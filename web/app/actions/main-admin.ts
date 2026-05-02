@@ -1,0 +1,73 @@
+"use server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
+
+export async function createSubMahalla(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const address = formData.get("address") as string;
+  const area = formData.get("area") as string;
+
+  try {
+    await prisma.subMahalla.create({
+      data: {
+        name,
+        email,
+        address,
+        area,
+        mainMahallaId: session.user.mainMahallaId,
+      }
+    });
+    revalidatePath("/dashboard/sub-mahallas");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Failed to create Sub Mahalla" };
+  }
+}
+
+export async function createSubAdmin(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const subMahallaId = formData.get("subMahallaId") as string;
+
+  if (!subMahallaId) return { success: false, error: "Sub Mahalla selection is required" };
+
+  try {
+    // Verify that the selected SubMahalla actually belongs to this MainAdmin's MainMahalla
+    const sm = await prisma.subMahalla.findUnique({ where: { id: subMahallaId }});
+    if (!sm || sm.mainMahallaId !== session.user.mainMahallaId) {
+      return { success: false, error: "Invalid Sub Mahalla" };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: "SUB_ADMIN",
+        mainMahallaId: session.user.mainMahallaId,
+        subMahallaId: subMahallaId,
+      }
+    });
+    revalidatePath("/dashboard/sub-admins");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: "Failed to create Sub Admin. Email might already exist." };
+  }
+}

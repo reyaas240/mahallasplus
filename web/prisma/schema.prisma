@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  MAIN_ADMIN
+  SUB_ADMIN
+  MEMBER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LivingType {
+  OWN_HOUSE
+  RENTED
+  MONTHLY_SUBSCRIPTION_MAIN
+  MONTHLY_SUBSCRIPTION_SUB
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(MEMBER)
+
+  // Tenancy
+  mainMahallaId String?
+  subMahallaId  String?
+
+  mainMahalla MainMahalla? @relation(fields: [mainMahallaId], references: [id])
+  subMahalla  SubMahalla?  @relation(fields: [subMahallaId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RegistrationRequest {
+  id              String             @id @default(cuid())
+  licensePlan     String
+  fullName        String
+  email           String             @unique
+  phone           String?
+  mahallaName     String
+  selfieUrl       String?
+  governmentIdUrl String?
+  status          RegistrationStatus @default(PENDING)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model MainMahalla {
+  id             String   @id @default(cuid())
+  name           String
+  logo           String?
+  coverImage     String?
+  registeredDate DateTime @default(now())
+  email          String?
+  address        String?
+  country        String?
+  province       String?
+  district       String?
+  area           String?
+  status         Status   @default(ACTIVE)
+
+  subMahallas SubMahalla[]
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubMahalla {
+  id             String   @id @default(cuid())
+  name           String
+  logo           String?
+  coverImage     String?
+  registeredDate DateTime @default(now())
+  email          String?
+  address        String?
+  area           String?
+
+  mainMahallaId String
+  mainMahalla   MainMahalla @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+
+  status Status @default(ACTIVE)
+
+  familyCards FamilyCard[]
+  users       User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FamilyCard {
+  id                String     @id @default(cuid())
+  mainMahallaCardNo String?
+  subMahallaCardNo  String?
+  registeredDate    DateTime   @default(now())
+  livingType        LivingType
+  livingFromDate    DateTime?
+  attachments       String[]
+  status            Status     @default(ACTIVE)
+
+  subMahallaId String
+  subMahalla   SubMahalla @relation(fields: [subMahallaId], references: [id], onDelete: Cascade)
+
+  members FamilyMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FamilyMember {
+  id            String   @id @default(cuid())
+  title         String
+  fullName      String
+  dob           DateTime
+  nic           String?  @unique
+  relationship  String
+  isBreadwinner Boolean  @default(false)
+  isStudent     Boolean  @default(false)
+
+  school          String?
+  grade           String?
+  occupation      String?
+  monthlyEarnings Float?
+  maritalStatus   String?
+  dateOfDemise    DateTime?
+  attachments     String[]
+  status          Status    @default(ACTIVE)
+
+  familyCardId String
+  familyCard   FamilyCard @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MasterCountry {
+  id                    String @id @default(cuid())
+  name                  String @unique
+  code                  String
+  currency              String
+  currencyDecimalPlaces Int    @default(2)
+
+  provinces MasterProvince[]
+}
+
+model MasterProvince {
+  id   String @id @default(cuid())
+  name String
+  
+  countryId String
+  country   MasterCountry @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  districts MasterDistrict[]
+
+  @@unique([name, countryId])
+}
+
+model MasterDistrict {
+  id   String @id @default(cuid())
+  name String
+  
+  provinceId String
+  province   MasterProvince @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+
+  areas MasterArea[]
+
+  @@unique([name, provinceId])
+}
+
+model MasterArea {
+  id   String @id @default(cuid())
+  name String
+  
+  districtId String
+  district   MasterDistrict @relation(fields: [districtId], references: [id], onDelete: Cascade)
+
+  @@unique([name, districtId])
+}
+
+model MasterSchool {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model MasterGrade {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model MasterOccupation {
+  id   String @id @default(cuid())
+  name String @unique
+}
