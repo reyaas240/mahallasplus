@@ -5,6 +5,7 @@ import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import { FamilyMemberForm } from "./FamilyMemberForm";
+import { FamilyMemberActions } from "./FamilyMemberActions";
 
 export default async function FamilyDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -21,6 +22,10 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
         orderBy: { createdAt: "asc" },
       },
     },
+  });
+
+  const occupations = await prisma.masterOccupation.findMany({
+    orderBy: { name: "asc" },
   });
 
   if (!family) return notFound();
@@ -85,9 +90,8 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 className="w-4 h-4" /></button>
-                      <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-2">
+                      <FamilyMemberActions member={member} occupations={occupations} />
                     </div>
                   </div>
                 ))
@@ -121,7 +125,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
             </div>
           </div>
 
-          <FamilyMemberForm cardId={family.id} />
+          <FamilyMemberForm cardId={family.id} occupations={occupations} />
         </div>
       </div>
     </div>

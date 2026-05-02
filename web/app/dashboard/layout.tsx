@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building } from "lucide-react";
+import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building, Shield } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 
 export default async function DashboardLayout({
@@ -70,6 +70,10 @@ export default async function DashboardLayout({
                 <Users className="w-5 h-5" />
                 <span className="font-medium">Families</span>
               </Link>
+              <Link href="/dashboard/committees" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <Shield className="w-5 h-5" />
+                <span className="font-medium">Committees</span>
+              </Link>
             </>
           )}
 
@@ -79,6 +83,16 @@ export default async function DashboardLayout({
               <Link href="/dashboard/families" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
                 <Users className="w-5 h-5" />
                 <span className="font-medium">Families</span>
+              </Link>
+            </>
+          )}
+
+          {role === "COMMITTEE_ADMIN" && (
+            <>
+              <div className="mt-4 mb-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Committee Portal</div>
+              <Link href="/dashboard/committee-portal" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors">
+                <Shield className="w-5 h-5" />
+                <span className="font-medium">My Committee</span>
               </Link>
             </>
           )}

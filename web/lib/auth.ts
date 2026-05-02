@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           mainMahallaId: user.mainMahallaId,
           subMahallaId: user.subMahallaId,
+          committeeId: user.committeeId,
         };
       },
     }),
@@ -54,6 +55,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.mainMahallaId = user.mainMahallaId;
         token.subMahallaId = user.subMahallaId;
+        token.committeeId = user.committeeId;
       }
       return token;
     },
@@ -65,6 +67,7 @@ export const authOptions: NextAuthOptions = {
           role: token.role as string,
           mainMahallaId: token.mainMahallaId as string | null,
           subMahallaId: token.subMahallaId as string | null,
+          committeeId: token.committeeId as string | null,
         };
       }
       return session;

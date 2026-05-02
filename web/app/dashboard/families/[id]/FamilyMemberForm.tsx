@@ -3,7 +3,7 @@ import { addFamilyMember } from "@/app/actions/family";
 import { useState } from "react";
 import { Loader2, UserPlus, AlertCircle } from "lucide-react";
 
-export function FamilyMemberForm({ cardId }: { cardId: string }) {
+export function FamilyMemberForm({ cardId, occupations }: { cardId: string, occupations: any[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,8 +44,8 @@ export function FamilyMemberForm({ cardId }: { cardId: string }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-1">
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Title</label>
-            <select required name="title" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium">
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Title</label>
+            <select required name="title" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900">
               <option value="Mr.">Mr.</option>
               <option value="Mrs.">Mrs.</option>
               <option value="Miss.">Miss.</option>
@@ -54,27 +54,31 @@ export function FamilyMemberForm({ cardId }: { cardId: string }) {
               <option value="Alhaj.">Alhaj.</option>
             </select>
           </div>
-          <div className="col-span-2">
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
-            <input required name="fullName" type="text" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium" placeholder="Member Name" />
+          <div className="col-span-1">
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Full Name</label>
+            <input required name="fullName" type="text" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900" placeholder="Member Name" />
+          </div>
+          <div className="col-span-1">
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Email (For Access)</label>
+            <input name="email" type="email" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900" placeholder="Optional" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Date of Birth</label>
-            <input required name="dob" type="date" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium" />
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Date of Birth</label>
+            <input required name="dob" type="date" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">NIC (ID Card)</label>
-            <input name="nic" type="text" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium" placeholder="ID Number" />
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">NIC (ID Card)</label>
+            <input name="nic" type="text" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900" placeholder="ID Number" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Relationship</label>
-            <select required name="relationship" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium">
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Relationship</label>
+            <select required name="relationship" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900">
               <option value="Head">Family Head</option>
               <option value="Spouse">Spouse</option>
               <option value="Son">Son</option>
@@ -87,8 +91,8 @@ export function FamilyMemberForm({ cardId }: { cardId: string }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Marital Status</label>
-            <select required name="maritalStatus" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium">
+            <label className="block text-sm font-bold text-slate-700 mb-1.5">Marital Status</label>
+            <select required name="maritalStatus" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900">
               <option value="Married">Married</option>
               <option value="Single">Single</option>
               <option value="Widowed">Widowed</option>
@@ -109,11 +113,16 @@ export function FamilyMemberForm({ cardId }: { cardId: string }) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5">Occupation / Job</label>
-          <input name="occupation" type="text" className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-sm font-medium" placeholder="Job Title" />
+          <label className="block text-sm font-bold text-slate-700 mb-1.5">Occupation / Job</label>
+          <select name="occupation" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900">
+            <option value="">-- Select Occupation --</option>
+            {occupations.map(occ => (
+              <option key={occ.id} value={occ.name}>{occ.name}</option>
+            ))}
+          </select>
         </div>
 
-        <button disabled={isSubmitting} type="submit" className="w-full py-3 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-all flex justify-center items-center gap-2 mt-4 active:scale-95 shadow-md shadow-emerald-200/50">
+        <button disabled={isSubmitting} type="submit" className="w-full py-3 bg-emerald-600 text-white rounded-lg font-black hover:bg-emerald-700 transition-all flex justify-center items-center gap-2 mt-4 active:scale-95 shadow-md shadow-emerald-200/50 uppercase tracking-wide text-sm">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Add to Family List</>}
         </button>
       </form>

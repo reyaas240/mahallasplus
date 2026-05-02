@@ -11,7 +11,41 @@ enum Role {
   PLATFORM_ADMIN
   MAIN_ADMIN
   SUB_ADMIN
+  COMMITTEE_ADMIN
   MEMBER
+}
+
+model Committee {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  status        Status   @default(ACTIVE)
+
+  mainMahallaId String
+  mainMahalla   MainMahalla @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+
+  members CommitteeMember[]
+  users   User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CommitteeMember {
+  id            String   @id @default(cuid())
+  role          String   @default("Member") // e.g. President, Secretary
+  hasDashboardAccess Boolean @default(false)
+
+  committeeId   String
+  committee     Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+
+  familyMemberId String
+  familyMember   FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([committeeId, familyMemberId])
 }
 
 enum Status {
@@ -44,9 +78,11 @@ model User {
   // Tenancy
   mainMahallaId String?
   subMahallaId  String?
+  committeeId   String?
 
   mainMahalla MainMahalla? @relation(fields: [mainMahallaId], references: [id])
   subMahalla  SubMahalla?  @relation(fields: [subMahallaId], references: [id])
+  committee   Committee?   @relation(fields: [committeeId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,6 +117,7 @@ model MainMahalla {
   status         Status   @default(ACTIVE)
 
   subMahallas SubMahalla[]
+  committees  Committee[]
   users       User[]
 
   createdAt DateTime @default(now())
@@ -134,6 +171,7 @@ model FamilyMember {
   fullName      String
   dob           DateTime
   nic           String?  @unique
+  email         String?  @unique
   relationship  String
   isBreadwinner Boolean  @default(false)
   isStudent     Boolean  @default(false)
@@ -149,6 +187,8 @@ model FamilyMember {
 
   familyCardId String
   familyCard   FamilyCard @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
+
+  committeeMembers CommitteeMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
