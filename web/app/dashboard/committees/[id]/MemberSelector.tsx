@@ -1,13 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, UserPlus, Loader2, MapPin, X } from "lucide-react";
 import { addCommitteeMember } from "@/app/actions/committee";
 
-export function MemberSelector({ committeeId, allMembers }: { committeeId: string, allMembers: any[] }) {
+export function MemberSelector({ terms, allMembers }: { terms: any[], allMembers: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [role, setRole] = useState("Member");
+  const [selectedTermId, setSelectedTermId] = useState("");
+
+  // Initialize selectedTermId when terms are available
+  useEffect(() => {
+    if (terms.length > 0 && !selectedTermId) {
+      // Find active term first, otherwise pick the first one
+      const activeTerm = terms.find(t => t.status === 'ACTIVE');
+      setSelectedTermId(activeTerm ? activeTerm.id : terms[0].id);
+    }
+  }, [terms, selectedTermId]);
 
   const filteredMembers = allMembers.filter(m => 
     m.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -15,9 +25,12 @@ export function MemberSelector({ committeeId, allMembers }: { committeeId: strin
   ).slice(0, 5);
 
   const handleAdd = async () => {
-    if (!selectedMember) return;
+    if (!selectedMember || !selectedTermId) {
+      if (!selectedTermId) alert("Please select or create a term first.");
+      return;
+    }
     setIsSubmitting(true);
-    const res = await addCommitteeMember(committeeId, selectedMember.id, role);
+    const res = await addCommitteeMember(selectedTermId, selectedMember.id, role);
     setIsSubmitting(false);
     
     if (res.success) {
@@ -38,7 +51,13 @@ export function MemberSelector({ committeeId, allMembers }: { committeeId: strin
       </div>
 
       <div className="space-y-6">
-        {!selectedMember ? (
+        {terms.length === 0 ? (
+          <div className="p-10 border-2 border-dashed border-slate-100 rounded-3xl text-center">
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-relaxed">
+               No active terms found.<br/>Establish a term first to assign members.
+             </p>
+          </div>
+        ) : !selectedMember ? (
           <div className="relative">
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Search Family Member</label>
             <div className="relative">
@@ -98,6 +117,17 @@ export function MemberSelector({ committeeId, allMembers }: { committeeId: strin
             
             <div className="mt-5 space-y-4">
               <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Committee Term</label>
+                <select 
+                  value={selectedTermId}
+                  onChange={(e) => setSelectedTermId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-emerald-200 rounded-xl outline-none focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 transition-all font-black text-slate-900 text-xs uppercase tracking-widest mb-4"
+                >
+                  {terms.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Committee Role</label>
                 <select 
                   value={role}

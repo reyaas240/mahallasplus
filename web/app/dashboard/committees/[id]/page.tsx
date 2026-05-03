@@ -2,10 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { Users, Shield, Calendar, MapPin, Trash2, ChevronLeft, UserPlus, ShieldCheck } from "lucide-react";
+import { Users, Shield, Calendar, MapPin, Trash2, ChevronLeft, UserPlus, ShieldCheck, History } from "lucide-react";
 import Link from "next/link";
 import { MemberSelector } from "./MemberSelector";
 import { CommitteeMemberActions } from "./CommitteeMemberActions";
+import { TermManager } from "./TermManager";
+import { FinancialSetup } from "./FinancialSetup";
 
 export default async function CommitteeDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -17,18 +19,27 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
   const committee = await prisma.committee.findUnique({
     where: { id: params.id },
     include: {
-      members: {
+      terms: {
         include: {
-          familyMember: {
+          balances: true,
+          members: {
             include: {
-              familyCard: {
+              familyMember: {
                 include: {
-                  subMahalla: true
+                  familyCard: {
+                    include: {
+                      subMahalla: true
+                    }
+                  }
                 }
               }
             }
+          },
+          _count: {
+            select: { members: true }
           }
-        }
+        },
+        orderBy: { createdAt: "desc" }
       }
     }
   });
@@ -37,9 +48,9 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
     return notFound();
   }
 
-  // Fetch all family members under this main mahalla for assignment
-  // In a real app, this would be paginated or searchable via API
-  // For the MVP, we'll fetch them for the selector component
+  const currentTerm = committee.terms.find(t => t.status === 'ACTIVE') || committee.terms[0] || null;
+  const members = currentTerm?.members || [];
+
   const allMembers = await prisma.familyMember.findMany({
     where: {
       familyCard: {
@@ -83,20 +94,26 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" /> Committee Members ({committee.members.length})
+                <Users className="w-5 h-5 text-blue-600" /> 
+                {currentTerm ? `${currentTerm.name} Members` : 'Committee Members'} ({members.length})
               </h3>
+              {currentTerm && (
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5" /> Showing {currentTerm.status === 'ACTIVE' ? 'Active' : 'Latest'} Term
+                </span>
+              )}
             </div>
             
             <div className="divide-y divide-slate-100">
-              {committee.members.length === 0 ? (
+              {members.length === 0 ? (
                 <div className="p-20 text-center">
                   <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <UserPlus className="w-8 h-8 text-slate-300" />
                   </div>
-                  <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">No members assigned yet</p>
+                  <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">No members assigned to this term</p>
                 </div>
               ) : (
-                committee.members.map((m) => (
+                members.map((m) => (
                   <div key={m.id} className="p-6 flex justify-between items-center hover:bg-slate-50/50 transition-all group">
                     <div className="flex gap-4 items-center">
                       <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-black text-lg">
@@ -106,6 +123,7 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
                         <div className="flex items-center gap-2">
                           <h4 className="font-black text-slate-900 uppercase tracking-wide text-sm">{m.familyMember.fullName}</h4>
                           <span className="bg-slate-900 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">{m.role}</span>
+                          {m.status === 'INACTIVE' && <span className="bg-rose-50 text-rose-600 text-[8px] font-black px-1.5 py-0.5 rounded uppercase border border-rose-100 tracking-tighter">InActive</span>}
                         </div>
                         <div className="flex gap-3 items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
                           <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {m.familyMember.familyCard.subMahalla.name}</span>
@@ -134,7 +152,9 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
             </p>
           </div>
 
-          <MemberSelector committeeId={committee.id} allMembers={allMembers} />
+          <TermManager committeeId={committee.id} terms={committee.terms} />
+
+          <MemberSelector terms={committee.terms} allMembers={allMembers} />
         </div>
       </div>
     </div>

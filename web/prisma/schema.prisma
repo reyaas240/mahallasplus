@@ -7,85 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  PLATFORM_ADMIN
-  MAIN_ADMIN
-  SUB_ADMIN
-  COMMITTEE_ADMIN
-  MEMBER
-}
-
 model Committee {
-  id            String   @id @default(cuid())
+  id            String            @id @default(cuid())
   name          String
   description   String?
-  status        Status   @default(ACTIVE)
+  logo          String?
+  shortCode     String?
+  establishedDate DateTime?
+  registrationNo String?
+  address       String?
+  email         String?
+  contactNo     String?
+  website       String?
 
+  // Bank Details
+  bankName          String?
+  accountNumber     String?
+  accountHolderName String?
+  branch            String?
+  defaultCurrency   String? @default("LKR")
+
+  status        Status            @default(ACTIVE)
   mainMahallaId String
-  mainMahalla   MainMahalla @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  mainMahalla   MainMahalla       @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  terms         CommitteeTerm[]
+  users         User[]
+}
 
-  members CommitteeMember[]
-  users   User[]
+enum FinancialStatus {
+  PENDING
+  APPROVED
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model CommitteeTerm {
+  id                  String               @id @default(cuid())
+  name                String               // e.g., "Term 2024-2025"
+  startDate           DateTime?
+  endDate             DateTime?
+  status              Status               @default(ACTIVE)
+  financialsStatus    FinancialStatus      @default(PENDING)
+  financialsApprovedAt DateTime?
+  committeeId         String
+  committee           Committee            @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  members             CommitteeMember[]
+  balances            CommitteeTermBalance[]
+  
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model CommitteeMember {
-  id            String   @id @default(cuid())
-  role          String   @default("Member") // e.g. President, Secretary
-  hasDashboardAccess Boolean @default(false)
+  id                 String       @id @default(cuid())
+  role               String
+  status             Status       @default(ACTIVE)
+  activeDateFrom     DateTime?
+  activeDateTo       DateTime?
+  committeeTermId    String
+  committeeTerm      CommitteeTerm @relation(fields: [committeeTermId], references: [id], onDelete: Cascade)
+  familyMemberId     String
+  familyMember       FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  hasDashboardAccess Boolean      @default(false)
+  
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  committeeId   String
-  committee     Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
-
-  familyMemberId String
-  familyMember   FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([committeeId, familyMemberId])
-}
-
-enum Status {
-  ACTIVE
-  INACTIVE
-}
-
-enum RegistrationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum LivingType {
-  OWN_HOUSE
-  RENTED
-  MONTHLY_SUBSCRIPTION_MAIN
-  MONTHLY_SUBSCRIPTION_SUB
+  @@unique([committeeTermId, familyMemberId])
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?      @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          Role      @default(MEMBER)
-
-  // Tenancy
+  role          Role         @default(MEMBER)
   mainMahallaId String?
   subMahallaId  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   committeeId   String?
-
-  mainMahalla MainMahalla? @relation(fields: [mainMahallaId], references: [id])
-  subMahalla  SubMahalla?  @relation(fields: [subMahallaId], references: [id])
-  committee   Committee?   @relation(fields: [committeeId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  committee     Committee?   @relation(fields: [committeeId], references: [id])
+  mainMahalla   MainMahalla? @relation(fields: [mainMahallaId], references: [id])
+  subMahalla    SubMahalla?  @relation(fields: [subMahallaId], references: [id])
 }
 
 model RegistrationRequest {
@@ -103,135 +109,144 @@ model RegistrationRequest {
 }
 
 model MainMahalla {
-  id             String   @id @default(cuid())
-  name           String
-  logo           String?
-  coverImage     String?
-  registeredDate DateTime @default(now())
-  email          String?
-  address        String?
-  country        String?
-  province       String?
-  district       String?
-  area           String?
-  status         Status   @default(ACTIVE)
+  id                      String                   @id @default(cuid())
+  name                    String                   @unique
+  logo                    String?
+  coverImage              String?
+  registeredDate          DateTime                 @default(now())
+  email                   String?
+  address                 String?
+  country                 String?
+  province                String?
+  district                String?
+  area                    String?
+  defaultCurrency         String                   @default("LKR")
+  activatedDate           DateTime?
+  deactivatedDate         DateTime?
+  status                  Status                   @default(ACTIVE)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  committees              Committee[]
+  subMahallas             SubMahalla[]
+  users                   User[]
+  openingBalanceCategories OpeningBalanceCategory[]
+}
 
-  subMahallas SubMahalla[]
-  committees  Committee[]
-  users       User[]
+model OpeningBalanceCategory {
+  id            String                 @id @default(cuid())
+  name          String
+  mainMahallaId String
+  mainMahalla   MainMahalla            @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  balances      CommitteeTermBalance[]
+  createdAt     DateTime               @default(now())
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@unique([mainMahallaId, name])
+}
+
+model CommitteeTermBalance {
+  id                String                 @id @default(cuid())
+  amount            Float                  @default(0)
+  committeeTermId   String
+  committeeTerm     CommitteeTerm          @relation(fields: [committeeTermId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          OpeningBalanceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  @@unique([committeeTermId, categoryId])
 }
 
 model SubMahalla {
-  id             String   @id @default(cuid())
-  name           String
+  id             String       @id @default(cuid())
+  name           String       @unique
   logo           String?
   coverImage     String?
-  registeredDate DateTime @default(now())
+  registeredDate DateTime     @default(now())
   email          String?
   address        String?
   area           String?
-
-  mainMahallaId String
-  mainMahalla   MainMahalla @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
-
-  status Status @default(ACTIVE)
-
-  familyCards FamilyCard[]
-  users       User[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  mainMahallaId  String
+  status         Status       @default(ACTIVE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  familyCards    FamilyCard[]
+  mainMahalla    MainMahalla  @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  users          User[]
 }
 
 model FamilyCard {
-  id                String     @id @default(cuid())
+  id                String         @id @default(cuid())
   mainMahallaCardNo String?
   subMahallaCardNo  String?
-  registeredDate    DateTime   @default(now())
+  registeredDate    DateTime       @default(now())
   livingType        LivingType
   livingFromDate    DateTime?
   attachments       String[]
-  status            Status     @default(ACTIVE)
-
-  subMahallaId String
-  subMahalla   SubMahalla @relation(fields: [subMahallaId], references: [id], onDelete: Cascade)
-
-  members FamilyMember[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status            Status         @default(ACTIVE)
+  subMahallaId      String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  subMahalla        SubMahalla     @relation(fields: [subMahallaId], references: [id], onDelete: Cascade)
+  members           FamilyMember[]
 }
 
 model FamilyMember {
-  id            String   @id @default(cuid())
-  title         String
-  fullName      String
-  dob           DateTime
-  nic           String?  @unique
-  email         String?  @unique
-  relationship  String
-  isBreadwinner Boolean  @default(false)
-  isStudent     Boolean  @default(false)
-
-  school          String?
-  grade           String?
-  occupation      String?
-  monthlyEarnings Float?
-  maritalStatus   String?
-  dateOfDemise    DateTime?
-  attachments     String[]
-  status          Status    @default(ACTIVE)
-
-  familyCardId String
-  familyCard   FamilyCard @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
-
+  id               String            @id @default(cuid())
+  title            String
+  fullName         String
+  dob              DateTime
+  nic              String?           @unique
+  relationship     String
+  isBreadwinner    Boolean           @default(false)
+  isStudent        Boolean           @default(false)
+  school           String?
+  grade            String?
+  occupation       String?
+  monthlyEarnings  Float?
+  maritalStatus    String?
+  dateOfDemise     DateTime?
+  attachments      String[]
+  status           Status            @default(ACTIVE)
+  familyCardId     String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  email            String?           @unique
   committeeMembers CommitteeMember[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  familyCard       FamilyCard        @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
 }
 
 model MasterCountry {
-  id                    String @id @default(cuid())
-  name                  String @unique
+  id                    String           @id @default(cuid())
+  name                  String           @unique
   code                  String
   currency              String
-  currencyDecimalPlaces Int    @default(2)
-
-  provinces MasterProvince[]
+  currencyDecimalPlaces Int              @default(2)
+  provinces             MasterProvince[]
 }
 
 model MasterProvince {
-  id   String @id @default(cuid())
-  name String
-  
+  id        String           @id @default(cuid())
+  name      String
   countryId String
-  country   MasterCountry @relation(fields: [countryId], references: [id], onDelete: Cascade)
-
   districts MasterDistrict[]
+  country   MasterCountry    @relation(fields: [countryId], references: [id], onDelete: Cascade)
 
   @@unique([name, countryId])
 }
 
 model MasterDistrict {
-  id   String @id @default(cuid())
-  name String
-  
+  id         String         @id @default(cuid())
+  name       String
   provinceId String
+  areas      MasterArea[]
   province   MasterProvince @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-
-  areas MasterArea[]
 
   @@unique([name, provinceId])
 }
 
 model MasterArea {
-  id   String @id @default(cuid())
-  name String
-  
+  id         String         @id @default(cuid())
+  name       String
   districtId String
   district   MasterDistrict @relation(fields: [districtId], references: [id], onDelete: Cascade)
 
@@ -251,4 +266,30 @@ model MasterGrade {
 model MasterOccupation {
   id   String @id @default(cuid())
   name String @unique
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  MAIN_ADMIN
+  SUB_ADMIN
+  MEMBER
+  COMMITTEE_ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LivingType {
+  OWN_HOUSE
+  RENTED
+  MONTHLY_SUBSCRIPTION_MAIN
+  MONTHLY_SUBSCRIPTION_SUB
 }
