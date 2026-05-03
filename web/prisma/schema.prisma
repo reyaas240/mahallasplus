@@ -281,24 +281,31 @@ enum DonorType {
 model Donor {
   id             String         @id @default(cuid())
   type           DonorType      @default(INTERNAL)
-  name           String         // Display name (cached for internal, full for external)
+  name           String         // Display name
   phone          String?
   email          String?
-  address        String?
-  
-  // Relations
-  familyMemberId String?        // Only for INTERNAL
-  familyMember   FamilyMember?  @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
-  
+  familyMemberId String?
   mainMahallaId  String
-  mainMahalla    MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
-  
-  donations      Donation[]
-  
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  donations      Donation[]
+  contacts       DonorContact[]
+  familyMember   FamilyMember?  @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  mainMahalla    MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
 
   @@index([mainMahallaId])
+}
+
+model DonorContact {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  whatsapp   String?
+  email      String?
+  donorId    String
+  donor      Donor    @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Donation {
@@ -307,6 +314,7 @@ model Donation {
   date            DateTime       @default(now())
   paymentMethod   String         // e.g., CASH, BANK, CHEQUE, PDC
   reference       String?        // e.g., Cheque No, Bank Ref
+  attachmentUrl   String?
   
   // Relations
   donorId         String

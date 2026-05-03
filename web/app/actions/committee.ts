@@ -506,6 +506,44 @@ export async function saveOpeningBalances(committeeTermId: string, balances: { c
   }
 }
 
+export async function getCommitteeStats(committeeId: string, termId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { totalCollections: 0, donorCount: 0, goalProgress: 0 };
+
+  const [donations, balances, committee] = await Promise.all([
+    prisma.donation.aggregate({
+      where: { committeeId, committeeTermId: termId },
+      _sum: { amount: true },
+      _count: { donorId: true }
+    }),
+    prisma.committeeTermBalance.aggregate({
+      where: { committeeTermId: termId },
+      _sum: { amount: true }
+    }),
+    prisma.committee.findUnique({
+      where: { id: committeeId },
+      select: { description: true }
+    })
+  ]);
+
+  const totalOpening = balances._sum.amount || 0;
+  const totalDonations = donations._sum.amount || 0;
+  const totalAmount = totalOpening + totalDonations;
+
+  // Extract numeric goal from description if possible (simple heuristic)
+  const goalMatch = committee?.description?.match(/(\d+[\d,]*)/);
+  const goalAmount = goalMatch ? parseFloat(goalMatch[0].replace(/,/g, '')) : 1000000;
+
+  return {
+    openingBalance: totalOpening,
+    totalCollections: totalDonations,
+    totalAmount: totalAmount,
+    donorCount: donations._count.donorId,
+    goalAmount: goalAmount,
+    goalProgress: Math.min(Math.round((totalDonations / goalAmount) * 100), 100)
+  };
+}
+
 export async function approveOpeningBalances(committeeTermId: string) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "MAIN_ADMIN") return { success: false, error: "Unauthorized" };
