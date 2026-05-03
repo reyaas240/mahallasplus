@@ -34,6 +34,7 @@ model Committee {
   mainMahalla   MainMahalla       @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
   terms         CommitteeTerm[]
   users         User[]
+  donations     Donation[]
 }
 
 enum FinancialStatus {
@@ -53,6 +54,7 @@ model CommitteeTerm {
   committee           Committee            @relation(fields: [committeeId], references: [id], onDelete: Cascade)
   members             CommitteeMember[]
   balances            CommitteeTermBalance[]
+  donations           Donation[]
   
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -130,6 +132,8 @@ model MainMahalla {
   subMahallas             SubMahalla[]
   users                   User[]
   openingBalanceCategories OpeningBalanceCategory[]
+  donations               Donation[]
+  donors                  Donor[]
 }
 
 model OpeningBalanceCategory {
@@ -213,6 +217,7 @@ model FamilyMember {
   email            String?           @unique
   committeeMembers CommitteeMember[]
   familyCard       FamilyCard        @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
+  donors           Donor[]
 }
 
 model MasterCountry {
@@ -266,6 +271,62 @@ model MasterGrade {
 model MasterOccupation {
   id   String @id @default(cuid())
   name String @unique
+}
+
+enum DonorType {
+  INTERNAL
+  EXTERNAL
+}
+
+model Donor {
+  id             String         @id @default(cuid())
+  type           DonorType      @default(INTERNAL)
+  name           String         // Display name (cached for internal, full for external)
+  phone          String?
+  email          String?
+  address        String?
+  
+  // Relations
+  familyMemberId String?        // Only for INTERNAL
+  familyMember   FamilyMember?  @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  
+  mainMahallaId  String
+  mainMahalla    MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  
+  donations      Donation[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([mainMahallaId])
+}
+
+model Donation {
+  id              String         @id @default(cuid())
+  amount          Float
+  date            DateTime       @default(now())
+  paymentMethod   String         // e.g., CASH, BANK, CHEQUE, PDC
+  reference       String?        // e.g., Cheque No, Bank Ref
+  
+  // Relations
+  donorId         String
+  donor           Donor          @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  
+  committeeId     String
+  committee       Committee      @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  
+  committeeTermId String
+  committeeTerm   CommitteeTerm  @relation(fields: [committeeTermId], references: [id], onDelete: Cascade)
+  
+  mainMahallaId   String
+  mainMahalla     MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([donorId])
+  @@index([committeeId])
+  @@index([committeeTermId])
 }
 
 enum Role {

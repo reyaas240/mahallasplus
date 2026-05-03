@@ -8,6 +8,7 @@ import { MemberSelector } from "./MemberSelector";
 import { CommitteeMemberActions } from "./CommitteeMemberActions";
 import { TermManager } from "./TermManager";
 import { FinancialSetup } from "./FinancialSetup";
+import { DonorDonationManager } from "./DonorDonationManager";
 
 export default async function CommitteeDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -137,6 +138,9 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
               )}
             </div>
           </div>
+
+          {/* Donor & Donation Management */}
+          <DonorDonationManager committeeId={committee.id} terms={committee.terms} />
         </div>
 
         <div className="lg:col-span-1 space-y-8">
