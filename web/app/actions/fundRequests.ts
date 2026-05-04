@@ -110,18 +110,35 @@ export async function updateFundRequest(id: string, data: any) {
   if (!session) return { success: false, error: "Unauthorized" };
 
   try {
-    await prisma.fundRequest.update({
-      where: { id },
-      data: {
-        purpose: data.purpose,
-        description: data.description,
-        requestedAmount: data.requestedAmount ? parseFloat(data.requestedAmount) : null,
-        projectName: data.projectName || null,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const req = await tx.fundRequest.update({
+        where: { id },
+        data: {
+          projectName: data.projectName || null,
+          purpose: data.purpose,
+          description: data.description || null,
+          requestedAmount: data.requestedAmount ? parseFloat(data.requestedAmount) : null,
+          letterRefNo: data.letterRefNo || null,
+          externalName: data.externalName || null,
+          externalPhone: data.externalPhone || null,
+          externalAddress: data.externalAddress || null,
+          attachments: data.attachments || [],
+        },
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: id,
+          action: "Request updated",
+          performedBy: session.user.name || session.user.email || "System",
+          note: "Request details modified",
+        },
+      });
+
+      return req;
     });
 
-    const req = await prisma.fundRequest.findUnique({ where: { id } });
-    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    revalidatePath(`/dashboard/committees/${updated.committeeId}`);
     return { success: true };
   } catch (e) {
     console.error(e);
@@ -345,6 +362,36 @@ export async function updateAppointmentOutcome(appointmentId: string, data: any)
   }
 }
 
+export async function resumeFundRequest(requestId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.fundRequest.update({
+        where: { id: requestId },
+        data: { status: "UNDER_DISCUSSION" },
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: requestId,
+          action: "Review resumed",
+          performedBy: session.user.name || session.user.email || "System",
+          note: "Request moved back to active discussion",
+        },
+      });
+    });
+
+    const req = await prisma.fundRequest.findUnique({ where: { id: requestId } });
+    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to resume request" };
+  }
+}
+
 // ─────────────── Quotations ───────────────
 
 export async function addQuotation(data: any) {
@@ -359,7 +406,8 @@ export async function addQuotation(data: any) {
           vendor: data.vendor,
           amount: parseFloat(data.amount),
           description: data.description || null,
-          fileUrl: data.fileUrl,
+          attachments: data.attachments || [],
+          isGranted: data.isGranted || false,
         },
       });
 
@@ -382,7 +430,94 @@ export async function addQuotation(data: any) {
   }
 }
 
+export async function updateQuotation(id: string, data: any) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      const q = await tx.fundQuotation.update({
+        where: { id },
+        data: {
+          vendor: data.vendor,
+          amount: parseFloat(data.amount),
+          description: data.description || null,
+          attachments: data.attachments || [],
+          isGranted: data.isGranted || false,
+        },
+        include: { fundRequest: true }
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: q.fundRequestId,
+          action: "Quotation updated",
+          performedBy: session.user.name || session.user.email || "System",
+          note: `Vendor: ${data.vendor} — Amount: ${data.amount} — Granted: ${data.isGranted ? 'Yes' : 'No'}`,
+        },
+      });
+      return q;
+    });
+
+    revalidatePath(`/dashboard/committees/${updated.fundRequest.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update quotation" };
+  }
+}
+
+export async function deleteQuotation(id: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    const q = await prisma.fundQuotation.delete({ 
+      where: { id },
+      include: { fundRequest: true }
+    });
+    revalidatePath(`/dashboard/committees/${q.fundRequest.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to delete quotation" };
+  }
+}
+
 // ─────────────── Approval / Rejection ───────────────
+
+export async function holdFundRequest(requestId: string, reason: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.fundRequest.update({
+        where: { id: requestId },
+        data: {
+          status: "ON_HOLD",
+          decisionNotes: reason || null,
+        },
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: requestId,
+          action: "Request put on hold",
+          performedBy: session.user.name || session.user.email || "System",
+          note: reason || "No specific reason provided",
+        },
+      });
+    });
+
+    const req = await prisma.fundRequest.findUnique({ where: { id: requestId } });
+    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to put request on hold" };
+  }
+}
 
 export async function approveFundRequest(requestId: string, data: any) {
   const session = await getServerSession(authOptions);
@@ -465,9 +600,11 @@ export async function disburseFunds(requestId: string, data: any) {
           disbursementMethod: data.disbursementMethod,
           chequeNumber: data.chequeNumber || null,
           bankReference: data.bankReference || null,
-          receiptUrl: data.receiptUrl || null,
-          disbursedAt: new Date(),
+          handedOverDate: data.handedOverDate ? new Date(data.handedOverDate) : null,
+          assignedMembers: data.assignedMembers || null,
+          disbursementAttachments: data.attachments || [],
           status: "DISBURSED",
+          disbursedAt: new Date(),
         },
       });
 
@@ -476,7 +613,7 @@ export async function disburseFunds(requestId: string, data: any) {
           fundRequestId: requestId,
           action: "Funds disbursed",
           performedBy: session.user.name || session.user.email || "System",
-          note: `Method: ${data.disbursementMethod}${data.chequeNumber ? ` — Cheque #${data.chequeNumber}` : ""}${data.bankReference ? ` — Ref: ${data.bankReference}` : ""}`,
+          note: `Method: ${data.disbursementMethod}. ${data.assignedMembers ? `Assigned to: ${data.assignedMembers}` : ""}`,
         },
       });
     });
@@ -490,7 +627,38 @@ export async function disburseFunds(requestId: string, data: any) {
   }
 }
 
-// ─────────────── Stats ───────────────
+export async function updateDisbursementFollowUp(requestId: string, data: any) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.fundRequest.update({
+        where: { id: requestId },
+        data: {
+          assignedMembers: data.assignedMembers || null,
+          disbursementAttachments: data.attachments || [],
+        },
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: requestId,
+          action: "Disbursement follow-up updated",
+          performedBy: session.user.name || session.user.email || "System",
+          note: `Assigned to: ${data.assignedMembers || "None"}`,
+        },
+      });
+    });
+
+    const req = await prisma.fundRequest.findUnique({ where: { id: requestId } });
+    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update follow-up details" };
+  }
+}
 
 export async function getFundDistributionStats(committeeId: string, termId?: string) {
   const session = await getServerSession(authOptions);

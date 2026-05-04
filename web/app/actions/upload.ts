@@ -51,3 +51,46 @@ export async function uploadInvestigationImages(formData: FormData) {
     return { success: false, error: "Failed to process and upload images" };
   }
 }
+export async function uploadFundRequestAttachments(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const files = formData.getAll("files") as File[];
+  const savedPaths: string[] = [];
+
+  try {
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "requests");
+    await mkdir(uploadDir, { recursive: true });
+
+    for (const file of files) {
+      if (file.size === 0) continue;
+      
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      
+      const isImg = file.type.startsWith("image/") || file.name.toLowerCase().endsWith(".heic");
+      const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+      let relativePath = `/uploads/requests/${filename}`;
+      const absolutePath = path.join(process.cwd(), "public", relativePath);
+
+      if (isImg) {
+        relativePath = relativePath.replace(/\.[^/.]+$/, ".jpg");
+        const finalAbsolutePath = path.join(process.cwd(), "public", relativePath);
+        await sharp(buffer)
+          .rotate()
+          .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toFile(finalAbsolutePath);
+      } else {
+        await writeFile(absolutePath, buffer);
+      }
+      
+      savedPaths.push(relativePath);
+    }
+
+    return { success: true, paths: savedPaths };
+  } catch (e: any) {
+    console.error("Upload error:", e.message);
+    return { success: false, error: "Failed to upload attachments" };
+  }
+}

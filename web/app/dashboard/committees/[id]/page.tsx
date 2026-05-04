@@ -15,7 +15,7 @@ import { CommitteeView } from "./CommitteeView";
 export default async function CommitteeDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 

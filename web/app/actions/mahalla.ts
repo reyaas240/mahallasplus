@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
+import { saveFile } from "@/lib/storage";
 import { authOptions } from "@/lib/auth";
 
 export async function updateMainMahalla(id: string, formData: FormData) {
@@ -13,6 +14,7 @@ export async function updateMainMahalla(id: string, formData: FormData) {
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
   const address = formData.get("address") as string;
   const country = formData.get("country") as string;
   const province = formData.get("province") as string;
@@ -20,6 +22,9 @@ export async function updateMainMahalla(id: string, formData: FormData) {
   const area = formData.get("area") as string;
   const defaultCurrency = formData.get("defaultCurrency") as string;
   const status = formData.get("status") as string;
+
+  const logoFile = formData.get("logo") as File;
+  const coverFile = formData.get("coverImage") as File;
 
   try {
     const current = await prisma.mainMahalla.findUnique({ where: { id } });
@@ -35,11 +40,15 @@ export async function updateMainMahalla(id: string, formData: FormData) {
       deactivatedDate = new Date();
     }
 
+    const logo = await saveFile(logoFile, "main-mahallas");
+    const coverImage = await saveFile(coverFile, "main-mahallas");
+
     await prisma.mainMahalla.update({
       where: { id },
       data: {
         name,
         email,
+        phone,
         address,
         country,
         province,
@@ -48,7 +57,9 @@ export async function updateMainMahalla(id: string, formData: FormData) {
         defaultCurrency,
         status: status as any,
         activatedDate,
-        deactivatedDate
+        deactivatedDate,
+        ...(logo && { logo }),
+        ...(coverImage && { coverImage })
       }
     });
 

@@ -9,14 +9,20 @@ import { CommitteeActions } from "./CommitteeActions";
 
 export default async function CommitteesPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
+  const where: any = {
+    mainMahallaId: session.user.mainMahallaId as string,
+  };
+
+  if (session.user.role === "SUB_ADMIN") {
+    where.subMahallaId = session.user.subMahallaId as string;
+  }
+
   const committees = await prisma.committee.findMany({
-    where: {
-      mainMahallaId: session.user.mainMahallaId as string,
-    },
+    where,
     include: {
       _count: {
         select: { terms: true }

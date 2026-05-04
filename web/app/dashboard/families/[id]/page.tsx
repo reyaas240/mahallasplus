@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Users } from "lucide-react";
+import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Users, Phone } from "lucide-react";
 import Link from "next/link";
 import { FamilyMemberForm } from "./FamilyMemberForm";
 import { FamilyMemberActions } from "./FamilyMemberActions";
@@ -82,6 +82,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 font-medium">
                           <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> NIC: {member.nic || "N/A"}</span>
+                          {member.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {member.phone}</span>}
                           <span className="flex items-center gap-1 uppercase text-[11px] font-black text-slate-400">{member.relationship}</span>
                           <span className="flex items-center gap-1 italic">{new Date().getFullYear() - new Date(member.dob).getFullYear()} Years Old</span>
                         </div>

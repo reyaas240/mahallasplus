@@ -52,6 +52,7 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   const isBreadwinner = formData.get("isBreadwinner") === "on";
   const isStudent = formData.get("isStudent") === "on";
   const occupation = formData.get("occupation") as string;
+  const phone = formData.get("phone") as string || null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
 
   // Complex Validation
@@ -86,6 +87,7 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
         isBreadwinner,
         isStudent,
         occupation,
+        phone,
         monthlyEarnings,
       },
     });
@@ -158,6 +160,7 @@ export async function updateFamilyMember(id: string, formData: FormData) {
   const isBreadwinner = formData.get("isBreadwinner") === "on";
   const isStudent = formData.get("isStudent") === "on";
   const occupation = formData.get("occupation") as string || null;
+  const phone = formData.get("phone") as string || null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
 
   console.log("Updating Member:", { id, title, fullName, email, dob, nic, monthlyEarnings });
@@ -192,6 +195,7 @@ export async function updateFamilyMember(id: string, formData: FormData) {
         isBreadwinner,
         isStudent,
         occupation,
+        phone,
         monthlyEarnings,
       },
     });

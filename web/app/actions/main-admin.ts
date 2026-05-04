@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { saveFile } from "@/lib/storage";
 
 export async function createSubMahalla(formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -15,21 +16,74 @@ export async function createSubMahalla(formData: FormData) {
   const email = formData.get("email") as string;
   const address = formData.get("address") as string;
   const area = formData.get("area") as string;
+  
+  const logoFile = formData.get("logo") as File;
+  const coverFile = formData.get("coverImage") as File;
 
   try {
+    const logo = await saveFile(logoFile, "sub-mahallas");
+    const coverImage = await saveFile(coverFile, "sub-mahallas");
+
     await prisma.subMahalla.create({
       data: {
         name,
         email,
         address,
         area,
+        logo,
+        coverImage,
         mainMahallaId: session.user.mainMahallaId,
       }
     });
     revalidatePath("/dashboard/sub-mahallas");
     return { success: true };
   } catch (e) {
+    console.error(e);
     return { success: false, error: "Failed to create Sub Mahalla" };
+  }
+}
+
+export async function updateSubMahalla(id: string, formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const address = formData.get("address") as string;
+  const area = formData.get("area") as string;
+  const status = formData.get("status") as any;
+  
+  const logoFile = formData.get("logo") as File;
+  const coverFile = formData.get("coverImage") as File;
+
+  try {
+    const current = await prisma.subMahalla.findUnique({ where: { id } });
+    if (!current || current.mainMahallaId !== session.user.mainMahallaId) {
+      return { success: false, error: "Access denied" };
+    }
+
+    const logo = logoFile.size > 0 ? await saveFile(logoFile, "sub-mahallas") : current.logo;
+    const coverImage = coverFile.size > 0 ? await saveFile(coverFile, "sub-mahallas") : current.coverImage;
+
+    await prisma.subMahalla.update({
+      where: { id },
+      data: {
+        name,
+        email,
+        address,
+        area,
+        status,
+        logo,
+        coverImage
+      }
+    });
+    revalidatePath("/dashboard/sub-mahallas");
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update Sub Mahalla" };
   }
 }
 

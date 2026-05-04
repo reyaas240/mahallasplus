@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Building, Users, Activity, FileText } from "lucide-react";
+import { Building, Users, Activity, FileText, MapPin } from "lucide-react";
 
 export default async function DashboardOverview() {
   const session = await getServerSession(authOptions);
@@ -12,16 +12,43 @@ export default async function DashboardOverview() {
     subMahallas: 0,
     totalMembers: 0,
     pendingRequests: 0,
+    mainMahallaName: "",
   };
 
   if (role === "PLATFORM_ADMIN") {
     stats.mainMahallas = await prisma.mainMahalla.count();
     stats.subMahallas = await prisma.subMahalla.count();
-    stats.totalMembers = await prisma.user.count({ where: { role: "MEMBER" } });
+    stats.totalMembers = await prisma.familyMember.count();
     stats.pendingRequests = await prisma.registrationRequest.count({ where: { status: "PENDING" } });
   } else if (role === "MAIN_ADMIN" && session?.user?.mainMahallaId) {
+    const mainMahalla = await prisma.mainMahalla.findUnique({
+      where: { id: session.user.mainMahallaId },
+      select: { name: true }
+    });
+    stats.mainMahallaName = mainMahalla?.name || "";
     stats.subMahallas = await prisma.subMahalla.count({ where: { mainMahallaId: session.user.mainMahallaId } });
-    stats.totalMembers = await prisma.user.count({ where: { mainMahallaId: session.user.mainMahallaId, role: "MEMBER" } });
+    stats.totalMembers = await prisma.familyMember.count({ 
+      where: { 
+        familyCard: { 
+          subMahalla: { 
+            mainMahallaId: session.user.mainMahallaId 
+          } 
+        } 
+      } 
+    });
+  } else if (role === "SUB_ADMIN" && session?.user?.subMahallaId) {
+    const subMahalla = await prisma.subMahalla.findUnique({
+      where: { id: session.user.subMahallaId },
+      select: { name: true }
+    });
+    stats.mainMahallaName = subMahalla?.name || ""; // Using this field for the label
+    stats.totalMembers = await prisma.familyMember.count({
+      where: {
+        familyCard: {
+          subMahallaId: session.user.subMahallaId
+        }
+      }
+    });
   }
 
   return (
@@ -44,20 +71,25 @@ export default async function DashboardOverview() {
         )}
         
         {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN") && (
-          <>
-            <StatCard 
-              title="Sub Mahallas" 
-              value={stats.subMahallas.toString()} 
-              icon={<Building className="w-6 h-6 text-emerald-600" />} 
-              trend="+5 this month"
-            />
-            <StatCard 
-              title="Total Members" 
-              value={stats.totalMembers.toString()} 
-              icon={<Users className="w-6 h-6 text-indigo-600" />} 
-              trend="+120 this week"
-            />
-          </>
+          <StatCard 
+            title="Sub Mahallas" 
+            value={stats.subMahallas.toString()} 
+            icon={<MapPin className="w-6 h-6 text-emerald-600" />} 
+            trend={role === "MAIN_ADMIN" ? `Under ${stats.mainMahallaName}` : "Platform Jurisdictions"}
+          />
+        )}
+
+        {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN" || role === "SUB_ADMIN") && (
+          <StatCard 
+            title="Total Members" 
+            value={stats.totalMembers.toString()} 
+            icon={<Users className="w-6 h-6 text-indigo-600" />} 
+            trend={
+              role === "MAIN_ADMIN" ? "From All Sub Mahallas" : 
+              role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` : 
+              "Global Community"
+            }
+          />
         )}
 
         {role === "PLATFORM_ADMIN" && (

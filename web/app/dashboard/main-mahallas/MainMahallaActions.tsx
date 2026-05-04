@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Edit3, X, Loader2, Save, Power, CheckCircle2, AlertTriangle, Calendar } from "lucide-react";
+import { Edit3, X, Loader2, Save, Power, CheckCircle2, AlertTriangle, Calendar, Plus } from "lucide-react";
 import { updateMainMahalla } from "@/app/actions/mahalla";
 
 export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters: any }) {
@@ -12,9 +12,13 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
   const [selectedCountryId, setSelectedCountryId] = useState("");
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null);
+  const [previewCover, setPreviewCover] = useState<string | null>(null);
 
   // Initialize selections if mahalla has data
   const handleOpen = () => {
+    setPreviewLogo(mahalla.logo);
+    setPreviewCover(mahalla.coverImage);
     const country = masters.countries.find((c: any) => c.name === mahalla.country);
     if (country) setSelectedCountryId(country.id);
     
@@ -85,9 +89,70 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
 
             <form onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
               <div className="space-y-8">
+                {/* Brand Identity */}
+                <div className="space-y-5">
+                  <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] px-1 text-left">Brand Identity</h4>
+                  <div className="grid grid-cols-2 gap-5">
+                    <div className="col-span-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Mahalla Logo</label>
+                      <div className="relative group">
+                        <input 
+                          name="logo" 
+                          type="file" 
+                          accept="image/*" 
+                          className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setPreviewLogo(URL.createObjectURL(file));
+                          }}
+                        />
+                        <div className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-blue-400 transition-all overflow-hidden">
+                          {previewLogo ? (
+                            <img src={previewLogo} className="w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                                <Plus className="w-5 h-5 text-slate-300" />
+                              </div>
+                              <span className="text-[8px] font-black text-slate-400 uppercase">Upload Logo</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Cover Image</label>
+                      <div className="relative group">
+                        <input 
+                          name="coverImage" 
+                          type="file" 
+                          accept="image/*" 
+                          className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setPreviewCover(URL.createObjectURL(file));
+                          }}
+                        />
+                        <div className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-blue-400 transition-all overflow-hidden">
+                          {previewCover ? (
+                            <img src={previewCover} className="w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                                <Plus className="w-5 h-5 text-slate-300" />
+                              </div>
+                              <span className="text-[8px] font-black text-slate-400 uppercase">Upload Cover</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Basic Identity */}
                 <div className="space-y-5">
-                  <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] px-1 text-left">Basic Identity</h4>
+                  <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] px-1 text-left">Core Details</h4>
                   <div className="grid grid-cols-2 gap-5">
                     <div className="col-span-2">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Mahalla Name</label>
@@ -98,6 +163,10 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
                       <input name="email" type="email" defaultValue={mahalla.email} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900 text-xs text-left" />
                     </div>
                     <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Contact No (Required)</label>
+                      <input name="phone" required defaultValue={mahalla.phone} placeholder="e.g. +94..." className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900 text-xs text-left" />
+                    </div>
+                    <div className="col-span-2">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Global Currency</label>
                       <input name="defaultCurrency" defaultValue={mahalla.defaultCurrency} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-black text-slate-900 text-xs uppercase tracking-widest text-left" />
                     </div>

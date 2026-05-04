@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, UserPlus, HeartHandshake, History, Plus, Loader2, X, Wallet, ArrowUpRight, DollarSign, Calendar, Landmark, CreditCard, Banknote, ShieldCheck, Phone, MessageCircle, Mail, Pencil, Paperclip, FileText, Trash2, Edit3 } from "lucide-react";
 import { searchInternalMembers, createDonor, updateDonor, recordDonation, getCommitteeDonations, getDonors, searchAllDonors, updateDonation, deleteDonation } from "@/app/actions/donors";
 import { getFinancialSettings } from "@/app/actions/committee";
+import { QRCallButton } from "@/components/QRCallButton";
 
 export function DonorDonationManager({ committeeId, terms }: { committeeId: string, terms: any[] }) {
   const [activeTab, setActiveTab] = useState<'donors' | 'donations'>('donations');
@@ -48,13 +49,13 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
         <div className="flex gap-4">
           <button 
             onClick={() => setActiveTab('donations')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'donations' ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-400 hover:bg-slate-100'}`}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'donations' ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-600 hover:bg-slate-100'}`}
           >
             <History className="w-4 h-4" /> Donations
           </button>
           <button 
             onClick={() => setActiveTab('donors')}
-            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'donors' ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-400 hover:bg-slate-100'}`}
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'donors' ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' : 'text-slate-600 hover:bg-slate-100'}`}
           >
             <HeartHandshake className="w-4 h-4" /> Donor Registry
           </button>
@@ -75,7 +76,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                   <Wallet className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No contributions recorded for this term</p>
+                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">No contributions recorded for this term</p>
               </div>
             ) : (
               donations.map((d) => (
@@ -86,7 +87,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                     </div>
                     <div>
                       <h4 className="font-black text-slate-900 uppercase tracking-wide text-sm">{d.donor.name}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
+                      <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2 mt-1">
                         <Calendar className="w-3.5 h-3.5" /> {new Date(d.date).toLocaleDateString()} • {d.paymentMethod}
                       </p>
                     </div>
@@ -94,7 +95,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="font-black text-slate-900 text-lg">{settings.currency} {formatValue(d.amount)}</p>
-                      {d.reference && <p className="text-[8px] font-black text-slate-400 uppercase tracking-tight">Ref: {d.reference}</p>}
+                      {d.reference && <p className="text-[8px] font-black text-slate-600 uppercase tracking-tight">Ref: {d.reference}</p>}
                     </div>
                     
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
@@ -129,7 +130,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                   <HeartHandshake className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">No donors registered in the registry</p>
+                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">No donors registered in the registry</p>
               </div>
             ) : (
               donors.map((d) => (
@@ -144,9 +145,12 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                              <h4 className="font-black text-slate-900 uppercase tracking-wide text-sm">{d.name}</h4>
                              <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg uppercase tracking-[0.1em] ${d.type === 'INTERNAL' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{d.type}</span>
                            </div>
-                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-2">
-                             {d.phone || "No primary contact"}
-                           </p>
+                           <div className="flex items-center gap-2 mt-1">
+                             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                               {d.phone || "No primary contact"}
+                             </p>
+                             {d.phone && <QRCallButton phone={d.phone} name={d.name} />}
+                           </div>
                          </div>
 
                          {/* Contacts Display */}
@@ -156,7 +160,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                                <div key={idx} className="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl flex items-center gap-3 group/contact">
                                   <span className="text-[9px] font-black text-slate-600 uppercase tracking-wider">{c.name}</span>
                                   <div className="flex gap-1.5 opacity-40 group-hover/contact:opacity-100 transition-opacity">
-                                     {c.phone && <Phone className="w-3 h-3 text-slate-400" />}
+                                     {c.phone && <Phone className="w-3 h-3 text-slate-600" />}
                                      {c.whatsapp && <MessageCircle className="w-3 h-3 text-emerald-500" />}
                                      {c.email && <Mail className="w-3 h-3 text-blue-400" />}
                                   </div>
@@ -168,7 +172,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                    </div>
                    <div className="flex items-center gap-4">
                      <div className="text-right">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Lifetime Support</p>
+                       <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Lifetime Support</p>
                        <p className="font-black text-slate-900 text-sm">Active Contributor</p>
                      </div>
                      <button 
@@ -231,10 +235,10 @@ function EditDonationModal({ donation, settings, onClose }: any) {
             </div>
             <div>
               <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Edit Contribution</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Record ID: {donation.id.slice(-6)}</p>
+              <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em]">Record ID: {donation.id.slice(-6)}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 rounded-xl hover:text-rose-600 transition-all border border-slate-100 shadow-sm">
+          <button onClick={onClose} className="p-2 text-slate-600 rounded-xl hover:text-rose-600 transition-all border border-slate-100 shadow-sm">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -242,7 +246,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Donor Entity</p>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Donor Entity</p>
                 <p className="text-xs font-black text-slate-900 uppercase tracking-wide mt-1">{donation.donor.name}</p>
              </div>
              <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${donation.donor.type === 'INTERNAL' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
@@ -252,9 +256,9 @@ function EditDonationModal({ donation, settings, onClose }: any) {
 
           <div className="grid grid-cols-12 gap-4">
              <div className="col-span-12">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
+               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
                <div className="relative">
-                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-base">{settings.currency}</span>
+                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
                  <input 
                    name="amount" 
                    type="number" 
@@ -267,7 +271,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
              </div>
              
              <div className="col-span-6">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Date</label>
+               <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Date</label>
                <input 
                  name="date" 
                  type="date" 
@@ -278,7 +282,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
              </div>
 
              <div className="col-span-6">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Method</label>
+               <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Method</label>
                <select 
                  name="paymentMethod" 
                  defaultValue={donation.paymentMethod}
@@ -294,7 +298,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
              <div className="col-span-12">
                 <div className="flex gap-4">
                    <div className="flex-1">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Reference</label>
+                      <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Reference</label>
                       <input 
                         name="reference" 
                         defaultValue={donation.reference || ""}
@@ -303,7 +307,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
                       />
                    </div>
                    <div className="w-1/2">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Attachment</label>
+                      <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Attachment</label>
                       <div className="relative group cursor-pointer">
                         <input 
                           type="file" 
@@ -311,8 +315,8 @@ function EditDonationModal({ donation, settings, onClose }: any) {
                           className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                         />
                         <div className={`w-full px-4 py-3 border-2 border-dashed rounded-xl flex items-center gap-2 transition-all ${attachment || donation.attachmentUrl ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-slate-300 group-hover:border-blue-400'}`}>
-                           {(attachment || donation.attachmentUrl) ? <FileText className="w-3 h-3 text-emerald-600" /> : <Paperclip className="w-3 h-3 text-slate-400" />}
-                           <span className={`text-[9px] font-black uppercase truncate ${(attachment || donation.attachmentUrl) ? 'text-emerald-700' : 'text-slate-400'}`}>
+                           {(attachment || donation.attachmentUrl) ? <FileText className="w-3 h-3 text-emerald-600" /> : <Paperclip className="w-3 h-3 text-slate-600" />}
+                           <span className={`text-[9px] font-black uppercase truncate ${(attachment || donation.attachmentUrl) ? 'text-emerald-700' : 'text-slate-600'}`}>
                              {attachment ? attachment.name : (donation.attachmentUrl ? donation.attachmentUrl : "Add File")}
                            </span>
                         </div>
@@ -376,10 +380,10 @@ function EditDonorModal({ donor, onClose }: any) {
             </div>
             <div>
               <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Edit Donor Registry</h3>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">Master Record Modification</p>
+              <p className="text-[9px] font-bold text-slate-600 uppercase tracking-[0.2em] mt-0.5">Master Record Modification</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2.5 bg-white text-slate-400 rounded-xl hover:text-rose-600 transition-all border border-slate-100">
+          <button onClick={onClose} className="p-2.5 bg-white text-slate-600 rounded-xl hover:text-rose-600 transition-all border border-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -387,7 +391,7 @@ function EditDonorModal({ donor, onClose }: any) {
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
           <div className="grid grid-cols-2 gap-6">
              <div className="col-span-2">
-               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Donor / Entity Name</label>
+               <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2 px-1">Donor / Entity Name</label>
                <input 
                  value={data.name}
                  onChange={(e) => setData({...data, name: e.target.value})}
@@ -395,7 +399,7 @@ function EditDonorModal({ donor, onClose }: any) {
                />
              </div>
              <div>
-               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Primary Phone</label>
+               <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2 px-1">Primary Phone</label>
                <input 
                  value={data.phone}
                  onChange={(e) => setData({...data, phone: e.target.value})}
@@ -403,7 +407,7 @@ function EditDonorModal({ donor, onClose }: any) {
                />
              </div>
              <div>
-               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Primary Email</label>
+               <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2 px-1">Primary Email</label>
                <input 
                  value={data.email}
                  onChange={(e) => setData({...data, email: e.target.value})}
@@ -416,31 +420,31 @@ function EditDonorModal({ donor, onClose }: any) {
 
           {/* Manage Contacts */}
           <div className="space-y-4">
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Manage Authorized Contacts</label>
+            <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] px-1">Manage Authorized Contacts</label>
             <div className="grid grid-cols-2 gap-3 bg-slate-100/50 p-6 rounded-3xl border border-slate-200 shadow-inner">
                <input 
                  placeholder="Contact Name"
                  value={newContact.name}
                  onChange={(e) => setNewContact({...newContact, name: e.target.value})}
-                 className="col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-400 focus:border-blue-600 transition-all" 
+                 className="col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-600 focus:border-blue-600 transition-all" 
                />
                <input 
                  placeholder="Phone"
                  value={newContact.phone}
                  onChange={(e) => setNewContact({...newContact, phone: e.target.value})}
-                 className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-400 focus:border-blue-600 transition-all" 
+                 className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-600 focus:border-blue-600 transition-all" 
                />
                <input 
                  placeholder="WhatsApp"
                  value={newContact.whatsapp}
                  onChange={(e) => setNewContact({...newContact, whatsapp: e.target.value})}
-                 className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-400 focus:border-blue-600 transition-all" 
+                 className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-600 focus:border-blue-600 transition-all" 
                />
                <input 
                  placeholder="Email"
                  value={newContact.email}
                  onChange={(e) => setNewContact({...newContact, email: e.target.value})}
-                 className="col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-400 focus:border-blue-600 transition-all" 
+                 className="col-span-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-600 focus:border-blue-600 transition-all" 
                />
                <button 
                  type="button"
@@ -461,7 +465,7 @@ function EditDonorModal({ donor, onClose }: any) {
                        <div>
                           <p className="text-[11px] font-black text-slate-900 uppercase tracking-wide">{c.name}</p>
                           <div className="flex gap-3 mt-1">
-                             {c.phone && <span className="text-[8px] font-bold text-slate-400 uppercase flex items-center gap-1"><Phone className="w-2.5 h-2.5" /> {c.phone}</span>}
+                             {c.phone && <span className="text-[8px] font-bold text-slate-600 uppercase flex items-center gap-1"><Phone className="w-2.5 h-2.5" /> {c.phone}</span>}
                              {c.whatsapp && <span className="text-[8px] font-black text-emerald-500 uppercase flex items-center gap-1"><MessageCircle className="w-2.5 h-2.5" /> {c.whatsapp}</span>}
                           </div>
                        </div>
@@ -598,10 +602,10 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
             </div>
             <div>
               <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Record Contribution</h3>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">Financial Entry</p>
+              <p className="text-[8px] font-bold text-slate-600 uppercase tracking-[0.2em]">Financial Entry</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 rounded-xl hover:text-rose-600 transition-all border border-slate-100 shadow-sm">
+          <button onClick={onClose} className="p-2 text-slate-600 rounded-xl hover:text-rose-600 transition-all border border-slate-100 shadow-sm">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -609,15 +613,15 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
           
           <div className="space-y-3">
-            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Donor Registry</label>
+            <label className="block text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] px-1">Donor Registry</label>
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-blue-600 transition-colors" />
               <input 
                 type="text"
                 placeholder="Search Name / Phone..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setSelectedDonor(null); setShowRegistration(false); }}
-                className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl outline-none focus:border-blue-600 transition-all font-bold text-xs text-slate-900 placeholder:text-slate-400"
+                className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl outline-none focus:border-blue-600 transition-all font-bold text-xs text-slate-900 placeholder:text-slate-500"
               />
             </div>
 
@@ -658,9 +662,9 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
 
           {showRegistration && (
             <div className="p-5 bg-slate-50 rounded-3xl border-2 border-slate-200 space-y-4 shadow-inner">
-               <div className="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
-                  <button type="button" onClick={() => setRegType('INTERNAL')} className={`flex-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${regType === 'INTERNAL' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Member</button>
-                  <button type="button" onClick={() => setRegType('EXTERNAL')} className={`flex-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${regType === 'EXTERNAL' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>External</button>
+               <div className="flex gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                  <button type="button" onClick={() => setRegType('INTERNAL')} className={`flex-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${regType === 'INTERNAL' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-700 hover:bg-slate-50'}`}>Member</button>
+                  <button type="button" onClick={() => setRegType('EXTERNAL')} className={`flex-1 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${regType === 'EXTERNAL' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-700 hover:bg-slate-50'}`}>External</button>
                </div>
                
                {regType === 'INTERNAL' ? (
@@ -669,7 +673,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                       placeholder="Search Member..."
                       value={memberQuery}
                       onChange={(e) => setMemberQuery(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl outline-none font-bold text-[11px] text-slate-900"
+                      className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-500"
                     />
                     <div className="max-h-20 overflow-y-auto space-y-1">
                        {memberResults.map(m => (
@@ -681,9 +685,9 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                  </div>
                ) : (
                  <div className="grid grid-cols-2 gap-2">
-                    <input value={externalData.name} onChange={e => setExternalData({...externalData, name: e.target.value})} placeholder="Org Name" className="col-span-2 px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase" />
-                    <input value={externalData.phone} onChange={e => setExternalData({...externalData, phone: e.target.value})} placeholder="Phone" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px]" />
-                    <input value={externalData.email} onChange={e => setExternalData({...externalData, email: e.target.value})} placeholder="Email" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px]" />
+                    <input value={externalData.name} onChange={e => setExternalData({...externalData, name: e.target.value})} placeholder="Org Name" className="col-span-2 px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase placeholder:text-slate-500" />
+                    <input value={externalData.phone} onChange={e => setExternalData({...externalData, phone: e.target.value})} placeholder="Phone" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] placeholder:text-slate-500" />
+                    <input value={externalData.email} onChange={e => setExternalData({...externalData, email: e.target.value})} placeholder="Email" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] placeholder:text-slate-500" />
                  </div>
                )}
             </div>
@@ -693,20 +697,20 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
 
           <div className="grid grid-cols-12 gap-3">
              <div className="col-span-12 lg:col-span-12">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
+               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
                <div className="relative">
-                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-base">{settings.currency}</span>
+                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
                  <input name="amount" type="number" step="0.01" required className="w-full pl-16 pr-5 py-3.5 bg-white border-2 border-slate-300 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-xl" placeholder="0.00" />
                </div>
              </div>
              
              <div className="col-span-6">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Date</label>
+               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Date</label>
                <input name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-[11px]" />
              </div>
 
              <div className="col-span-6">
-               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Method</label>
+               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Method</label>
                <select name="paymentMethod" className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase cursor-pointer">
                  <option value="CASH">CASH</option>
                  <option value="BANK">BANK</option>
@@ -718,11 +722,11 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
              <div className="col-span-12">
                 <div className="flex gap-3">
                    <div className="flex-1">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Reference (Ref No)</label>
-                      <input name="reference" placeholder="Ref No / Cheque No" className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-[11px] placeholder:text-slate-300" />
+                      <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Reference (Ref No)</label>
+                      <input name="reference" placeholder="Ref No / Cheque No" className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-[11px] placeholder:text-slate-500" />
                    </div>
                    <div className="w-1/2">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Attachment</label>
+                      <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Attachment</label>
                       <div className="relative group cursor-pointer">
                         <input 
                           type="file" 
@@ -730,8 +734,8 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                           className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                         />
                         <div className={`w-full px-4 py-2.5 border-2 border-dashed rounded-xl flex items-center gap-2 transition-all ${attachment ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-slate-300 group-hover:border-blue-400'}`}>
-                           {attachment ? <FileText className="w-3 h-3 text-emerald-600" /> : <Paperclip className="w-3 h-3 text-slate-400" />}
-                           <span className={`text-[9px] font-black uppercase truncate ${attachment ? 'text-emerald-700' : 'text-slate-400'}`}>
+                           {attachment ? <FileText className="w-3 h-3 text-emerald-600" /> : <Paperclip className="w-3 h-3 text-slate-600" />}
+                           <span className={`text-[9px] font-black uppercase truncate ${attachment ? 'text-emerald-700' : 'text-slate-600'}`}>
                              {attachment ? attachment.name : "Add File"}
                            </span>
                         </div>

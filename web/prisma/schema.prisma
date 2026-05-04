@@ -29,9 +29,11 @@ model Committee {
 
   status        Status            @default(ACTIVE)
   mainMahallaId String
+  subMahallaId  String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   mainMahalla   MainMahalla       @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  subMahalla    SubMahalla?       @relation(fields: [subMahallaId], references: [id], onDelete: Cascade)
   terms         CommitteeTerm[]
   users         User[]
   donations     Donation[]
@@ -124,6 +126,7 @@ model MainMahalla {
   province                String?
   district                String?
   area                    String?
+  phone                   String?
   defaultCurrency         String                   @default("LKR")
   activatedDate           DateTime?
   deactivatedDate         DateTime?
@@ -176,6 +179,7 @@ model SubMahalla {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   familyCards    FamilyCard[]
+  committees     Committee[]
   mainMahalla    MainMahalla  @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
   users          User[]
 }
@@ -217,6 +221,7 @@ model FamilyMember {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   email            String?           @unique
+  phone            String?
   committeeMembers CommitteeMember[]
   familyCard       FamilyCard        @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
   donors           Donor[]
@@ -376,6 +381,7 @@ enum FundRequestStatus {
   INQUIRY_SCHEDULED
   APPROVED
   REJECTED
+  ON_HOLD
   DISBURSED
 }
 
@@ -429,6 +435,9 @@ model FundRequest {
   disbursementMethod  DisbursementMethod?
   chequeNumber        String?
   bankReference       String?
+  handedOverDate      DateTime?
+  assignedMembers     String?            // Assigned committee members for follow-up
+  disbursementAttachments String[]       @default([])
   disbursedAt         DateTime?
   receiptUrl          String?
 
@@ -482,7 +491,8 @@ model FundQuotation {
   vendor          String
   amount          Float
   description     String?
-  fileUrl         String
+  attachments     String[]
+  isGranted       Boolean      @default(false)
 
   createdAt       DateTime     @default(now())
 }

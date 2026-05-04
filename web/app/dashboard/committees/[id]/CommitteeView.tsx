@@ -6,6 +6,7 @@ import { CommitteeMemberActions } from "./CommitteeMemberActions";
 import { TermManager } from "./TermManager";
 import { DonorDonationManager } from "./DonorDonationManager";
 import { FundDistributionManager } from "./FundDistributionManager";
+import { QRCallButton } from "@/components/QRCallButton";
 
 export function CommitteeView({ committee, currentTerm, members, allMembers, stats, settings }: any) {
   const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'distributions' | 'members'>('overview');
@@ -21,49 +22,53 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Bento Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-8 rounded-[36px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-50 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-             <Landmark className="w-20 h-20 text-slate-600" />
-          </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Term Opening Balance</p>
-          <h4 className="text-2xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.openingBalance)}</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-50 transition-all duration-500">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Term Opening Balance</p>
+          <h4 className="text-xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.openingBalance)}</h4>
           <div className="mt-4 flex items-center gap-2 text-slate-400">
-             <Info className="w-4 h-4" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Initial Float</span>
+             <Landmark className="w-3.5 h-3.5" />
+             <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Initial Float</span>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[36px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-50 transition-all duration-500">
-          <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-             <Wallet className="w-20 h-20 text-blue-600" />
-          </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Total Collections</p>
-          <h4 className="text-2xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.totalCollections)}</h4>
+        <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-50 transition-all duration-500">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Total Collections</p>
+          <h4 className="text-xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.totalCollections)}</h4>
           <div className="mt-4 flex items-center gap-2 text-emerald-600">
-             <TrendingUp className="w-4 h-4" />
-             <span className="text-[10px] font-black uppercase tracking-widest">Active Inflow</span>
+             <TrendingUp className="w-3.5 h-3.5" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Active Inflow</span>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[36px] border-2 border-emerald-100 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-emerald-50 transition-all duration-500 bg-gradient-to-br from-white to-emerald-50/20">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-             <Banknote className="w-20 h-20 text-emerald-600" />
-          </div>
-          <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.2em] mb-3">Total Amount (Net)</p>
-          <h4 className="text-3xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.totalAmount)}</h4>
-          <div className="mt-4 flex items-center gap-2 text-emerald-600">
-             <ShieldCheck className="w-4 h-4" />
-             <span className="text-[10px] font-black uppercase tracking-widest">Opening Balance & Collection</span>
+        <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-blue-50 transition-all duration-500">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Total Amount (Net)</p>
+          <h4 className="text-xl font-black text-slate-900 leading-none">{settings.currency} {formatValue(stats.totalAmount)}</h4>
+          <div className="mt-4 flex items-center gap-2 text-blue-600">
+             <Banknote className="w-3.5 h-3.5" />
+             <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Opening + Collections</span>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-[36px] border border-slate-200 shadow-sm group hover:shadow-xl transition-all duration-500">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Donor Base</p>
-          <h4 className="text-2xl font-black text-slate-900 leading-none">{stats.donorCount}</h4>
-          <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-             <HeartHandshake className="w-4 h-4 text-rose-500" /> Contributors
-          </p>
+        <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-xl hover:shadow-rose-50 transition-all duration-500">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Total Disbursed</p>
+          <h4 className="text-xl font-black text-rose-600 leading-none">{settings.currency} {formatValue(stats.totalDisbursed)}</h4>
+          <div className="mt-4 flex items-center gap-2 text-rose-500">
+             <ArrowUpRight className="w-3.5 h-3.5" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Fund Usage</span>
+          </div>
+        </div>
+
+        <div className="bg-emerald-600 p-6 rounded-[32px] shadow-lg shadow-emerald-100 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+             <ShieldCheck className="w-16 h-16 text-white" />
+          </div>
+          <p className="text-[9px] font-black text-emerald-100 uppercase tracking-[0.2em] mb-3">Net Balance</p>
+          <h4 className="text-2xl font-black text-white leading-none">{settings.currency} {formatValue(stats.netBalance)}</h4>
+          <div className="mt-4 flex items-center gap-2 text-emerald-100">
+             <Wallet className="w-3.5 h-3.5" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Available Funds</span>
+          </div>
         </div>
       </div>
 
@@ -142,6 +147,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
                                <div className="flex items-center gap-3">
                                  <h4 className="font-black text-slate-900 uppercase tracking-wide text-sm">{m.familyMember.fullName}</h4>
                                  <span className="bg-slate-900 text-white text-[8px] font-black px-2 py-0.5 rounded-lg uppercase tracking-[0.1em]">{m.role}</span>
+                                 <QRCallButton phone={m.familyMember.phone} name={m.familyMember.fullName} />
                                </div>
                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                  <MapPin className="w-3.5 h-3.5" /> {m.familyMember.familyCard.subMahalla.name}

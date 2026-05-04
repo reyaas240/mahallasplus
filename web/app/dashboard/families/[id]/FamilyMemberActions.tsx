@@ -77,6 +77,10 @@ export function FamilyMemberActions({ member, occupations }: { member: any, occu
                   <input required name="fullName" type="text" defaultValue={member.fullName} className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm" />
                 </div>
                 <div className="col-span-1">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Phone</label>
+                  <input name="phone" type="text" defaultValue={member.phone || ""} className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm" />
+                </div>
+                <div className="col-span-1">
                   <label className="block text-sm font-bold text-slate-700 mb-1.5">Email</label>
                   <input name="email" type="email" defaultValue={member.email || ""} className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm" />
                 </div>

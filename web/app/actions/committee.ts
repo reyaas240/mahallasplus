@@ -11,7 +11,7 @@ import path from "path";
 export async function createCommittee(formData: FormData) {
   console.log("Create Committee Action triggered");
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -61,6 +61,7 @@ export async function createCommittee(formData: FormData) {
         branch,
         defaultCurrency,
         mainMahallaId: session.user.mainMahallaId as string,
+        subMahallaId: session.user.role === "SUB_ADMIN" ? session.user.subMahallaId : (formData.get("subMahallaId") as string || null),
       },
     });
     revalidatePath("/dashboard/committees");
@@ -74,7 +75,7 @@ export async function createCommittee(formData: FormData) {
 export async function updateCommittee(id: string, formData: FormData) {
   console.log("Update Committee Action triggered for ID:", id);
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -138,7 +139,7 @@ export async function updateCommittee(id: string, formData: FormData) {
 
 export async function addCommitteeMember(committeeTermId: string, familyMemberId: string, role: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -510,7 +511,7 @@ export async function getCommitteeStats(committeeId: string, termId: string) {
   const session = await getServerSession(authOptions);
   if (!session) return { totalCollections: 0, donorCount: 0, goalProgress: 0 };
 
-  const [donations, balances, committee] = await Promise.all([
+  const [donations, balances, committee, disbursement] = await Promise.all([
     prisma.donation.aggregate({
       where: { committeeId, committeeTermId: termId },
       _sum: { amount: true },
@@ -523,12 +524,17 @@ export async function getCommitteeStats(committeeId: string, termId: string) {
     prisma.committee.findUnique({
       where: { id: committeeId },
       select: { description: true }
+    }),
+    prisma.fundRequest.aggregate({
+      where: { committeeTermId: termId, status: "DISBURSED" },
+      _sum: { grantedAmount: true }
     })
   ]);
 
   const totalOpening = balances._sum.amount || 0;
   const totalDonations = donations._sum.amount || 0;
   const totalAmount = totalOpening + totalDonations;
+  const totalDisbursed = disbursement._sum.grantedAmount || 0;
 
   // Extract numeric goal from description if possible (simple heuristic)
   const goalMatch = committee?.description?.match(/(\d+[\d,]*)/);
@@ -538,6 +544,8 @@ export async function getCommitteeStats(committeeId: string, termId: string) {
     openingBalance: totalOpening,
     totalCollections: totalDonations,
     totalAmount: totalAmount,
+    totalDisbursed: totalDisbursed,
+    netBalance: totalAmount - totalDisbursed,
     donorCount: donations._count.donorId,
     goalAmount: goalAmount,
     goalProgress: Math.min(Math.round((totalDonations / goalAmount) * 100), 100)
