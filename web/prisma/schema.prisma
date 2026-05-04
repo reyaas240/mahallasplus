@@ -35,6 +35,7 @@ model Committee {
   terms         CommitteeTerm[]
   users         User[]
   donations     Donation[]
+  fundRequests  FundRequest[]
 }
 
 enum FinancialStatus {
@@ -55,6 +56,7 @@ model CommitteeTerm {
   members             CommitteeMember[]
   balances            CommitteeTermBalance[]
   donations           Donation[]
+  fundRequests        FundRequest[]
   
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -218,6 +220,7 @@ model FamilyMember {
   committeeMembers CommitteeMember[]
   familyCard       FamilyCard        @relation(fields: [familyCardId], references: [id], onDelete: Cascade)
   donors           Donor[]
+  fundRequests     FundRequest[]
 }
 
 model MasterCountry {
@@ -361,4 +364,135 @@ enum LivingType {
   RENTED
   MONTHLY_SUBSCRIPTION_MAIN
   MONTHLY_SUBSCRIPTION_SUB
+}
+
+// ───────────────── Fund Distribution ─────────────────
+
+enum FundRequestStatus {
+  RECEIVED
+  UNDER_VERIFICATION
+  UNDER_DISCUSSION
+  UNDER_INVESTIGATION
+  INQUIRY_SCHEDULED
+  APPROVED
+  REJECTED
+  DISBURSED
+}
+
+enum BeneficiaryType {
+  INTERNAL
+  EXTERNAL
+}
+
+enum DisbursementMethod {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+}
+
+model FundRequest {
+  id                String             @id @default(cuid())
+
+  // Context
+  committeeId       String
+  committee         Committee          @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  committeeTermId   String
+  committeeTerm     CommitteeTerm      @relation(fields: [committeeTermId], references: [id], onDelete: Cascade)
+  projectName       String?
+
+  // Beneficiary
+  beneficiaryType   BeneficiaryType
+  familyMemberId    String?
+  familyMember      FamilyMember?      @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
+  externalName      String?
+  externalPhone     String?
+  externalAddress   String?
+
+  // Request Details
+  purpose           String
+  description       String?
+  requestedAmount   Float?
+  letterRefNo       String?
+  attachments       String[]           @default([])
+
+  // Verification (Internal only)
+  verified          Boolean            @default(false)
+  verifiedAt        DateTime?
+  verifiedBy        String?
+
+  // Decision
+  grantedAmount     Float?
+  status            FundRequestStatus  @default(RECEIVED)
+  decisionNotes     String?
+
+  // Disbursement
+  disbursementMethod  DisbursementMethod?
+  chequeNumber        String?
+  bankReference       String?
+  disbursedAt         DateTime?
+  receiptUrl          String?
+
+  // Children
+  investigations    Investigation[]
+  appointments      FundAppointment[]
+  quotations        FundQuotation[]
+  events            FundRequestEvent[]
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([committeeId])
+  @@index([committeeTermId])
+}
+
+model Investigation {
+  id              String       @id @default(cuid())
+  fundRequestId   String
+  fundRequest     FundRequest  @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+
+  investigators   String
+  visitDate       DateTime
+  findings        String
+  attachmentUrl   String?
+
+  createdAt       DateTime     @default(now())
+}
+
+model FundAppointment {
+  id              String       @id @default(cuid())
+  fundRequestId   String
+  fundRequest     FundRequest  @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+
+  scheduledDate   DateTime
+  location        String?
+  purpose         String?
+  outcome         String?
+  attended        Boolean      @default(false)
+
+  createdAt       DateTime     @default(now())
+}
+
+model FundQuotation {
+  id              String       @id @default(cuid())
+  fundRequestId   String
+  fundRequest     FundRequest  @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+
+  vendor          String
+  amount          Float
+  description     String?
+  fileUrl         String
+
+  createdAt       DateTime     @default(now())
+}
+
+model FundRequestEvent {
+  id              String       @id @default(cuid())
+  fundRequestId   String
+  fundRequest     FundRequest  @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+
+  action          String
+  performedBy     String
+  note            String?
+
+  createdAt       DateTime     @default(now())
 }

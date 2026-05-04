@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
-import { Users, Shield, Calendar, MapPin, UserPlus, ShieldCheck, History, Wallet, HeartHandshake, ArrowUpRight, Target, TrendingUp, Info, Landmark, Banknote } from "lucide-react";
+import { Users, Shield, Calendar, MapPin, UserPlus, ShieldCheck, History, Wallet, HeartHandshake, ArrowUpRight, ArrowDownRight, Target, TrendingUp, Info, Landmark, Banknote } from "lucide-react";
 import { MemberSelector } from "./MemberSelector";
 import { CommitteeMemberActions } from "./CommitteeMemberActions";
 import { TermManager } from "./TermManager";
 import { DonorDonationManager } from "./DonorDonationManager";
+import { FundDistributionManager } from "./FundDistributionManager";
 
 export function CommitteeView({ committee, currentTerm, members, allMembers, stats, settings }: any) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'members'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'distributions' | 'members'>('overview');
 
   const formatValue = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -72,7 +73,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
           
           {/* Custom Tabs */}
           <div className="flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur rounded-[24px] w-fit border border-slate-200/50">
-            {['overview', 'financials', 'members'].map((tab) => (
+            {['overview', 'financials', 'distributions', 'members'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -112,6 +113,12 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
             {activeTab === 'financials' && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                  <DonorDonationManager committeeId={committee.id} terms={committee.terms} />
+              </div>
+            )}
+
+            {activeTab === 'distributions' && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                 <FundDistributionManager committeeId={committee.id} terms={committee.terms} />
               </div>
             )}
 

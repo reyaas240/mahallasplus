@@ -412,7 +412,7 @@ export async function getFinancialSettings() {
 
   const mahallaId = session.user.mainMahallaId;
   const mahalla = await prisma.mainMahalla.findUnique({
-    where: { id: mahallaId },
+    where: { id: mahallaId ?? undefined },
     select: { country: true, defaultCurrency: true }
   });
 
