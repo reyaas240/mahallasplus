@@ -450,10 +450,12 @@ model Investigation {
   fundRequestId   String
   fundRequest     FundRequest  @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
 
-  investigators   String
-  visitDate       DateTime
+  investigators   String       // Assigned group
+  visitDate       DateTime     // Planned/Assigned date
   findings        String
-  attachmentUrl   String?
+  actualVisitDate DateTime?    // When it actually happened
+  attendedMembers String?      // Who actually went
+  attachments     String[]     @default([])
 
   createdAt       DateTime     @default(now())
 }

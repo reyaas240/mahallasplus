@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Loader2, ShieldCheck, Users, Calendar, FileText, Banknote, CheckCircle2, XCircle, Clock, Plus, Paperclip, User, Building2 } from "lucide-react";
-import { getFundRequestDetail, verifyBeneficiary, addInvestigation, scheduleAppointment, updateAppointmentOutcome, addQuotation, approveFundRequest, rejectFundRequest, disburseFunds } from "@/app/actions/fundRequests";
+import { X, Loader2, ShieldCheck, Users, Calendar, FileText, Banknote, CheckCircle2, XCircle, Clock, Plus, Paperclip, User, Building2, ChevronDown, Search, Trash2, Edit3, Image as ImageIcon } from "lucide-react";
+import { getFundRequestDetail, verifyBeneficiary, addInvestigation, updateInvestigation, deleteInvestigation, scheduleAppointment, updateAppointmentOutcome, addQuotation, approveFundRequest, rejectFundRequest, disburseFunds } from "@/app/actions/fundRequests";
+import { uploadInvestigationImages } from "@/app/actions/upload";
+import { resizeImage } from "@/lib/imageResize";
 
 export function FundRequestDetailModal({ requestId, settings, members, onClose }: any) {
   const [req, setReq] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("overview");
+  const [isEditing, setIsEditing] = useState(false);
 
   const load = async () => { setLoading(true); const d = await getFundRequestDetail(requestId); setReq(d); setLoading(false); };
   useEffect(() => { load(); }, [requestId]);
@@ -32,7 +35,12 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{req.purpose} {req.projectName ? `• ${req.projectName}` : ""}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 rounded-xl hover:text-rose-600 transition-all border border-slate-100"><X className="w-5 h-5" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setIsEditing(true)} className="p-2 text-slate-400 rounded-xl hover:text-blue-600 transition-all border border-slate-100 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3">
+              <Edit3 className="w-4 h-4" /> Edit
+            </button>
+            <button onClick={onClose} className="p-2 text-slate-400 rounded-xl hover:text-rose-600 transition-all border border-slate-100"><X className="w-5 h-5" /></button>
+          </div>
         </div>
 
         {/* Two-column body */}
@@ -86,6 +94,118 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
           </div>
         </div>
       </div>
+
+      {isEditing && <EditRequestModal req={req} settings={settings} onRefresh={load} onClose={() => setIsEditing(false)} />}
+    </div>
+  );
+}
+
+function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const fd = new FormData(e.currentTarget);
+    const payload = {
+      purpose: fd.get("purpose"),
+      projectName: fd.get("projectName"),
+      description: fd.get("description"),
+      requestedAmount: fd.get("requestedAmount"),
+      externalName: fd.get("externalName"),
+      externalPhone: fd.get("externalPhone"),
+      externalAddress: fd.get("externalAddress"),
+    };
+
+    const { updateFundRequest } = await import("@/app/actions/fundRequests");
+    const res = await updateFundRequest(req.id, payload);
+    if (res.success) {
+      await onRefresh();
+      onClose();
+    } else {
+      alert(res.error);
+    }
+    setSubmitting(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this fund request? This cannot be undone.")) return;
+    setDeleting(true);
+    const { deleteFundRequest } = await import("@/app/actions/fundRequests");
+    const res = await deleteFundRequest(req.id);
+    if (res.success) {
+      window.location.reload(); // Hard refresh to clear modal and update list
+    } else {
+      alert(res.error);
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+      <div className="bg-white rounded-[40px] w-[600px] max-w-full shadow-2xl p-8 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Edit Fund Request</h2>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all"><X className="w-5 h-5 text-slate-400" /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Purpose / Title</p>
+              <input name="purpose" required defaultValue={req.purpose} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Project Name (Optional)</p>
+              <input name="projectName" defaultValue={req.projectName} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Description</p>
+            <textarea name="description" rows={3} defaultValue={req.description} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all resize-none" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Requested Amount</p>
+              <input name="requestedAmount" type="number" step="0.01" defaultValue={req.requestedAmount} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+            </div>
+            {req.beneficiaryType === "EXTERNAL" && (
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Name</p>
+                <input name="externalName" defaultValue={req.externalName} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              </div>
+            )}
+          </div>
+
+          {req.beneficiaryType === "EXTERNAL" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Phone</p>
+                <input name="externalPhone" defaultValue={req.externalPhone} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Address</p>
+                <input name="externalAddress" defaultValue={req.externalAddress} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button type="button" onClick={handleDelete} disabled={deleting} className="px-6 py-4 bg-rose-50 text-rose-600 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-rose-100 transition-all flex items-center gap-2">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Delete Request
+            </button>
+            <div className="flex-1 flex gap-3">
+              <button type="button" onClick={onClose} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+              <button type="submit" disabled={submitting} className="flex-[2] py-4 bg-blue-600 text-white rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all disabled:opacity-50">
+                {submitting ? "Updating..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
@@ -134,77 +254,317 @@ function InfoCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+/* ──── Reusable Member Select ──── */
+function MemberSelect({ label, members, selected, onToggle, placeholder = "Select members..." }: any) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = (members || []).filter((m: any) => {
+    const name = m.familyMember?.fullName || "Member";
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
+
+  return (
+    <div className="relative">
+      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{label}</p>
+      <div 
+        onClick={() => setOpen(!open)}
+        className="w-full min-h-[48px] px-4 py-2 bg-white border-2 border-slate-300 rounded-xl cursor-pointer flex flex-wrap gap-2 items-center justify-between transition-all hover:border-purple-400 shadow-sm"
+      >
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {selected.length === 0 && <span className="text-slate-400 font-bold text-xs px-1">{placeholder}</span>}
+          {selected.map((name: string) => (
+            <div key={name} className="bg-slate-900 text-white px-2 py-1 rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 shadow-sm">
+              {name}
+              <X onClick={(e) => { e.stopPropagation(); onToggle(name); }} className="w-2.5 h-2.5 cursor-pointer hover:text-white/70" />
+            </div>
+          ))}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </div>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute z-[100] left-0 right-0 mt-2 bg-white border-2 border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-2 border-b border-slate-100 bg-slate-50/50">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input autoFocus placeholder="Search..." className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-900 outline-none focus:border-purple-400"
+                  value={search} onChange={(e) => setSearch(e.target.value)} onClick={(e) => e.stopPropagation()} />
+              </div>
+            </div>
+            <div className="max-h-[160px] overflow-y-auto custom-scrollbar">
+              {filtered.map((m: any) => {
+                const name = m.familyMember?.fullName || "Member";
+                const isSelected = selected.includes(name);
+                return (
+                  <button key={m.id} type="button" onClick={(e) => { e.stopPropagation(); onToggle(name); }}
+                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition-colors ${isSelected ? "bg-purple-50/40" : ""}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black ${isSelected ? "bg-purple-600 text-white" : "bg-slate-100 text-slate-500"}`}>{name.charAt(0)}</div>
+                      <span className={`text-[10px] font-black uppercase tracking-tight ${isSelected ? "text-purple-700" : "text-slate-600"}`}>{name}</span>
+                    </div>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ──── Investigation ──── */
 function InvestigationSection({ req, members, onRefresh }: any) {
   const [show, setShow] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  
+  const [investigators, setInvestigators] = useState<string[]>([]);
+  const [attended, setAttended] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const [previewImages, setPreviewImages] = useState<File[]>([]);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
-  const toggleMember = (name: string) => {
-    setSelectedMembers(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
+  const toggleInv = (name: string) => setInvestigators(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
+  const toggleAtt = (name: string) => setAttended(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
+
+  const handleEdit = (inv: any) => {
+    setEditId(inv.id);
+    setInvestigators(inv.investigators.split(", "));
+    setAttended(inv.attendedMembers ? inv.attendedMembers.split(", ") : []);
+    setAttachments(inv.attachments || []);
+    setPreviewImages([]);
+    setShow(true);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const resizedFiles = await Promise.all(files.map(f => resizeImage(f, 1)));
+      setPreviewImages(prev => [...prev, ...resizedFiles]);
+    } catch (err) {
+      console.error("Resize error:", err);
+      alert("Failed to process some images");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (selectedMembers.length === 0) { alert("Select at least one investigator"); return; }
+    const form = e.currentTarget;
+    if (investigators.length === 0) { alert("Select at least one investigator"); return; }
     setSubmitting(true);
-    const fd = new FormData(e.currentTarget);
-    await addInvestigation({ fundRequestId: req.id, investigators: selectedMembers.join(", "), visitDate: fd.get("visitDate"), findings: fd.get("findings") });
-    await onRefresh(); setSubmitting(false); setShow(false); setSelectedMembers([]);
+
+    try {
+      // 1. Upload new images if any
+      let finalAttachments = [...attachments];
+      if (previewImages.length > 0) {
+        const fd = new FormData();
+        previewImages.forEach(f => fd.append("images", f));
+        const res = await uploadInvestigationImages(fd);
+        if (res.success) finalAttachments = [...finalAttachments, ...res.paths];
+      }
+
+      const fd = new FormData(form);
+      const payload = {
+        fundRequestId: req.id,
+        investigators: investigators.join(", "),
+        visitDate: fd.get("visitDate")?.toString(),
+        findings: fd.get("findings")?.toString(),
+        actualVisitDate: fd.get("actualVisitDate")?.toString() || null,
+        attendedMembers: attended.length > 0 ? attended.join(", ") : null,
+        attachments: finalAttachments,
+      };
+
+      if (editId) await updateInvestigation(editId, payload);
+      else await addInvestigation(payload);
+
+      await onRefresh();
+      setSubmitting(false); setShow(false); setEditId(null); setInvestigators([]); setAttended([]); setAttachments([]); setPreviewImages([]);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save investigation");
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Delete this investigation record?")) {
+      await deleteInvestigation(id);
+      await onRefresh();
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Field Investigations ({req.investigations.length})</p>
-        <button onClick={() => setShow(!show)} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-700 flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button>
+        <button onClick={() => { setShow(!show); setEditId(null); setInvestigators([]); setAttended([]); setAttachments([]); setPreviewImages([]); }} 
+          className="px-4 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-700 flex items-center gap-1">
+          <Plus className="w-3 h-3" /> Add Investigation
+        </button>
       </div>
+
       {show && (
-        <form onSubmit={handleAdd} className="p-4 bg-purple-50 border-2 border-purple-200 rounded-2xl space-y-3">
+        <form onSubmit={handleAdd} className="p-6 bg-purple-50 border-2 border-purple-200 rounded-[32px] space-y-4 animate-in slide-in-from-top-4 duration-300">
+          <div className="grid grid-cols-2 gap-4">
+            <MemberSelect label="Assigned Investigators" members={members} selected={investigators} onToggle={toggleInv} />
+            <MemberSelect label="Actually Attended" members={members} selected={attended} onToggle={toggleAtt} placeholder="Optional..." />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Planned Date</p>
+              <input name="visitDate" type="date" required 
+                defaultValue={editId ? (new Date(req.investigations.find((i:any)=>i.id===editId)?.visitDate)).toISOString().split('T')[0] : ""} 
+                className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs shadow-sm" />
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Actual Visit Date</p>
+              <input name="actualVisitDate" type="date" 
+                defaultValue={(() => {
+                  const inv = req.investigations.find((i:any)=>i.id===editId);
+                  return inv?.actualVisitDate ? new Date(inv.actualVisitDate).toISOString().split('T')[0] : "";
+                })()}
+                className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs shadow-sm" />
+            </div>
+          </div>
+
           <div>
-            <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-2">Select Investigators</p>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Findings & Report</p>
+            <textarea name="findings" required placeholder="Describe the findings..." rows={3} 
+              defaultValue={editId ? req.investigations.find((i:any)=>i.id===editId)?.findings : ""}
+              className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs resize-none shadow-sm" />
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-3">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Capture / Upload Images</p>
             <div className="flex flex-wrap gap-2">
-              {(members || []).map((m: any) => {
-                const name = m.familyMember?.fullName || "Member";
-                const isSelected = selectedMembers.includes(name);
-                return (
-                  <button key={m.id} type="button" onClick={() => toggleMember(name)}
-                    className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border-2 ${
-                      isSelected ? "bg-purple-600 text-white border-purple-600 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-purple-400"
-                    }`}>
-                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center text-[9px] font-black ${
-                      isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                    }`}>{name.charAt(0)}</div>
-                    {name}
-                    {isSelected && <CheckCircle2 className="w-3 h-3" />}
+              {/* Existing Images */}
+              {attachments.map((path, i) => (
+                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden group border-2 border-white shadow-sm">
+                  <img src={path} className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} 
+                    className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X className="w-3 h-3" />
                   </button>
+                </div>
+              ))}
+              
+              {/* Previews of new files */}
+              {previewImages.map((file, i) => {
+                const isHeic = file.name.toLowerCase().endsWith(".heic") || file.type === "image/heic";
+                return (
+                  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden group border-2 border-purple-400 shadow-sm animate-in zoom-in-95 bg-slate-50">
+                    {isHeic ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-purple-600">
+                        <ImageIcon className="w-6 h-6 mb-1" />
+                        <span className="text-[8px] font-black uppercase">HEIC File</span>
+                      </div>
+                    ) : (
+                      <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-purple-600/20" />
+                    <button type="button" onClick={() => setPreviewImages(prev => prev.filter((_, idx) => idx !== i))} 
+                      className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 );
               })}
+
+              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all">
+                <input type="file" multiple accept="image/*,.heic,.HEIC" className="hidden" onChange={handleFileChange} disabled={uploading} />
+                {uploading ? <Loader2 className="w-5 h-5 text-purple-600 animate-spin" /> : <ImageIcon className="w-5 h-5 text-slate-400" />}
+                <span className="text-[8px] font-black text-slate-400 uppercase mt-1">Add Image</span>
+              </label>
             </div>
-            {selectedMembers.length > 0 && (
-              <p className="text-[8px] font-bold text-purple-500 mt-2 uppercase tracking-widest">{selectedMembers.length} selected: {selectedMembers.join(", ")}</p>
-            )}
           </div>
-          <input name="visitDate" type="date" required className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs" />
-          <textarea name="findings" required placeholder="Findings & report..." rows={3} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs resize-none" />
-          <button disabled={submitting || selectedMembers.length === 0} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50">
-            {submitting ? "Saving..." : "Save Investigation"}
-          </button>
+
+          <div className="flex gap-2">
+            <button type="button" onClick={() => { setShow(false); setEditId(null); }} className="flex-1 py-3 bg-slate-200 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-300 transition-all">Cancel</button>
+            <button disabled={submitting || investigators.length === 0 || uploading} className="flex-[2] py-3 bg-purple-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 shadow-lg shadow-purple-200 transition-all active:scale-[0.98]">
+              {submitting ? "Processing..." : editId ? "Update Investigation" : "Save Investigation"}
+            </button>
+          </div>
         </form>
       )}
+
       {req.investigations.map((inv: any) => (
-        <div key={inv.id} className="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+        <div key={inv.id} className="p-5 bg-white border border-slate-200 rounded-[32px] space-y-3 group hover:border-purple-200 transition-all shadow-sm hover:shadow-md">
           <div className="flex justify-between items-start">
-            <div className="flex flex-wrap gap-1">
-              {inv.investigators.split(", ").map((name: string, i: number) => (
-                <span key={i} className="bg-purple-100 text-purple-700 text-[8px] font-black px-2 py-0.5 rounded-lg uppercase">{name}</span>
+            <div className="space-y-2">
+              <div>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Assigned Group</p>
+                <div className="flex flex-wrap gap-1">
+                  {inv.investigators.split(", ").map((name: string) => (
+                    <span key={name} className="bg-slate-100 text-slate-600 text-[8px] font-black px-2 py-0.5 rounded-lg uppercase">{name}</span>
+                  ))}
+                </div>
+              </div>
+              {inv.attendedMembers && (
+                <div>
+                  <p className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5" /> Attended By
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {inv.attendedMembers.split(", ").map((name: string) => (
+                      <span key={name} className="bg-emerald-50 text-emerald-700 text-[8px] font-black px-2 py-0.5 rounded-lg uppercase">{name}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-bold text-slate-400 mb-1">Planned: {new Date(inv.visitDate).toLocaleDateString()}</p>
+              {inv.actualVisitDate && <p className="text-[9px] font-black text-purple-600">Visited: {new Date(inv.actualVisitDate).toLocaleDateString()}</p>}
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+            <p className="text-[11px] text-slate-700 font-medium leading-relaxed italic">"{inv.findings}"</p>
+          </div>
+
+          {/* Image Gallery */}
+          {inv.attachments && inv.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {inv.attachments.map((path: string, i: number) => (
+                <div key={i} onClick={() => setLightbox(path)} className="w-20 h-20 rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:border-purple-400 transition-all">
+                  <img src={path} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                </div>
               ))}
             </div>
-            <span className="text-[9px] font-bold text-slate-400 shrink-0 ml-2">{new Date(inv.visitDate).toLocaleDateString()}</span>
+          )}
+
+          <div className="flex justify-between items-center pt-1">
+            <div className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">{inv.attachments?.length || 0} Images attached</div>
+            <div className="flex gap-1">
+              <button onClick={() => handleEdit(inv)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => handleDelete(inv.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+            </div>
           </div>
-          <p className="text-xs text-slate-700 font-medium">{inv.findings}</p>
         </div>
       ))}
+
+      {/* Lightbox Modal */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setLightbox(null)}>
+          <button className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all">
+            <X className="w-6 h-6" />
+          </button>
+          <img src={lightbox} className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }

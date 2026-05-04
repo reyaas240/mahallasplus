@@ -193,7 +193,9 @@ export async function addInvestigation(data: any) {
           investigators: data.investigators,
           visitDate: new Date(data.visitDate),
           findings: data.findings,
-          attachmentUrl: data.attachmentUrl || null,
+          actualVisitDate: data.actualVisitDate ? new Date(data.actualVisitDate) : null,
+          attendedMembers: data.attendedMembers || null,
+          attachments: data.attachments || [],
         },
       });
 
@@ -213,13 +215,57 @@ export async function addInvestigation(data: any) {
     });
 
     const req = await prisma.fundRequest.findUnique({ where: { id: data.fundRequestId } });
-    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    if (req?.committeeId) revalidatePath(`/dashboard/committees/${req.committeeId}`);
     return { success: true };
   } catch (e) {
     console.error(e);
     return { success: false, error: "Failed to add investigation" };
   }
 }
+
+export async function updateInvestigation(id: string, data: any) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    const inv = await prisma.investigation.update({
+      where: { id },
+      data: {
+        investigators: data.investigators,
+        visitDate: new Date(data.visitDate),
+        findings: data.findings,
+        actualVisitDate: data.actualVisitDate ? new Date(data.actualVisitDate) : null,
+        attendedMembers: data.attendedMembers || null,
+        attachments: data.attachments || [],
+      },
+    });
+
+    const req = await prisma.fundRequest.findUnique({ where: { id: inv.fundRequestId } });
+    if (req?.committeeId) revalidatePath(`/dashboard/committees/${req.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update investigation" };
+  }
+}
+
+export async function deleteInvestigation(id: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    const inv = await prisma.investigation.delete({ where: { id } });
+    const req = await prisma.fundRequest.findUnique({ where: { id: inv.fundRequestId } });
+    if (req?.committeeId) revalidatePath(`/dashboard/committees/${req.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to delete investigation" };
+  }
+}
+
+
+
 
 // ─────────────── Appointments ───────────────
 
