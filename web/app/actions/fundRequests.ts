@@ -12,6 +12,16 @@ export async function createFundRequest(data: any) {
   if (!session || !session.user.mainMahallaId) return { success: false, error: "Unauthorized" };
 
   try {
+    if (data.letterRefNo) {
+      const existing = await prisma.fundRequest.findFirst({
+        where: { 
+          letterRefNo: data.letterRefNo,
+          committee: { mainMahallaId: session.user.mainMahallaId }
+        }
+      });
+      if (existing) return { success: false, error: `Letter Ref No ${data.letterRefNo} already exists.` };
+    }
+
     const request = await prisma.$transaction(async (tx) => {
       const req = await tx.fundRequest.create({
         data: {
@@ -110,6 +120,17 @@ export async function updateFundRequest(id: string, data: any) {
   if (!session) return { success: false, error: "Unauthorized" };
 
   try {
+    if (data.letterRefNo) {
+      const existing = await prisma.fundRequest.findFirst({
+        where: { 
+          letterRefNo: data.letterRefNo,
+          committee: { mainMahallaId: session.user.mainMahallaId },
+          id: { not: id }
+        }
+      });
+      if (existing) return { success: false, error: `Letter Ref No ${data.letterRefNo} already exists.` };
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const req = await tx.fundRequest.update({
         where: { id },

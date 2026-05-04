@@ -191,6 +191,9 @@ model FamilyCard {
   registeredDate    DateTime       @default(now())
   livingType        LivingType
   livingFromDate    DateTime?
+  address           String?
+  latitude          Float?
+  longitude         Float?
   attachments       String[]
   status            Status         @default(ACTIVE)
   subMahallaId      String

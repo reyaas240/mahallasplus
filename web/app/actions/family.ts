@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { LivingType, Status } from "@prisma/client";
 
+import { saveFile } from "@/lib/storage";
+
 export async function createFamilyCard(formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
@@ -15,16 +17,42 @@ export async function createFamilyCard(formData: FormData) {
   const livingType = formData.get("livingType") as LivingType;
   const mainMahallaCardNo = formData.get("mainMahallaCardNo") as string;
   const subMahallaCardNo = formData.get("subMahallaCardNo") as string;
+  const address = formData.get("address") as string;
   const livingFromDate = formData.get("livingFromDate") ? new Date(formData.get("livingFromDate") as string) : null;
 
+  const files = formData.getAll("attachments") as File[];
+  const attachmentPaths: string[] = [];
+
   try {
+    // Duplicate Checks
+    if (mainMahallaCardNo) {
+      const existingMain = await prisma.familyCard.findFirst({
+        where: { mainMahallaCardNo, subMahalla: { mainMahallaId: session.user.mainMahallaId } }
+      });
+      if (existingMain) return { success: false, error: `Main Card No ${mainMahallaCardNo} is already registered in this Mahalla.` };
+    }
+
+    if (subMahallaCardNo) {
+      const existingSub = await prisma.familyCard.findFirst({
+        where: { subMahallaCardNo, subMahallaId }
+      });
+      if (existingSub) return { success: false, error: `Sub Card No ${subMahallaCardNo} is already registered in this Sub Mahalla.` };
+    }
+
+    for (const file of files) {
+      const path = await saveFile(file, "families");
+      if (path) attachmentPaths.push(path);
+    }
+
     const card = await prisma.familyCard.create({
       data: {
         subMahallaId,
         livingType,
         mainMahallaCardNo,
         subMahallaCardNo,
+        address,
         livingFromDate,
+        attachments: attachmentPaths,
         status: "ACTIVE",
       },
     });
@@ -108,19 +136,61 @@ export async function updateFamilyCard(id: string, formData: FormData) {
   const livingType = formData.get("livingType") as LivingType;
   const mainMahallaCardNo = formData.get("mainMahallaCardNo") as string;
   const subMahallaCardNo = formData.get("subMahallaCardNo") as string;
+  const address = formData.get("address") as string;
   const livingFromDate = formData.get("livingFromDate") ? new Date(formData.get("livingFromDate") as string) : null;
 
+  const files = formData.getAll("attachments") as File[];
+  const newAttachmentPaths: string[] = [];
+
   try {
+    const currentCard = await prisma.familyCard.findUnique({ 
+      where: { id }, 
+      select: { attachments: true, subMahallaId: true } 
+    });
+
+    // Duplicate Checks
+    if (mainMahallaCardNo) {
+      const existingMain = await prisma.familyCard.findFirst({
+        where: { 
+          mainMahallaCardNo, 
+          subMahalla: { mainMahallaId: session.user.mainMahallaId },
+          id: { not: id }
+        }
+      });
+      if (existingMain) return { success: false, error: `Main Card No ${mainMahallaCardNo} is already registered in this Mahalla.` };
+    }
+
+    if (subMahallaCardNo) {
+      const existingSub = await prisma.familyCard.findFirst({
+        where: { 
+          subMahallaCardNo, 
+          subMahallaId: currentCard?.subMahallaId,
+          id: { not: id }
+        }
+      });
+      if (existingSub) return { success: false, error: `Sub Card No ${subMahallaCardNo} is already registered in this Sub Mahalla.` };
+    }
+
+    for (const file of files) {
+      const path = await saveFile(file, "families");
+      if (path) newAttachmentPaths.push(path);
+    }
+
+    const combinedAttachments = [...(currentCard?.attachments || []), ...newAttachmentPaths];
+
     await prisma.familyCard.update({
       where: { id },
       data: {
         livingType,
         mainMahallaCardNo,
         subMahallaCardNo,
+        address,
         livingFromDate,
+        attachments: combinedAttachments,
       },
     });
     revalidatePath("/dashboard/families");
+    revalidatePath(`/dashboard/families/${id}`);
     return { success: true };
   } catch (e) {
     return { success: false, error: "Failed to update Family Card" };

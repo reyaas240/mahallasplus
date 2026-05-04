@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Users, Phone } from "lucide-react";
+import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Users, Phone, Map, Image as ImageIcon, FileText } from "lucide-react";
 import Link from "next/link";
 import { FamilyMemberForm } from "./FamilyMemberForm";
 import { FamilyMemberActions } from "./FamilyMemberActions";
@@ -59,6 +59,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" /> Family Members ({family.members.length})
               </h3>
+              <FamilyMemberForm cardId={family.id} occupations={occupations} />
             </div>
             
             <div className="divide-y divide-slate-100">
@@ -110,23 +111,53 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-blue-400" /> Mahalla Details
             </h3>
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-4 relative z-10">
               <div className="flex justify-between border-b border-slate-800 pb-2">
                 <span className="text-slate-400 text-sm font-medium">Sub Mahalla</span>
                 <span className="font-bold">{family.subMahalla.name}</span>
+              </div>
+              <div className="flex flex-col border-b border-slate-800 pb-2">
+                <span className="text-slate-400 text-sm font-medium mb-1">Residential Address</span>
+                <span className="font-bold text-sm leading-relaxed">{family.address || "No address registered"}</span>
               </div>
               <div className="flex justify-between border-b border-slate-800 pb-2">
                 <span className="text-slate-400 text-sm font-medium">Living Type</span>
                 <span className="font-bold">{family.livingType.replace("_", " ")}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between border-b border-slate-800 pb-2">
                 <span className="text-slate-400 text-sm font-medium">Main Card No</span>
                 <span className="font-bold text-blue-400">{family.mainMahallaCardNo}</span>
               </div>
             </div>
           </div>
 
-          <FamilyMemberForm cardId={family.id} occupations={occupations} />
+          {family.attachments.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-blue-600" /> Documents & Images
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {family.attachments.map((path: string, i: number) => (
+                  <a 
+                    key={i} 
+                    href={path} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="group relative aspect-square bg-slate-50 rounded-xl border border-slate-100 overflow-hidden hover:border-blue-200 transition-all"
+                  >
+                    {path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img src={path} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={`Attachment ${i+1}`} />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
+                        <FileText className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
+                        <span className="text-[8px] font-black uppercase text-slate-400 mt-1">View Document</span>
+                      </div>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

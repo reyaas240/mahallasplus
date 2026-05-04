@@ -31,6 +31,7 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [viewFilter, setViewFilter] = useState<"active" | "completed" | "hold" | "rejected">("active");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const currentTerm = terms.find((t) => t.status === "ACTIVE") || terms[0];
 
@@ -52,55 +53,87 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
   }, [committeeId, currentTerm?.id, showNewRequest, selectedRequest]);
 
   const filtered = requests.filter((r) => {
-    if (viewFilter === "active") return !["DISBURSED", "REJECTED", "ON_HOLD"].includes(r.status);
-    if (viewFilter === "completed") return r.status === "DISBURSED";
-    if (viewFilter === "hold") return r.status === "ON_HOLD";
-    if (viewFilter === "rejected") return r.status === "REJECTED";
+    // Status Filter
+    let statusMatch = true;
+    if (viewFilter === "active") statusMatch = !["DISBURSED", "REJECTED", "ON_HOLD"].includes(r.status);
+    else if (viewFilter === "completed") statusMatch = r.status === "DISBURSED";
+    else if (viewFilter === "hold") statusMatch = r.status === "ON_HOLD";
+    else if (viewFilter === "rejected") statusMatch = r.status === "REJECTED";
+
+    if (!statusMatch) return false;
+
+    // Search Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const name = r.beneficiaryType === "INTERNAL" ? r.familyMember?.fullName || "" : r.externalName || "";
+      const nic = r.familyMember?.nic || "";
+      const ref = r.letterRefNo || "";
+      
+      return (
+        name.toLowerCase().includes(q) ||
+        nic.toLowerCase().includes(q) ||
+        ref.toLowerCase().includes(q)
+      );
+    }
+
     return true;
   });
 
   return (
     <div className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setViewFilter("active")}
-            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "active" ? "bg-slate-900 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
-          >
-            <ClipboardList className="w-3.5 h-3.5 inline mr-2" />Active
-          </button>
-          <button
-            onClick={() => setViewFilter("hold")}
-            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "hold" ? "bg-amber-500 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
-          >
-            <Clock className="w-3.5 h-3.5 inline mr-2" />On Hold
-          </button>
-          <button
-            onClick={() => setViewFilter("completed")}
-            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "completed" ? "bg-teal-600 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 inline mr-2" />Completed
-          </button>
-          <button
-            onClick={() => setViewFilter("rejected")}
-            className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "rejected" ? "bg-rose-500 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
-          >
-            <XCircle className="w-3.5 h-3.5 inline mr-2" />Rejected
-          </button>
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50 space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setViewFilter("active")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "active" ? "bg-slate-900 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
+            >
+              <ClipboardList className="w-3.5 h-3.5 inline mr-2" />Active
+            </button>
+            <button
+              onClick={() => setViewFilter("hold")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "hold" ? "bg-amber-500 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
+            >
+              <Clock className="w-3.5 h-3.5 inline mr-2" />On Hold
+            </button>
+            <button
+              onClick={() => setViewFilter("completed")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "completed" ? "bg-teal-600 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 inline mr-2" />Completed
+            </button>
+            <button
+              onClick={() => setViewFilter("rejected")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "rejected" ? "bg-rose-500 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
+            >
+              <XCircle className="w-3.5 h-3.5 inline mr-2" />Rejected
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Disbursed</p>
+              <p className="text-sm font-black text-slate-900">{settings.currency} {formatValue(distStats.totalDisbursed)}</p>
+            </div>
+            <button
+              onClick={() => setShowNewRequest(true)}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> New Request
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Disbursed</p>
-            <p className="text-sm font-black text-slate-900">{settings.currency} {formatValue(distStats.totalDisbursed)}</p>
-          </div>
-          <button
-            onClick={() => setShowNewRequest(true)}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> New Request
-          </button>
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by Letter Ref No, Beneficiary Name, or NIC/ID..."
+            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-600 transition-all placeholder:text-slate-400"
+          />
         </div>
       </div>
 
@@ -134,8 +167,14 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
                         name={name} 
                       />
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1">
-                      <Calendar className="w-3.5 h-3.5" /> {new Date(r.createdAt).toLocaleDateString()} • {r.purpose}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mt-1 flex-wrap">
+                      <Calendar className="w-3.5 h-3.5" /> {new Date(r.createdAt).toLocaleDateString()}
+                      {r.letterRefNo && (
+                        <span className="flex items-center gap-1.5 bg-slate-100 text-slate-800 px-2 py-1 rounded-xl border border-slate-200 text-xs font-black shadow-sm">
+                          <FileText className="w-3.5 h-3.5" /> {r.letterRefNo}
+                        </span>
+                      )}
+                      <span className="text-slate-300 mx-1">•</span> {r.purpose}
                       {r.projectName && <span className="text-blue-500">• {r.projectName}</span>}
                     </p>
                   </div>
