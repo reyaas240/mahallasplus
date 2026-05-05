@@ -526,15 +526,15 @@ export async function getCommitteeStats(committeeId: string, termId: string) {
       select: { description: true }
     }),
     prisma.fundRequest.aggregate({
-      where: { committeeTermId: termId, status: "DISBURSED" },
-      _sum: { grantedAmount: true }
+      where: { committeeTermId: termId },
+      _sum: { totalDisbursed: true }
     })
   ]);
 
   const totalOpening = balances._sum.amount || 0;
   const totalDonations = donations._sum.amount || 0;
   const totalAmount = totalOpening + totalDonations;
-  const totalDisbursed = disbursement._sum.grantedAmount || 0;
+  const totalDisbursed = disbursement._sum.totalDisbursed || 0;
 
   // Extract numeric goal from description if possible (simple heuristic)
   const goalMatch = committee?.description?.match(/(\d+[\d,]*)/);

@@ -25,7 +25,22 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
 
   const name = req.beneficiaryType === "INTERNAL" ? req.familyMember?.fullName || "Member" : req.externalName || "External";
   const tabs = ["overview", "investigation", "appointments", "quotations", "decision"];
-  const isLocked = ["DISBURSED", "APPROVED", "REJECTED", "ON_HOLD"].includes(req.status);
+  const isLocked = ["DISBURSED", "APPROVED", "REJECTED", "ON_HOLD", "ON_GOING"].includes(req.status);
+  
+  const STATUS_MAP: Record<string, { label: string; color: string }> = {
+    RECEIVED: { label: "Received", color: "bg-slate-100 text-slate-700" },
+    UNDER_VERIFICATION: { label: "Verifying", color: "bg-amber-100 text-amber-700" },
+    UNDER_DISCUSSION: { label: "Discussion", color: "bg-blue-100 text-blue-700" },
+    UNDER_INVESTIGATION: { label: "Investigating", color: "bg-purple-100 text-purple-700" },
+    INQUIRY_SCHEDULED: { label: "Inquiry", color: "bg-indigo-100 text-indigo-700" },
+    APPROVED: { label: "Approved", color: "bg-emerald-100 text-emerald-700" },
+    REJECTED: { label: "Rejected", color: "bg-rose-100 text-rose-700" },
+    ON_GOING: { label: "On-Going", color: "bg-blue-600 text-white" },
+    DISBURSED: { label: "Disbursed", color: "bg-teal-100 text-teal-700" },
+    ON_HOLD: { label: "On Hold", color: "bg-amber-500 text-white" },
+  };
+
+  const currentStatus = STATUS_MAP[req.status] || { label: req.status, color: "bg-slate-100 text-slate-700" };
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -37,6 +52,9 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">{name}</h3>
+                <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${currentStatus.color}`}>
+                  {currentStatus.label}
+                </span>
                 <QRCallButton 
                   phone={req.beneficiaryType === "INTERNAL" ? req.familyMember?.phone : req.externalPhone} 
                   name={name} 
@@ -337,6 +355,7 @@ function OverviewSection({ req, settings, fmt, onRefresh, setLightbox }: any) {
         {req.projectName && <InfoCard label="Project" value={req.projectName} />}
         <InfoCard label="Requested" value={req.requestedAmount ? `${settings.currency} ${fmt(req.requestedAmount)}` : "—"} />
         <InfoCard label="Granted" value={req.grantedAmount ? `${settings.currency} ${fmt(req.grantedAmount)}` : "—"} />
+        {req.totalDisbursed > 0 && <InfoCard label="Total Disbursed" value={`${settings.currency} ${fmt(req.totalDisbursed)}`} />}
         {req.description && <div className="col-span-2"><InfoCard label="Description" value={req.description} /></div>}
       </div>
 
@@ -968,13 +987,43 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
   const [isEditingFollowUp, setIsEditingFollowUp] = useState(false);
   const [isEditingDecision, setIsEditingDecision] = useState(false);
   const [currentAttachments, setCurrentAttachments] = useState<string[]>(latestDisbursement?.attachments || []);
+  const [paymentType, setPaymentType] = useState(req.paymentType || "ONE_TIME");
+  
+  // Monthly calculation state
+  const [startMonth, setStartMonth] = useState(req.startMonth || "");
+  const [endMonth, setEndMonth] = useState(req.endMonth || "");
+  const [calcDuration, setCalcDuration] = useState(req.durationMonths || 0);
+
+  useEffect(() => {
+    if (paymentType === "MONTHLY" && startMonth && endMonth) {
+      const start = new Date(startMonth);
+      const end = new Date(endMonth);
+      const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+      setCalcDuration(diffMonths > 0 ? diffMonths : 0);
+    } else if (paymentType === "ONE_TIME") {
+      setCalcDuration(0);
+    }
+  }, [startMonth, endMonth, paymentType]);
 
   const handleEditApproved = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setSubmitting(true);
     const fd = new FormData(e.currentTarget);
     const { updateApprovedDecision } = await import("@/app/actions/fundRequests");
-    await updateApprovedDecision(req.id, { grantedAmount: fd.get("grantedAmount"), decisionNotes: fd.get("decisionNotes") });
-    await onRefresh(); setSubmitting(false); setIsEditingDecision(false);
+    const res = await updateApprovedDecision(req.id, { 
+      grantedAmount: fd.get("grantedAmount"), 
+      paymentType,
+      durationMonths: calcDuration,
+      startMonth,
+      endMonth,
+      decisionNotes: fd.get("decisionNotes") 
+    });
+    if (res.success) {
+      await onRefresh();
+      setIsEditingDecision(false);
+    } else {
+      alert(res.error);
+    }
+    setSubmitting(false);
   };
 
   const toggleAssigned = (name: string) => {
@@ -990,13 +1039,20 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     e.preventDefault(); setSubmitting(true);
     const fd = new FormData(e.currentTarget);
     const { approveFundRequest } = await import("@/app/actions/fundRequests");
-    await approveFundRequest(req.id, { 
+    const res = await approveFundRequest(req.id, { 
       grantedAmount: fd.get("grantedAmount"), 
-      paymentType: fd.get("paymentType"),
-      durationMonths: fd.get("durationMonths"),
+      paymentType,
+      durationMonths: calcDuration,
+      startMonth,
+      endMonth,
       decisionNotes: fd.get("decisionNotes") 
     });
-    await onRefresh(); setSubmitting(false);
+    if (res.success) {
+      await onRefresh();
+    } else {
+      alert(res.error);
+    }
+    setSubmitting(false);
   };
 
   const handleHold = async () => {
@@ -1264,7 +1320,7 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     );
   }
 
-  if (req.status === "APPROVED" || req.status === "PARTIALLY_DISBURSED") {
+  if (req.status === "APPROVED" || req.status === "ON_GOING") {
     return (
       <div className="space-y-4">
         <div className="relative p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-center group/decision transition-all">
@@ -1274,9 +1330,33 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
                 <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.2em]">Edit Approved Details</p>
                 <button type="button" onClick={() => setIsEditingDecision(false)} className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-600 transition-all"><X className="w-4 h-4" /></button>
               </div>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
-                <input name="grantedAmount" type="number" step="0.01" required defaultValue={req.grantedAmount} className="w-full pl-12 pr-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 text-sm shadow-sm focus:border-emerald-500 outline-none transition-all" />
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Payment Type</p>
+                <div className="flex bg-emerald-100 p-1 rounded-xl">
+                  <button type="button" onClick={() => setPaymentType("ONE_TIME")} className={`px-3 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${paymentType === "ONE_TIME" ? "bg-white text-emerald-700 shadow-sm" : "text-emerald-600 hover:bg-emerald-50"}`}>One Time</button>
+                  <button type="button" onClick={() => setPaymentType("MONTHLY")} className={`px-3 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${paymentType === "MONTHLY" ? "bg-white text-emerald-700 shadow-sm" : "text-emerald-600 hover:bg-emerald-50"}`}>Monthly</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={paymentType === "ONE_TIME" ? "col-span-2" : "col-span-1"}>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{paymentType === "MONTHLY" ? "Amount / Month" : "Amount"}</p>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
+                    <input name="grantedAmount" type="number" step="0.01" required defaultValue={req.grantedAmount} className="w-full pl-12 pr-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 text-sm shadow-sm focus:border-emerald-500 outline-none transition-all" />
+                  </div>
+                </div>
+                {paymentType === "MONTHLY" && (
+                  <>
+                    <div className="col-span-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Start Month</p>
+                      <input type="month" required value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 text-xs shadow-sm" />
+                    </div>
+                    <div className="col-span-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">End Month</p>
+                      <input type="month" required value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 text-xs shadow-sm" />
+                    </div>
+                  </>
+                )}
               </div>
               <textarea name="decisionNotes" defaultValue={req.decisionNotes} rows={2} className="w-full px-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-bold text-emerald-900 text-xs resize-none focus:border-emerald-500 outline-none transition-all shadow-sm" />
               <button disabled={submitting} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-100">
@@ -1361,9 +1441,24 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     );
   }
 
-  // Default: Approve/Reject form
-  const [paymentType, setPaymentType] = useState("ONE_TIME");
+  // Block decision for unverified internal requests
+  if (req.beneficiaryType === "INTERNAL" && !req.verified) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] text-center space-y-4">
+        <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center">
+          <ShieldCheck className="w-8 h-8 text-amber-600" />
+        </div>
+        <div className="space-y-1">
+          <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Verification Required</h4>
+          <p className="text-[10px] text-slate-500 font-bold max-w-[240px] leading-relaxed uppercase">
+            You must verify the beneficiary's family card in the <span className="text-blue-600">Overview</span> tab before taking a decision.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
+  // Default: Approve/Reject form
   return (
     <div className="space-y-4">
       <form onSubmit={handleApprove} className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl space-y-3">
@@ -1385,10 +1480,22 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
             </div>
           </div>
           {paymentType === "MONTHLY" && (
-            <div className="col-span-1">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Duration (Months)</p>
-              <input name="durationMonths" type="number" min="1" required className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" />
-            </div>
+            <>
+              <div className="col-span-1">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Start Month</p>
+                <input type="month" required value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-sm shadow-sm focus:border-emerald-500 outline-none transition-all" />
+              </div>
+              <div className="col-span-1">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">End Month</p>
+                <input type="month" required value={endMonth} onChange={(e) => setEndMonth(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-sm shadow-sm focus:border-emerald-500 outline-none transition-all" />
+              </div>
+              <div className="col-span-1">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Calculated Duration</p>
+                <div className="w-full px-4 py-3 bg-slate-100 border-2 border-slate-200 rounded-xl font-black text-slate-500 text-lg flex items-center justify-center">
+                  {calcDuration} Months
+                </div>
+              </div>
+            </>
           )}
         </div>
         

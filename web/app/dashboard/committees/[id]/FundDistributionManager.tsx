@@ -22,6 +22,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   INQUIRY_SCHEDULED: { label: "Inquiry", color: "bg-indigo-100 text-indigo-700" },
   APPROVED: { label: "Approved", color: "bg-emerald-100 text-emerald-700" },
   REJECTED: { label: "Rejected", color: "bg-rose-100 text-rose-700" },
+  ON_GOING: { label: "On-Going", color: "bg-blue-600 text-white shadow-sm" },
   DISBURSED: { label: "Disbursed", color: "bg-teal-100 text-teal-700" },
 };
 
@@ -31,7 +32,7 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
   const [settings, setSettings] = useState({ currency: "LKR", decimals: 2 });
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
-  const [viewFilter, setViewFilter] = useState<"active" | "completed" | "hold" | "rejected">("active");
+  const [viewFilter, setViewFilter] = useState<"active" | "ongoing" | "completed" | "hold" | "rejected">("active");
   const [searchQuery, setSearchQuery] = useState("");
 
   const currentTerm = terms.find((t) => t.status === "ACTIVE") || terms[0];
@@ -56,7 +57,8 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
   const filtered = requests.filter((r) => {
     // Status Filter
     let statusMatch = true;
-    if (viewFilter === "active") statusMatch = !["DISBURSED", "REJECTED", "ON_HOLD"].includes(r.status);
+    if (viewFilter === "active") statusMatch = !["DISBURSED", "REJECTED", "ON_HOLD", "ON_GOING"].includes(r.status);
+    else if (viewFilter === "ongoing") statusMatch = r.status === "ON_GOING";
     else if (viewFilter === "completed") statusMatch = r.status === "DISBURSED";
     else if (viewFilter === "hold") statusMatch = r.status === "ON_HOLD";
     else if (viewFilter === "rejected") statusMatch = r.status === "REJECTED";
@@ -91,6 +93,12 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
               className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "active" ? "bg-slate-900 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
             >
               <ClipboardList className="w-3.5 h-3.5 inline mr-2" />Active
+            </button>
+            <button
+              onClick={() => setViewFilter("ongoing")}
+              className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${viewFilter === "ongoing" ? "bg-blue-600 text-white shadow-lg" : "bg-white text-slate-500 border border-slate-200"}`}
+            >
+              <Clock className="w-3.5 h-3.5 inline mr-2" />On-Going
             </button>
             <button
               onClick={() => setViewFilter("hold")}
@@ -183,17 +191,24 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
                 <div className="flex items-center gap-6">
                   <div className="text-right">
                     {r.grantedAmount ? (
-                      <p className="font-black text-emerald-700 text-lg">{settings.currency} {formatValue(r.grantedAmount)}</p>
+                      <div className="flex flex-col items-end">
+                        <p className="font-black text-emerald-700 text-lg leading-tight">{settings.currency} {formatValue(r.grantedAmount)}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {r.totalDisbursed > 0 && (
+                            <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
+                              Paid: {settings.currency} {formatValue(r.totalDisbursed)}
+                            </span>
+                          )}
+                          <p className="text-[8px] font-black text-emerald-500 uppercase">{r.paymentType === "MONTHLY" ? "Per Month" : "Granted"}</p>
+                        </div>
+                      </div>
                     ) : r.requestedAmount ? (
-                      <p className="font-black text-slate-500 text-sm">{settings.currency} {formatValue(r.requestedAmount)}</p>
+                      <div className="flex flex-col items-end">
+                        <p className="font-black text-slate-500 text-sm">{settings.currency} {formatValue(r.requestedAmount)}</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase">Requested</p>
+                      </div>
                     ) : (
                       <p className="text-[9px] font-black text-slate-300 uppercase">No amount</p>
-                    )}
-                    {r.requestedAmount && !r.grantedAmount && (
-                      <p className="text-[8px] font-black text-slate-400 uppercase">Requested</p>
-                    )}
-                    {r.grantedAmount && (
-                      <p className="text-[8px] font-black text-emerald-500 uppercase">Granted</p>
                     )}
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">

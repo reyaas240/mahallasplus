@@ -554,6 +554,8 @@ export async function approveFundRequest(requestId: string, data: any) {
           grantedAmount: parseFloat(data.grantedAmount),
           paymentType: data.paymentType || "ONE_TIME",
           durationMonths: data.durationMonths ? parseInt(data.durationMonths, 10) : null,
+          startMonth: data.startMonth || null,
+          endMonth: data.endMonth || null,
           decisionNotes: data.decisionNotes || null,
           status: "APPROVED",
         },
@@ -564,7 +566,7 @@ export async function approveFundRequest(requestId: string, data: any) {
           fundRequestId: requestId,
           action: "Request approved",
           performedBy: session.user.name || session.user.email || "System",
-          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months' : ''}. ${data.decisionNotes || ""}`,
+          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months (' + (data.startMonth || '') + ' to ' + (data.endMonth || '') + ')' : ''}. ${data.decisionNotes || ""}`,
         },
       });
     });
@@ -590,6 +592,8 @@ export async function updateApprovedDecision(requestId: string, data: any) {
           grantedAmount: parseFloat(data.grantedAmount),
           paymentType: data.paymentType || "ONE_TIME",
           durationMonths: data.durationMonths ? parseInt(data.durationMonths, 10) : null,
+          startMonth: data.startMonth || null,
+          endMonth: data.endMonth || null,
           decisionNotes: data.decisionNotes || null,
         },
       });
@@ -599,7 +603,7 @@ export async function updateApprovedDecision(requestId: string, data: any) {
           fundRequestId: requestId,
           action: "Approved decision updated",
           performedBy: session.user.name || session.user.email || "System",
-          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months' : ''}. ${data.decisionNotes || ""}`,
+          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months (' + (data.startMonth || '') + ' to ' + (data.endMonth || '') + ')' : ''}. ${data.decisionNotes || ""}`,
         },
       });
     });
@@ -685,7 +689,7 @@ export async function disburseFunds(requestId: string, data: any) {
         if (newDisbursementCount >= fr.durationMonths) {
           nextStatus = "DISBURSED";
         } else {
-          nextStatus = "PARTIALLY_DISBURSED";
+          nextStatus = "ON_GOING";
         }
       } else {
         nextStatus = "DISBURSED";
@@ -768,8 +772,8 @@ export async function getFundDistributionStats(committeeId: string, termId?: str
 
   const [disbursedAgg, activeCount, approvedCount] = await Promise.all([
     prisma.fundRequest.aggregate({
-      where: { ...where, status: "DISBURSED" },
-      _sum: { grantedAmount: true },
+      where,
+      _sum: { totalDisbursed: true },
     }),
     prisma.fundRequest.count({
       where: { ...where, status: { notIn: ["DISBURSED", "REJECTED"] } },
@@ -780,7 +784,7 @@ export async function getFundDistributionStats(committeeId: string, termId?: str
   ]);
 
   return {
-    totalDisbursed: disbursedAgg._sum.grantedAmount || 0,
+    totalDisbursed: disbursedAgg._sum.totalDisbursed || 0,
     activeRequests: activeCount,
     approvedPending: approvedCount,
   };

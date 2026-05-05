@@ -408,7 +408,7 @@ enum FundRequestStatus {
   APPROVED
   REJECTED
   ON_HOLD
-  PARTIALLY_DISBURSED
+  ON_GOING
   DISBURSED
 }
 
@@ -462,6 +462,8 @@ model FundRequest {
   grantedAmount     Float?
   paymentType       PaymentType        @default(ONE_TIME)
   durationMonths    Int?
+  startMonth        String?            // YYYY-MM
+  endMonth          String?            // YYYY-MM
   status            FundRequestStatus  @default(RECEIVED)
   decisionNotes     String?
 
