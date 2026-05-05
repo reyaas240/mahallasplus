@@ -5,6 +5,7 @@ import { getFundRequestDetail, verifyBeneficiary, addInvestigation, updateInvest
 import { uploadInvestigationImages } from "@/app/actions/upload";
 import { resizeImage } from "@/lib/imageResize";
 import { QRCallButton } from "@/components/QRCallButton";
+import { getRequestCategories, getProjectMasters } from "@/app/actions/masters";
 
 export function FundRequestDetailModal({ requestId, settings, members, onClose }: any) {
   const [req, setReq] = useState<any>(null);
@@ -24,7 +25,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
 
   const name = req.beneficiaryType === "INTERNAL" ? req.familyMember?.fullName || "Member" : req.externalName || "External";
   const tabs = ["overview", "investigation", "appointments", "quotations", "decision"];
-  const isDisbursed = req.status === "DISBURSED";
+  const isLocked = ["DISBURSED", "APPROVED", "REJECTED", "ON_HOLD"].includes(req.status);
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -45,7 +46,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isDisbursed && (
+            {!isLocked && (
               <button onClick={() => setIsEditing(true)} className="p-2 text-slate-400 rounded-xl hover:text-blue-600 transition-all border border-slate-100 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3">
                 <Edit3 className="w-4 h-4" /> Edit
               </button>
@@ -67,10 +68,10 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
 
             {/* Tab Content — fixed height, scrolls internally */}
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-              {activeSection === "overview" && <OverviewSection req={req} settings={settings} fmt={fmt} onRefresh={load} setLightbox={setLightbox} isDisbursed={isDisbursed} />}
-              {activeSection === "investigation" && <InvestigationSection req={req} members={members} onRefresh={load} setLightbox={setLightbox} isDisbursed={isDisbursed} />}
-              {activeSection === "appointments" && <AppointmentSection req={req} onRefresh={load} isDisbursed={isDisbursed} />}
-              {activeSection === "quotations" && <QuotationSection req={req} onRefresh={load} setLightbox={setLightbox} isDisbursed={isDisbursed} />}
+              {activeSection === "overview" && <OverviewSection req={req} settings={settings} fmt={fmt} onRefresh={load} setLightbox={setLightbox} isLocked={isLocked} />}
+              {activeSection === "investigation" && <InvestigationSection req={req} members={members} onRefresh={load} setLightbox={setLightbox} isLocked={isLocked} />}
+              {activeSection === "appointments" && <AppointmentSection req={req} onRefresh={load} isLocked={isLocked} />}
+              {activeSection === "quotations" && <QuotationSection req={req} onRefresh={load} setLightbox={setLightbox} isLocked={isLocked} />}
               {activeSection === "decision" && <DecisionSection req={req} settings={settings} members={members} fmt={fmt} onRefresh={load} setLightbox={setLightbox} />}
             </div>
           </div>
@@ -126,6 +127,16 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
   const [deleting, setDeleting] = useState(false);
   const [attachments, setAttachments] = useState<string[]>(req.attachments || []);
   const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [purpose, setPurpose] = useState(req.purpose || "");
+  const [projectName, setProjectName] = useState(req.projectName || "");
+  const [amountDisplay, setAmountDisplay] = useState(req.requestedAmount ? Number(req.requestedAmount).toLocaleString("en-US") : "");
+
+  useEffect(() => {
+    getRequestCategories(req.committeeId).then(setCategories);
+    getProjectMasters(req.committeeId).then(setProjects);
+  }, [req.committeeId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,19 +152,20 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
       newFiles.forEach(f => fd.append("files", f));
       const uploadRes = await uploadFundRequestAttachments(fd);
       if (uploadRes.success) {
-        finalAttachments = [...finalAttachments, ...uploadRes.paths];
+        finalAttachments = [...finalAttachments, ...(uploadRes.paths || [])];
       }
     }
 
     const fd = new FormData(form);
     const payload = {
-      purpose: fd.get("purpose"),
-      projectName: fd.get("projectName"),
+      purpose: purpose,
+      projectName: projectName,
       description: fd.get("description"),
       requestedAmount: fd.get("requestedAmount"),
       externalName: fd.get("externalName"),
       externalPhone: fd.get("externalPhone"),
       externalAddress: fd.get("externalAddress"),
+      letterRefNo: fd.get("letterRefNo"),
       attachments: finalAttachments,
     };
 
@@ -185,19 +197,37 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[300] flex items-center justify-center p-4">
       <div className="bg-white rounded-[40px] w-[600px] max-w-full shadow-2xl p-8 space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Edit Fund Request</h2>
+          <div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Edit Fund Request</h2>
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-all"><X className="w-5 h-5 text-slate-400" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Purpose / Title</p>
-              <input name="purpose" required defaultValue={req.purpose} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Purpose / Category</p>
+              <select name="purpose" required value={purpose} onChange={(e) => setPurpose(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 text-[10px] uppercase focus:border-blue-500 outline-none transition-all">
+                <option value="">-- Select --</option>
+                {categories.map((c: any) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+                {req.purpose && !categories.find((c: any) => c.name === req.purpose) && (
+                  <option value={req.purpose}>{req.purpose}</option>
+                )}
+              </select>
             </div>
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Project Name (Optional)</p>
-              <input name="projectName" defaultValue={req.projectName} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Project (Optional)</p>
+              <select name="projectName" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 text-[10px] uppercase focus:border-blue-500 outline-none transition-all">
+                <option value="">-- Select --</option>
+                {projects.map((p: any) => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+                {req.projectName && !projects.find((p: any) => p.name === req.projectName) && (
+                  <option value={req.projectName}>{req.projectName}</option>
+                )}
+              </select>
             </div>
           </div>
 
@@ -208,19 +238,32 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Requested Amount</p>
-              <input name="requestedAmount" type="number" step="0.01" defaultValue={req.requestedAmount} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
-            </div>
-            {req.beneficiaryType === "EXTERNAL" && (
-              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Name</p>
-                <input name="externalName" defaultValue={req.externalName} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Requested Amount ({settings.currency})</p>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px]">{settings.currency}</span>
+                <input
+                  value={amountDisplay}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9.]/g, "");
+                    setAmountDisplay(raw ? Number(raw).toLocaleString("en-US") : "");
+                  }}
+                  className="w-full pl-14 pr-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 text-xs focus:border-blue-500 outline-none transition-all"
+                />
+                <input type="hidden" name="requestedAmount" value={amountDisplay.replace(/,/g, "")} />
               </div>
-            )}
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Letter Ref No</p>
+              <input name="letterRefNo" defaultValue={req.letterRefNo} placeholder="REF-001" className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all placeholder-slate-400" />
+            </div>
           </div>
 
           {req.beneficiaryType === "EXTERNAL" && (
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Name</p>
+                <input name="externalName" defaultValue={req.externalName} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
+              </div>
               <div>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">External Phone</p>
                 <input name="externalPhone" defaultValue={req.externalPhone} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-900 text-xs focus:border-blue-500 outline-none transition-all" />
@@ -289,6 +332,9 @@ function OverviewSection({ req, settings, fmt, onRefresh, setLightbox }: any) {
       <div className="grid grid-cols-2 gap-4">
         <InfoCard label="Status" value={req.status.replace(/_/g, " ")} />
         <InfoCard label="Type" value={req.beneficiaryType} />
+        {req.letterRefNo && <InfoCard label="Letter Ref No" value={req.letterRefNo} />}
+        <InfoCard label="Purpose" value={req.purpose} />
+        {req.projectName && <InfoCard label="Project" value={req.projectName} />}
         <InfoCard label="Requested" value={req.requestedAmount ? `${settings.currency} ${fmt(req.requestedAmount)}` : "—"} />
         <InfoCard label="Granted" value={req.grantedAmount ? `${settings.currency} ${fmt(req.grantedAmount)}` : "—"} />
         {req.description && <div className="col-span-2"><InfoCard label="Description" value={req.description} /></div>}
@@ -414,7 +460,7 @@ function MemberSelect({ label, members, selected, onToggle, placeholder = "Selec
 }
 
 /* ──── Investigation ──── */
-function InvestigationSection({ req, members, onRefresh, setLightbox, isDisbursed }: any) {
+function InvestigationSection({ req, members, onRefresh, setLightbox, isLocked }: any) {
   const [show, setShow] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -466,7 +512,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isDisburse
         const fd = new FormData();
         previewImages.forEach(f => fd.append("images", f));
         const res = await uploadInvestigationImages(fd);
-        if (res.success) finalAttachments = [...finalAttachments, ...res.paths];
+        if (res.success) finalAttachments = [...finalAttachments, ...(res.paths || [])];
       }
 
       const fd = new FormData(form);
@@ -503,7 +549,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isDisburse
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Field Investigations ({req.investigations.length})</p>
-        {!isDisbursed && (
+        {!isLocked && (
           <button onClick={() => { setShow(!show); setEditId(null); setInvestigators([]); setAttended([]); setAttachments([]); setPreviewImages([]); }} 
             className="px-4 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-700 flex items-center gap-1">
             <Plus className="w-3 h-3" /> Add Investigation
@@ -624,7 +670,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isDisburse
             </div>
             <div className="text-right">
               <p className="text-[10px] text-slate-400 font-bold uppercase">{new Date(inv.visitDate).toLocaleDateString()}</p>
-              {!isDisbursed && (
+              {!isLocked && (
                 <div className="flex gap-1 justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => handleEdit(inv)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(inv.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -658,7 +704,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isDisburse
 }
 
 /* ──── Appointments ──── */
-function AppointmentSection({ req, onRefresh, isDisbursed }: any) {
+function AppointmentSection({ req, onRefresh, isLocked }: any) {
   const [show, setShow] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outcomeId, setOutcomeId] = useState<string | null>(null);
@@ -681,7 +727,7 @@ function AppointmentSection({ req, onRefresh, isDisbursed }: any) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Appointments ({req.appointments.length})</p>
-        {!isDisbursed && (
+        {!isLocked && (
           <button onClick={() => setShow(!show)} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 flex items-center gap-1"><Plus className="w-3 h-3" /> Schedule</button>
         )}
       </div>
@@ -709,7 +755,7 @@ function AppointmentSection({ req, onRefresh, isDisbursed }: any) {
           </div>
           {a.purpose && <p className="text-[10px] text-slate-500 font-bold">{a.purpose}</p>}
           {a.outcome && <p className="text-xs text-slate-700 font-medium">{a.outcome}</p>}
-          {!isDisbursed && !a.outcome && (
+          {!isLocked && !a.outcome && (
             outcomeId === a.id ? (
               <form onSubmit={(e) => handleOutcome(e, a.id)} className="space-y-2 pt-2 border-t border-slate-100">
                 <textarea name="outcome" required placeholder="Meeting outcome..." rows={2} className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs resize-none" />
@@ -730,7 +776,7 @@ function AppointmentSection({ req, onRefresh, isDisbursed }: any) {
 }
 
 /* ──── Quotations ──── */
-function QuotationSection({ req, onRefresh, setLightbox, isDisbursed }: any) {
+function QuotationSection({ req, onRefresh, setLightbox, isLocked }: any) {
   const [show, setShow] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -766,7 +812,7 @@ function QuotationSection({ req, onRefresh, setLightbox, isDisbursed }: any) {
       const fd = new FormData();
       previewFiles.forEach(f => fd.append("files", f));
       const res = await uploadFundRequestAttachments(fd);
-      if (res.success) finalAttachments = [...finalAttachments, ...res.paths];
+      if (res.success) finalAttachments = [...finalAttachments, ...(res.paths || [])];
       setUploading(false);
     }
 
@@ -805,7 +851,7 @@ function QuotationSection({ req, onRefresh, setLightbox, isDisbursed }: any) {
     <div className="space-y-4">
       <div className="flex justify-between items-center px-1">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quotations ({req.quotations.length})</p>
-        {!isDisbursed && (
+        {!isLocked && (
           <button onClick={() => { setShow(!show); setEditId(null); setAttachments([]); setPreviewFiles([]); }} className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-teal-700 transition-all shadow-lg shadow-teal-100">
             <Plus className="w-3.5 h-3.5" /> Add
           </button>
@@ -880,7 +926,7 @@ function QuotationSection({ req, onRefresh, setLightbox, isDisbursed }: any) {
             </div>
             <div className="text-right">
               <p className="font-black text-slate-900 text-sm tracking-tight">{q.amount.toLocaleString()}</p>
-              {!isDisbursed && (
+              {!isLocked && (
                 <div className="flex gap-1 justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => handleEdit(q)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Edit3 className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(q.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -911,12 +957,25 @@ function QuotationSection({ req, onRefresh, setLightbox, isDisbursed }: any) {
 
 /* ──── Decision ──── */
 function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }: any) {
+  const latestDisbursement = req.disbursements && req.disbursements.length > 0 
+    ? req.disbursements[req.disbursements.length - 1] 
+    : null;
+
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
-  const [assigned, setAssigned] = useState<string[]>(req.assignedMembers ? req.assignedMembers.split(", ") : []);
+  const [assigned, setAssigned] = useState<string[]>(latestDisbursement?.assignedMembers ? latestDisbursement.assignedMembers.split(", ") : []);
   const [isEditingFollowUp, setIsEditingFollowUp] = useState(false);
-  const [currentAttachments, setCurrentAttachments] = useState<string[]>(req.disbursementAttachments || []);
+  const [isEditingDecision, setIsEditingDecision] = useState(false);
+  const [currentAttachments, setCurrentAttachments] = useState<string[]>(latestDisbursement?.attachments || []);
+
+  const handleEditApproved = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); setSubmitting(true);
+    const fd = new FormData(e.currentTarget);
+    const { updateApprovedDecision } = await import("@/app/actions/fundRequests");
+    await updateApprovedDecision(req.id, { grantedAmount: fd.get("grantedAmount"), decisionNotes: fd.get("decisionNotes") });
+    await onRefresh(); setSubmitting(false); setIsEditingDecision(false);
+  };
 
   const toggleAssigned = (name: string) => {
     setAssigned(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
@@ -931,7 +990,12 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     e.preventDefault(); setSubmitting(true);
     const fd = new FormData(e.currentTarget);
     const { approveFundRequest } = await import("@/app/actions/fundRequests");
-    await approveFundRequest(req.id, { grantedAmount: fd.get("grantedAmount"), decisionNotes: fd.get("decisionNotes") });
+    await approveFundRequest(req.id, { 
+      grantedAmount: fd.get("grantedAmount"), 
+      paymentType: fd.get("paymentType"),
+      durationMonths: fd.get("durationMonths"),
+      decisionNotes: fd.get("decisionNotes") 
+    });
     await onRefresh(); setSubmitting(false);
   };
 
@@ -965,13 +1029,14 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
       const fd = new FormData();
       previewFiles.forEach(f => fd.append("files", f));
       const res = await uploadFundRequestAttachments(fd);
-      if (res.success) attachmentPaths = res.paths;
+      if (res.success) attachmentPaths = res.paths || [];
       setUploading(false);
     }
 
     const fd = new FormData(form);
     const { disburseFunds } = await import("@/app/actions/fundRequests");
     await disburseFunds(req.id, {
+      amount: fd.get("amount"),
       disbursementMethod: fd.get("disbursementMethod"),
       chequeNumber: fd.get("chequeNumber"),
       bankReference: fd.get("bankReference"),
@@ -993,7 +1058,7 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
       const fd = new FormData();
       previewFiles.forEach(f => fd.append("files", f));
       const res = await uploadFundRequestAttachments(fd);
-      if (res.success) attachmentPaths = [...attachmentPaths, ...res.paths];
+      if (res.success) attachmentPaths = [...attachmentPaths, ...(res.paths || [])];
       setUploading(false);
     }
 
@@ -1009,43 +1074,82 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     setSubmitting(false);
   };
 
+  const [showResumeForm, setShowResumeForm] = useState(false);
+  const [resumeReason, setResumeReason] = useState("");
+
   const handleResume = async () => {
+    if (!resumeReason.trim()) { alert("Please provide a reason for reopening this request."); return; }
     setSubmitting(true);
     const { resumeFundRequest } = await import("@/app/actions/fundRequests");
-    await resumeFundRequest(req.id);
+    await resumeFundRequest(req.id, resumeReason);
     await onRefresh();
     setSubmitting(false);
+    setShowResumeForm(false);
+    setResumeReason("");
   };
 
   if (req.status === "ON_HOLD") {
     return (
-      <div className="p-6 bg-amber-50 border-2 border-amber-200 rounded-[32px] text-center space-y-3">
+      <div className="p-6 bg-amber-50 border-2 border-amber-200 rounded-[32px] text-center space-y-4">
         <Clock className="w-12 h-12 text-amber-500 mx-auto" />
         <div>
           <p className="font-black text-amber-800 text-lg uppercase tracking-tight">Request On Hold</p>
           {req.decisionNotes && <p className="text-xs font-bold text-amber-600 mt-1">{req.decisionNotes}</p>}
         </div>
-        <div className="flex gap-2 pt-2">
-          <button disabled={submitting} onClick={handleResume} className="flex-1 py-3 bg-white text-slate-600 border-2 border-slate-100 rounded-xl font-black uppercase text-[10px] tracking-widest hover:border-amber-200 transition-all disabled:opacity-50">
-            {submitting ? "Processing..." : "Resume Review"}
+        
+        {showResumeForm ? (
+          <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
+            <textarea 
+              autoFocus
+              value={resumeReason}
+              onChange={(e) => setResumeReason(e.target.value)}
+              placeholder="Reason for resuming review..."
+              className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-2xl font-bold text-slate-900 text-xs resize-none outline-none focus:border-amber-400"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowResumeForm(false)} className="flex-1 py-3 bg-slate-200 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest">Cancel</button>
+              <button disabled={submitting} onClick={handleResume} className="flex-[2] py-3 bg-amber-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-amber-200">
+                {submitting ? "Processing..." : "Confirm & Resume"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowResumeForm(true)} className="w-full py-3 bg-white text-slate-600 border-2 border-slate-100 rounded-xl font-black uppercase text-[10px] tracking-widest hover:border-amber-200 transition-all">
+            Resume Review
           </button>
-        </div>
+        )}
       </div>
     );
   }
 
   if (req.status === "DISBURSED") {
+    const totalPaid = req.disbursements?.reduce((sum: number, d: any) => sum + d.amount, 0) || req.totalDisbursed || req.grantedAmount;
+    
     return (
       <div className="space-y-6">
         <div className="p-6 bg-teal-50 border-2 border-teal-200 rounded-[32px] text-center relative overflow-hidden group/card">
           <CheckCircle2 className="w-12 h-12 text-teal-600 mx-auto" />
           <p className="font-black text-teal-800 text-lg uppercase">Funds Disbursed</p>
-          <p className="text-sm font-bold text-teal-600">{settings.currency} {fmt(req.grantedAmount)} via {req.disbursementMethod?.replace("_", " ")}</p>
-          {req.handedOverDate && <p className="text-[10px] text-teal-500 font-bold">Handed Over: {new Date(req.handedOverDate).toLocaleDateString()}</p>}
-          <div className="flex justify-center gap-4 mt-2">
-            {req.chequeNumber && <p className="text-[10px] text-teal-500 font-bold uppercase tracking-tighter">Cheque #{req.chequeNumber}</p>}
-            {req.bankReference && <p className="text-[10px] text-teal-500 font-bold uppercase tracking-tighter">Ref: {req.bankReference}</p>}
-          </div>
+          <p className="text-sm font-bold text-teal-600">{settings.currency} {fmt(totalPaid)} Total Paid</p>
+          
+          {req.disbursements && req.disbursements.length > 0 && (
+            <div className="mt-4 space-y-2 text-left">
+              {req.disbursements.map((d: any, idx: number) => (
+                <div key={d.id} className="p-2 bg-white rounded-xl border border-teal-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">Tranche {idx + 1}: {settings.currency} {fmt(d.amount)} via {d.method?.replace("_", " ")}</p>
+                    <div className="flex gap-2 mt-0.5">
+                      {d.handedOverDate && <span className="text-[9px] font-bold text-slate-500">Handed Over: {new Date(d.handedOverDate).toLocaleDateString()}</span>}
+                      {d.chequeNumber && <span className="text-[9px] font-bold text-slate-500">• Cheque #{d.chequeNumber}</span>}
+                      {d.bankReference && <span className="text-[9px] font-bold text-slate-500">• Ref: {d.bankReference}</span>}
+                    </div>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                </div>
+              ))}
+            </div>
+          )}
           {!isEditingFollowUp && (
             <button onClick={() => setIsEditingFollowUp(true)} className="absolute top-4 right-4 p-2 bg-white text-teal-600 rounded-xl shadow-sm border border-teal-100 opacity-0 group-hover/card:opacity-100 transition-all hover:bg-teal-600 hover:text-white">
               <Edit3 className="w-4 h-4" />
@@ -1090,22 +1194,22 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
           </div>
         ) : (
           <>
-            {req.assignedMembers && (
+            {latestDisbursement?.assignedMembers && (
               <div className="p-5 bg-white border border-slate-200 rounded-[32px] space-y-2">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Follow-up Assigned To</p>
                 <div className="flex flex-wrap gap-1">
-                  {req.assignedMembers.split(", ").map((name: string) => (
+                  {latestDisbursement.assignedMembers.split(", ").map((name: string) => (
                     <span key={name} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-tight">{name}</span>
                   ))}
                 </div>
               </div>
             )}
 
-            {req.disbursementAttachments && req.disbursementAttachments.length > 0 && (
+            {latestDisbursement?.attachments && latestDisbursement.attachments.length > 0 && (
               <div className="space-y-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disbursement Attachments</p>
                 <div className="grid grid-cols-2 gap-3">
-                  {req.disbursementAttachments.map((path: string, i: number) => {
+                  {latestDisbursement.attachments.map((path: string, i: number) => {
                     const isImg = /\.(jpg|jpeg|png|webp|gif)$/i.test(path);
                     return (
                       <div key={i} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-2xl group hover:border-teal-300 transition-all shadow-sm">
@@ -1127,29 +1231,103 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
 
   if (req.status === "REJECTED") {
     return (
-      <div className="p-6 bg-rose-50 border-2 border-rose-200 rounded-2xl text-center space-y-2">
+      <div className="p-6 bg-rose-50 border-2 border-rose-200 rounded-[32px] text-center space-y-4">
         <XCircle className="w-12 h-12 text-rose-500 mx-auto" />
-        <p className="font-black text-rose-800 text-lg uppercase">Request Rejected</p>
-        {req.decisionNotes && <p className="text-xs font-medium text-rose-600">{req.decisionNotes}</p>}
+        <div>
+          <p className="font-black text-rose-800 text-lg uppercase tracking-tight">Request Rejected</p>
+          {req.decisionNotes && <p className="text-xs font-bold text-rose-600 mt-1">{req.decisionNotes}</p>}
+        </div>
+
+        {showResumeForm ? (
+          <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
+            <textarea 
+              autoFocus
+              value={resumeReason}
+              onChange={(e) => setResumeReason(e.target.value)}
+              placeholder="Reason for reopening this request..."
+              className="w-full px-4 py-3 bg-white border-2 border-rose-200 rounded-2xl font-bold text-slate-900 text-xs resize-none outline-none focus:border-rose-400"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowResumeForm(false)} className="flex-1 py-3 bg-slate-200 text-slate-600 rounded-xl font-black uppercase text-[10px] tracking-widest">Cancel</button>
+              <button disabled={submitting} onClick={handleResume} className="flex-[2] py-3 bg-rose-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-rose-200">
+                {submitting ? "Processing..." : "Confirm & Re-open"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setShowResumeForm(true)} className="w-full py-3 bg-white text-slate-600 border-2 border-slate-100 rounded-xl font-black uppercase text-[10px] tracking-widest hover:border-rose-200 transition-all">
+            Re-open for Review
+          </button>
+        )}
       </div>
     );
   }
 
-  if (req.status === "APPROVED") {
+  if (req.status === "APPROVED" || req.status === "PARTIALLY_DISBURSED") {
     return (
       <div className="space-y-4">
-        <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-center">
-          <p className="font-black text-emerald-800 uppercase text-sm">Approved: {settings.currency} {fmt(req.grantedAmount)}</p>
-          {req.decisionNotes && <p className="text-[10px] text-emerald-600 font-bold mt-1">{req.decisionNotes}</p>}
+        <div className="relative p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-center group/decision transition-all">
+          {isEditingDecision ? (
+            <form onSubmit={handleEditApproved} className="space-y-3 text-left">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.2em]">Edit Approved Details</p>
+                <button type="button" onClick={() => setIsEditingDecision(false)} className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-600 transition-all"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
+                <input name="grantedAmount" type="number" step="0.01" required defaultValue={req.grantedAmount} className="w-full pl-12 pr-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-black text-emerald-900 text-sm shadow-sm focus:border-emerald-500 outline-none transition-all" />
+              </div>
+              <textarea name="decisionNotes" defaultValue={req.decisionNotes} rows={2} className="w-full px-4 py-3 bg-white border-2 border-emerald-200 rounded-xl font-bold text-emerald-900 text-xs resize-none focus:border-emerald-500 outline-none transition-all shadow-sm" />
+              <button disabled={submitting} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-100">
+                {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Save Changes
+              </button>
+            </form>
+          ) : (
+            <>
+              <p className="font-black text-emerald-800 uppercase text-sm">Approved: {settings.currency} {fmt(req.grantedAmount)} {req.paymentType === "MONTHLY" ? `/ month (for ${req.durationMonths} months)` : ""}</p>
+              {req.decisionNotes && <p className="text-[10px] text-emerald-600 font-bold mt-1">{req.decisionNotes}</p>}
+              <button onClick={() => setIsEditingDecision(true)} className="absolute top-2 right-2 p-1.5 text-emerald-600 bg-white border border-emerald-100 rounded-xl opacity-0 group-hover/decision:opacity-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
         </div>
+
+        {req.disbursements && req.disbursements.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disbursement History</p>
+            <div className="space-y-2">
+              {req.disbursements.map((d: any, idx: number) => (
+                <div key={d.id} className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-slate-900">Tranche {idx + 1}: {settings.currency} {fmt(d.amount)}</p>
+                    <p className="text-[9px] font-bold text-slate-400 mt-0.5">Paid on {new Date(d.createdAt).toLocaleDateString()} via {d.method}</p>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                </div>
+              ))}
+            </div>
+            {req.paymentType === "MONTHLY" && req.durationMonths && (
+              <p className="text-[10px] font-bold text-emerald-600 text-center bg-emerald-50 py-1.5 rounded-lg border border-emerald-100">
+                {req.durationMonths - req.disbursements.length} Tranche(s) Remaining
+              </p>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleDisburse} className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Release Payment</p>
-          <select name="disbursementMethod" required className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
-            <option value="CASH">Cash</option>
-            <option value="CHEQUE">Cheque</option>
-            <option value="BANK_TRANSFER">Bank Transfer</option>
-          </select>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Release New Tranche</p>
           <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
+              <input name="amount" type="number" step="0.01" required defaultValue={req.grantedAmount} className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm" />
+            </div>
+            <select name="disbursementMethod" required className="col-span-2 w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
+              <option value="CASH">Cash</option>
+              <option value="CHEQUE">Cheque</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+            </select>
             <div className="col-span-2">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Handed Over Date</p>
               <input name="handedOverDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs shadow-sm" />
@@ -1184,17 +1362,39 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
   }
 
   // Default: Approve/Reject form
+  const [paymentType, setPaymentType] = useState("ONE_TIME");
+
   return (
     <div className="space-y-4">
       <form onSubmit={handleApprove} className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl space-y-3">
-        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Approve & Grant Amount ({settings.currency})</p>
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
-          <input name="grantedAmount" type="number" step="0.01" required placeholder="0.00" className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" />
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Approve & Grant Amount</p>
+          <div className="flex bg-emerald-100 p-1 rounded-xl">
+            <button type="button" onClick={() => setPaymentType("ONE_TIME")} className={`px-3 py-1 text-[9px] font-black uppercase rounded-lg transition-all ${paymentType === "ONE_TIME" ? "bg-white text-emerald-700 shadow-sm" : "text-emerald-600 hover:bg-emerald-50"}`}>One Time</button>
+            <button type="button" onClick={() => setPaymentType("MONTHLY")} className={`px-3 py-1 text-[9px] font-black uppercase rounded-lg transition-all ${paymentType === "MONTHLY" ? "bg-white text-emerald-700 shadow-sm" : "text-emerald-600 hover:bg-emerald-50"}`}>Monthly</button>
+          </div>
         </div>
+        <input type="hidden" name="paymentType" value={paymentType} />
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div className={paymentType === "ONE_TIME" ? "col-span-2" : "col-span-1"}>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{paymentType === "MONTHLY" ? "Amount Per Month" : "Total Amount"}</p>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
+              <input name="grantedAmount" type="number" step="0.01" required placeholder="0.00" className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" />
+            </div>
+          </div>
+          {paymentType === "MONTHLY" && (
+            <div className="col-span-1">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Duration (Months)</p>
+              <input name="durationMonths" type="number" min="1" required className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" />
+            </div>
+          )}
+        </div>
+        
         <textarea name="decisionNotes" placeholder="Decision notes..." rows={2} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs resize-none focus:border-emerald-500 outline-none transition-all shadow-sm" />
         <button disabled={submitting} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-100">
-          {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Approve & Disburse
+          {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Approve Request
         </button>
       </form>
       <div className="grid grid-cols-2 gap-3">

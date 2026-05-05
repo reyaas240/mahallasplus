@@ -27,7 +27,7 @@ export async function createFamilyCard(formData: FormData) {
     // Duplicate Checks
     if (mainMahallaCardNo) {
       const existingMain = await prisma.familyCard.findFirst({
-        where: { mainMahallaCardNo, subMahalla: { mainMahallaId: session.user.mainMahallaId } }
+        where: { mainMahallaCardNo, subMahalla: { mainMahallaId: session.user.mainMahallaId as string } }
       });
       if (existingMain) return { success: false, error: `Main Card No ${mainMahallaCardNo} is already registered in this Mahalla.` };
     }
@@ -81,6 +81,8 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   const isStudent = formData.get("isStudent") === "on";
   const occupation = formData.get("occupation") as string;
   const phone = formData.get("phone") as string || null;
+  const grade = isStudent ? formData.get("grade") as string : null;
+  const school = isStudent ? formData.get("school") as string : null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
 
   // Complex Validation
@@ -116,6 +118,8 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
         isStudent,
         occupation,
         phone,
+        grade,
+        school,
         monthlyEarnings,
       },
     });
@@ -153,7 +157,7 @@ export async function updateFamilyCard(id: string, formData: FormData) {
       const existingMain = await prisma.familyCard.findFirst({
         where: { 
           mainMahallaCardNo, 
-          subMahalla: { mainMahallaId: session.user.mainMahallaId },
+          subMahalla: { mainMahallaId: session.user.mainMahallaId as string },
           id: { not: id }
         }
       });
@@ -231,9 +235,11 @@ export async function updateFamilyMember(id: string, formData: FormData) {
   const isStudent = formData.get("isStudent") === "on";
   const occupation = formData.get("occupation") as string || null;
   const phone = formData.get("phone") as string || null;
+  const grade = isStudent ? formData.get("grade") as string : null;
+  const school = isStudent ? formData.get("school") as string : null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
 
-  console.log("Updating Member:", { id, title, fullName, email, dob, nic, monthlyEarnings });
+  console.log("Updating Member:", { id, title, fullName, email, dob, nic, monthlyEarnings, isStudent, grade, school });
 
   try {
     // Check NIC uniqueness if changed
@@ -266,6 +272,8 @@ export async function updateFamilyMember(id: string, formData: FormData) {
         isStudent,
         occupation,
         phone,
+        grade,
+        school,
         monthlyEarnings,
       },
     });

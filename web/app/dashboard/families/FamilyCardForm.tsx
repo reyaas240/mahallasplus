@@ -58,7 +58,6 @@ export function FamilyCardForm({ subMahallas, userRole, selectedMahallaId }: { s
               required
               name="subMahallaId"
               value={selectedMahallaId || ""}
-              readOnly={!!selectedMahallaId}
               disabled={!!selectedMahallaId}
               onChange={() => { }}
               className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 transition-all text-sm font-bold text-slate-900 ${selectedMahallaId ? 'opacity-75 cursor-not-allowed' : ''}`}

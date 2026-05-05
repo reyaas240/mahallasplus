@@ -38,6 +38,8 @@ model Committee {
   users         User[]
   donations     Donation[]
   fundRequests  FundRequest[]
+  requestCategories RequestCategory[]
+  projectMasters    ProjectMaster[]
 }
 
 enum FinancialStatus {
@@ -284,6 +286,27 @@ model MasterOccupation {
   name String @unique
 }
 
+model RequestCategory {
+  id          String    @id @default(cuid())
+  name        String
+  committeeId String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([committeeId, name])
+}
+
+model ProjectMaster {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  committeeId String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([committeeId, name])
+}
+
 enum DonorType {
   INTERNAL
   EXTERNAL
@@ -385,6 +408,7 @@ enum FundRequestStatus {
   APPROVED
   REJECTED
   ON_HOLD
+  PARTIALLY_DISBURSED
   DISBURSED
 }
 
@@ -397,6 +421,11 @@ enum DisbursementMethod {
   CASH
   CHEQUE
   BANK_TRANSFER
+}
+
+enum PaymentType {
+  ONE_TIME
+  MONTHLY
 }
 
 model FundRequest {
@@ -431,18 +460,14 @@ model FundRequest {
 
   // Decision
   grantedAmount     Float?
+  paymentType       PaymentType        @default(ONE_TIME)
+  durationMonths    Int?
   status            FundRequestStatus  @default(RECEIVED)
   decisionNotes     String?
 
   // Disbursement
-  disbursementMethod  DisbursementMethod?
-  chequeNumber        String?
-  bankReference       String?
-  handedOverDate      DateTime?
-  assignedMembers     String?            // Assigned committee members for follow-up
-  disbursementAttachments String[]       @default([])
-  disbursedAt         DateTime?
-  receiptUrl          String?
+  totalDisbursed    Float              @default(0)
+  disbursements     FundDisbursement[]
 
   // Children
   investigations    Investigation[]
@@ -455,6 +480,24 @@ model FundRequest {
 
   @@index([committeeId])
   @@index([committeeTermId])
+}
+
+model FundDisbursement {
+  id                String             @id @default(cuid())
+  fundRequestId     String
+  fundRequest       FundRequest        @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+  
+  amount            Float
+  method            DisbursementMethod
+  chequeNumber      String?
+  bankReference     String?
+  handedOverDate    DateTime
+  assignedMembers   String?
+  attachments       String[]           @default([])
+  
+  createdAt         DateTime           @default(now())
+  
+  @@index([fundRequestId])
 }
 
 model Investigation {

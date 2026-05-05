@@ -33,9 +33,11 @@ export default async function FamiliesPage(props: { searchParams: Promise<{ maha
     if (sm) subMahallas = [sm];
   }
 
-  // Apply Mahalla filter if present
-  if (mahallaId) {
-    baseWhere.subMahallaId = mahallaId;
+  // Apply Mahalla filter or set default for SUB_ADMIN
+  const effectiveMahallaId = mahallaId || (session.user.role === "SUB_ADMIN" ? session.user.subMahallaId : "");
+  
+  if (effectiveMahallaId) {
+    baseWhere.subMahallaId = effectiveMahallaId;
   }
 
   families = await prisma.familyCard.findMany({
@@ -60,14 +62,14 @@ export default async function FamiliesPage(props: { searchParams: Promise<{ maha
         </div>
       </div>
 
-      <MahallaFilter subMahallas={subMahallas} />
+      <MahallaFilter subMahallas={subMahallas} defaultId={effectiveMahallaId as string} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <FamilyCardForm 
             subMahallas={subMahallas} 
             userRole={session.user.role} 
-            selectedMahallaId={mahallaId} 
+            selectedMahallaId={effectiveMahallaId as string} 
           />
         </div>
 

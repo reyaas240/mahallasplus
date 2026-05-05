@@ -15,6 +15,8 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
   const [settings, setSettings] = useState({ currency: "LKR", decimals: 2 });
   const [isLoading, setIsLoading] = useState(true);
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const currentTerm = terms.find(t => t.status === 'ACTIVE') || terms[0];
 
   const fetchData = async () => {
@@ -40,6 +42,29 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
       maximumFractionDigits: settings.decimals,
     }).format(val);
   };
+
+  // Filter logic
+  const q = searchTerm.toLowerCase().trim();
+  const filteredDonations = q
+    ? donations.filter(d =>
+        d.donor.name.toLowerCase().includes(q) ||
+        d.donor.phone?.toLowerCase().includes(q) ||
+        d.reference?.toLowerCase().includes(q)
+      )
+    : donations;
+
+  const filteredDonors = q
+    ? donors.filter((d: any) =>
+        d.name.toLowerCase().includes(q) ||
+        d.phone?.toLowerCase().includes(q) ||
+        d.email?.toLowerCase().includes(q) ||
+        d.contacts?.some((c: any) =>
+          c.name?.toLowerCase().includes(q) ||
+          c.phone?.toLowerCase().includes(q) ||
+          c.whatsapp?.toLowerCase().includes(q)
+        )
+      )
+    : donors;
 
   if (isLoading) return null;
 
@@ -68,18 +93,36 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
         </button>
       </div>
 
+      <div className="p-4 border-b border-slate-100 bg-white">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by name, phone, or reference..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-xs placeholder:text-slate-400 transition-all"
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-all">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="p-0">
         {activeTab === 'donations' ? (
           <div className="divide-y divide-slate-100">
-            {donations.length === 0 ? (
+            {filteredDonations.length === 0 ? (
               <div className="p-20 text-center flex flex-col items-center">
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                   <Wallet className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">No contributions recorded for this term</p>
+                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">{q ? "No matching donations found" : "No contributions recorded for this term"}</p>
               </div>
             ) : (
-              donations.map((d) => (
+              filteredDonations.map((d) => (
                 <div key={d.id} className="p-6 flex justify-between items-center hover:bg-slate-50/30 transition-all group border-b border-slate-100 last:border-0 relative">
                   <div className="flex gap-4 items-center">
                     <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -125,15 +168,15 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {donors.length === 0 ? (
+            {filteredDonors.length === 0 ? (
               <div className="p-20 text-center flex flex-col items-center">
                 <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                   <HeartHandshake className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">No donors registered in the registry</p>
+                <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">{q ? "No matching donors found" : "No donors registered in the registry"}</p>
               </div>
             ) : (
-              donors.map((d) => (
+              filteredDonors.map((d: any) => (
                 <div key={d.id} className="p-8 flex justify-between items-start hover:bg-slate-50/50 transition-all group">
                    <div className="flex gap-5 items-start">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg ${d.type === 'INTERNAL' ? 'bg-blue-600 text-white shadow-blue-100' : 'bg-amber-500 text-white shadow-amber-100'}`}>
@@ -558,7 +601,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
           email: externalData.email,
           contacts: contacts
         });
-        if (res.success) donorId = res.donor.id;
+        if (res.success && res.donor) donorId = res.donor.id;
         else { alert(res.error); setIsSubmitting(false); return; }
       } else {
         const member = memberResults.find(m => m.isSelected);
@@ -568,7 +611,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
           name: member.name,
           familyMemberId: member.id
         });
-        if (res.success) donorId = res.donor.id;
+        if (res.success && res.donor) donorId = res.donor.id;
         else { alert(res.error); setIsSubmitting(false); return; }
       }
     }

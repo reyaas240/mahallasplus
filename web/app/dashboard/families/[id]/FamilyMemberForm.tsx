@@ -3,9 +3,10 @@ import { addFamilyMember } from "@/app/actions/family";
 import { useState } from "react";
 import { Loader2, UserPlus, AlertCircle, X, Users } from "lucide-react";
 
-export function FamilyMemberForm({ cardId, occupations }: { cardId: string, occupations: any[] }) {
+export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [] }: { cardId: string, occupations: any[], grades?: any[], schools?: any[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStudent, setIsStudent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,6 +22,7 @@ export function FamilyMemberForm({ cardId, occupations }: { cardId: string, occu
     
     if (res.success) {
       form.reset();
+      setIsStudent(false);
       setIsOpen(false);
     } else {
       setError(res.error || "Failed to add member");
@@ -30,7 +32,7 @@ export function FamilyMemberForm({ cardId, occupations }: { cardId: string, occu
   return (
     <>
       <button 
-        onClick={() => setIsOpen(true)}
+        onClick={() => { setIsOpen(true); setIsStudent(false); }}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200"
       >
         <UserPlus className="w-4 h-4" /> Add Member
@@ -134,15 +136,40 @@ export function FamilyMemberForm({ cardId, occupations }: { cardId: string, occu
                 </div>
               </div>
 
-              <div className="flex items-center gap-8 px-2 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input name="isBreadwinner" type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
-                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-600">Breadwinner</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input name="isStudent" type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
-                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-600">Student</span>
-                </label>
+              <div className="flex flex-col gap-4 p-4 bg-slate-50 rounded-[24px] border border-slate-100 shadow-inner">
+                <div className="flex items-center gap-8 px-2">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input name="isBreadwinner" type="checkbox" className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
+                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-600">Breadwinner</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input name="isStudent" type="checkbox" checked={isStudent} onChange={(e) => setIsStudent(e.target.checked)} className="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" />
+                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest group-hover:text-blue-600">Student</span>
+                  </label>
+                </div>
+
+                {isStudent && (
+                  <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300 p-2 pt-0">
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 text-left">Current Grade / Year</label>
+                      <select name="grade" required={isStudent} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-xs transition-all shadow-sm">
+                        <option value="">-- Select Grade --</option>
+                        {grades.map(g => (
+                          <option key={g.id} value={g.name}>{g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 text-left">School / University</label>
+                      <select name="school" required={isStudent} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-xs transition-all shadow-sm">
+                        <option value="">-- Select Institution --</option>
+                        {schools.map(s => (
+                          <option key={s.id} value={s.name}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-4 pt-4">

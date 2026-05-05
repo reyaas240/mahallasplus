@@ -85,6 +85,7 @@ export async function getFundRequests(committeeId: string, termId?: string) {
       appointments: true,
       quotations: true,
       events: { orderBy: { createdAt: "desc" } },
+      disbursements: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -111,6 +112,7 @@ export async function getFundRequestDetail(id: string) {
       appointments: { orderBy: { scheduledDate: "desc" } },
       quotations: { orderBy: { createdAt: "desc" } },
       events: { orderBy: { createdAt: "desc" } },
+      disbursements: { orderBy: { createdAt: "asc" } },
     },
   });
 }
@@ -124,7 +126,7 @@ export async function updateFundRequest(id: string, data: any) {
       const existing = await prisma.fundRequest.findFirst({
         where: { 
           letterRefNo: data.letterRefNo,
-          committee: { mainMahallaId: session.user.mainMahallaId },
+          committee: { mainMahallaId: session.user.mainMahallaId as string },
           id: { not: id }
         }
       });
@@ -383,7 +385,7 @@ export async function updateAppointmentOutcome(appointmentId: string, data: any)
   }
 }
 
-export async function resumeFundRequest(requestId: string) {
+export async function resumeFundRequest(requestId: string, reason: string = "Request moved back to active discussion") {
   const session = await getServerSession(authOptions);
   if (!session) return { success: false, error: "Unauthorized" };
 
@@ -399,7 +401,7 @@ export async function resumeFundRequest(requestId: string) {
           fundRequestId: requestId,
           action: "Review resumed",
           performedBy: session.user.name || session.user.email || "System",
-          note: "Request moved back to active discussion",
+          note: reason,
         },
       });
     });
@@ -550,6 +552,8 @@ export async function approveFundRequest(requestId: string, data: any) {
         where: { id: requestId },
         data: {
           grantedAmount: parseFloat(data.grantedAmount),
+          paymentType: data.paymentType || "ONE_TIME",
+          durationMonths: data.durationMonths ? parseInt(data.durationMonths, 10) : null,
           decisionNotes: data.decisionNotes || null,
           status: "APPROVED",
         },
@@ -560,7 +564,7 @@ export async function approveFundRequest(requestId: string, data: any) {
           fundRequestId: requestId,
           action: "Request approved",
           performedBy: session.user.name || session.user.email || "System",
-          note: `Granted: ${data.grantedAmount}. ${data.decisionNotes || ""}`,
+          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months' : ''}. ${data.decisionNotes || ""}`,
         },
       });
     });
@@ -571,6 +575,41 @@ export async function approveFundRequest(requestId: string, data: any) {
   } catch (e) {
     console.error(e);
     return { success: false, error: "Failed to approve request" };
+  }
+}
+
+export async function updateApprovedDecision(requestId: string, data: any) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.fundRequest.update({
+        where: { id: requestId },
+        data: {
+          grantedAmount: parseFloat(data.grantedAmount),
+          paymentType: data.paymentType || "ONE_TIME",
+          durationMonths: data.durationMonths ? parseInt(data.durationMonths, 10) : null,
+          decisionNotes: data.decisionNotes || null,
+        },
+      });
+
+      await tx.fundRequestEvent.create({
+        data: {
+          fundRequestId: requestId,
+          action: "Approved decision updated",
+          performedBy: session.user.name || session.user.email || "System",
+          note: `Granted: ${data.grantedAmount}${data.paymentType === 'MONTHLY' ? ' per month for ' + data.durationMonths + ' months' : ''}. ${data.decisionNotes || ""}`,
+        },
+      });
+    });
+
+    const req = await prisma.fundRequest.findUnique({ where: { id: requestId } });
+    revalidatePath(`/dashboard/committees/${req?.committeeId}`);
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update approved decision" };
   }
 }
 
@@ -615,17 +654,48 @@ export async function disburseFunds(requestId: string, data: any) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const fr = await tx.fundRequest.findUnique({
+        where: { id: requestId },
+        include: { disbursements: true }
+      });
+      if (!fr) throw new Error("Request not found");
+
+      const amountToRecord = data.amount ? parseFloat(data.amount) : (fr.grantedAmount || 0);
+
+      await tx.fundDisbursement.create({
+        data: {
+          fundRequestId: requestId,
+          amount: amountToRecord,
+          method: data.disbursementMethod,
+          chequeNumber: data.chequeNumber || null,
+          bankReference: data.bankReference || null,
+          handedOverDate: data.handedOverDate ? new Date(data.handedOverDate) : new Date(),
+          assignedMembers: data.assignedMembers || null,
+          attachments: data.attachments || [],
+        }
+      });
+
+      const newTotal = fr.totalDisbursed + amountToRecord;
+      const newDisbursementCount = fr.disbursements.length + 1;
+      
+      let nextStatus = fr.status;
+      if (fr.paymentType === "ONE_TIME") {
+        nextStatus = "DISBURSED";
+      } else if (fr.paymentType === "MONTHLY" && fr.durationMonths) {
+        if (newDisbursementCount >= fr.durationMonths) {
+          nextStatus = "DISBURSED";
+        } else {
+          nextStatus = "PARTIALLY_DISBURSED";
+        }
+      } else {
+        nextStatus = "DISBURSED";
+      }
+
       await tx.fundRequest.update({
         where: { id: requestId },
         data: {
-          disbursementMethod: data.disbursementMethod,
-          chequeNumber: data.chequeNumber || null,
-          bankReference: data.bankReference || null,
-          handedOverDate: data.handedOverDate ? new Date(data.handedOverDate) : null,
-          assignedMembers: data.assignedMembers || null,
-          disbursementAttachments: data.attachments || [],
-          status: "DISBURSED",
-          disbursedAt: new Date(),
+          totalDisbursed: newTotal,
+          status: nextStatus,
         },
       });
 
@@ -654,11 +724,17 @@ export async function updateDisbursementFollowUp(requestId: string, data: any) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.fundRequest.update({
-        where: { id: requestId },
+      const latestDisbursement = await tx.fundDisbursement.findFirst({
+        where: { fundRequestId: requestId },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!latestDisbursement) throw new Error("No disbursement found");
+
+      await tx.fundDisbursement.update({
+        where: { id: latestDisbursement.id },
         data: {
           assignedMembers: data.assignedMembers || null,
-          disbursementAttachments: data.attachments || [],
+          attachments: data.attachments || [],
         },
       });
 

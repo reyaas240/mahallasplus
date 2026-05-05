@@ -6,10 +6,11 @@ import { CommitteeMemberActions } from "./CommitteeMemberActions";
 import { TermManager } from "./TermManager";
 import { DonorDonationManager } from "./DonorDonationManager";
 import { FundDistributionManager } from "./FundDistributionManager";
+import { CommitteeMasters } from "./CommitteeMasters";
 import { QRCallButton } from "@/components/QRCallButton";
 
 export function CommitteeView({ committee, currentTerm, members, allMembers, stats, settings }: any) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'distributions' | 'members'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'distributions' | 'members' | 'masters'>('overview');
 
   const formatValue = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -78,7 +79,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
           
           {/* Custom Tabs */}
           <div className="flex gap-2 p-1.5 bg-slate-100/80 backdrop-blur rounded-[24px] w-fit border border-slate-200/50">
-            {['overview', 'financials', 'distributions', 'members'].map((tab) => (
+            {['overview', 'financials', 'distributions', 'members', 'masters'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -118,6 +119,12 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
             {activeTab === 'financials' && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                  <DonorDonationManager committeeId={committee.id} terms={committee.terms} />
+              </div>
+            )}
+
+            {activeTab === 'masters' && (
+              <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                 <CommitteeMasters committeeId={committee.id} />
               </div>
             )}
 

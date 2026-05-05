@@ -12,6 +12,7 @@ import {
 import { getFinancialSettings } from "@/app/actions/committee";
 import { FundRequestDetailModal } from "./FundRequestDetailModal";
 import { QRCallButton } from "@/components/QRCallButton";
+import { getRequestCategories, getProjectMasters } from "@/app/actions/masters";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   RECEIVED: { label: "Received", color: "bg-slate-100 text-slate-700" },
@@ -225,6 +226,7 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
         <NewFundRequestModal
           committeeId={committeeId}
           termId={currentTerm?.id}
+          settings={settings}
           onClose={() => setShowNewRequest(false)}
         />
       )}
@@ -242,13 +244,23 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
 
 // ────────────────── New Request Modal ──────────────────
 
-function NewFundRequestModal({ committeeId, termId, onClose }: any) {
+function NewFundRequestModal({ committeeId, termId, settings, onClose }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [benType, setBenType] = useState<"INTERNAL" | "EXTERNAL">("INTERNAL");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [amountDisplay, setAmountDisplay] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [projectName, setProjectName] = useState("");
+
+  useEffect(() => {
+    getRequestCategories(committeeId).then(setCategories);
+    getProjectMasters(committeeId).then(setProjects);
+  }, [committeeId]);
 
   useEffect(() => {
     if (benType !== "INTERNAL" || searchQuery.length < 2) { setSearchResults([]); return; }
@@ -280,7 +292,7 @@ function NewFundRequestModal({ committeeId, termId, onClose }: any) {
       attachments.forEach(f => fd.append("files", f));
       const uploadRes = await uploadFundRequestAttachments(fd);
       if (uploadRes.success) {
-        filePaths = uploadRes.paths;
+        filePaths = uploadRes.paths || [];
       }
     }
 
@@ -293,10 +305,10 @@ function NewFundRequestModal({ committeeId, termId, onClose }: any) {
       externalName: fd.get("externalName"),
       externalPhone: fd.get("externalPhone"),
       externalAddress: fd.get("externalAddress"),
-      purpose: fd.get("purpose"),
+      purpose: purpose,
       description: fd.get("description"),
       requestedAmount: fd.get("requestedAmount"),
-      projectName: fd.get("projectName"),
+      projectName: projectName,
       letterRefNo: fd.get("letterRefNo"),
       attachments: filePaths,
     });
@@ -395,22 +407,36 @@ function NewFundRequestModal({ committeeId, termId, onClose }: any) {
           <div className="grid grid-cols-12 gap-3">
             <div className="col-span-6">
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Purpose</label>
-              <select name="purpose" required className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
-                <option value="Medical">Medical</option>
-                <option value="Education">Education</option>
-                <option value="Housing">Housing</option>
-                <option value="Business">Business</option>
-                <option value="Emergency">Emergency</option>
-                <option value="Other">Other</option>
+              <select name="purpose" required value={purpose} onChange={(e) => setPurpose(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
+                <option value="">-- Select Category --</option>
+                {categories.map((c: any) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div className="col-span-6">
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Project (Optional)</label>
-              <input name="projectName" placeholder="Project name" className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-xs placeholder-slate-400" />
+              <select name="projectName" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
+                <option value="">-- Select Project --</option>
+                {projects.map((p: any) => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </select>
             </div>
             <div className="col-span-4">
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Requested Amount</label>
-              <input name="requestedAmount" type="number" step="0.01" className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-xs" />
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Requested Amount ({settings.currency})</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px]">{settings.currency}</span>
+                <input
+                  value={amountDisplay}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9.]/g, "");
+                    setAmountDisplay(raw ? Number(raw).toLocaleString("en-US") : "");
+                  }}
+                  className="w-full pl-14 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-xs"
+                />
+                <input type="hidden" name="requestedAmount" value={amountDisplay.replace(/,/g, "")} />
+              </div>
             </div>
             <div className="col-span-4">
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Letter Ref No</label>

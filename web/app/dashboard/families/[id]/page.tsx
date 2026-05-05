@@ -6,6 +6,7 @@ import { ChevronLeft, UserPlus, Trash2, Edit3, Calendar, CreditCard, MapPin, Use
 import Link from "next/link";
 import { FamilyMemberForm } from "./FamilyMemberForm";
 import { FamilyMemberActions } from "./FamilyMemberActions";
+import { FamilyCardEditShortcut } from "./FamilyCardEditShortcut";
 
 export default async function FamilyDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -24,9 +25,11 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
     },
   });
 
-  const occupations = await prisma.masterOccupation.findMany({
-    orderBy: { name: "asc" },
-  });
+  const [occupations, grades, schools] = await Promise.all([
+    prisma.masterOccupation.findMany({ orderBy: { name: "asc" } }),
+    prisma.masterGrade.findMany({ orderBy: { name: "asc" } }),
+    prisma.masterSchool.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!family) return notFound();
 
@@ -59,7 +62,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" /> Family Members ({family.members.length})
               </h3>
-              <FamilyMemberForm cardId={family.id} occupations={occupations} />
+              <FamilyMemberForm cardId={family.id} occupations={occupations} grades={grades} schools={schools} />
             </div>
             
             <div className="divide-y divide-slate-100">
@@ -93,7 +96,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <FamilyMemberActions member={member} occupations={occupations} />
+                      <FamilyMemberActions member={member} occupations={occupations} grades={grades} schools={schools} />
                     </div>
                   </div>
                 ))
@@ -108,9 +111,12 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
             <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
               <Users className="w-24 h-24" />
             </div>
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-blue-400" /> Mahalla Details
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-blue-400" /> Mahalla Details
+              </h3>
+              <FamilyCardEditShortcut family={family} subMahallas={[family.subMahalla]} />
+            </div>
             <div className="space-y-4 relative z-10">
               <div className="flex justify-between border-b border-slate-800 pb-2">
                 <span className="text-slate-400 text-sm font-medium">Sub Mahalla</span>
@@ -127,6 +133,10 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
               <div className="flex justify-between border-b border-slate-800 pb-2">
                 <span className="text-slate-400 text-sm font-medium">Main Card No</span>
                 <span className="font-bold text-blue-400">{family.mainMahallaCardNo}</span>
+              </div>
+              <div className="flex justify-between pb-2">
+                <span className="text-slate-400 text-sm font-medium">Sub Card No</span>
+                <span className="font-bold text-emerald-400">{family.subMahallaCardNo}</span>
               </div>
             </div>
           </div>

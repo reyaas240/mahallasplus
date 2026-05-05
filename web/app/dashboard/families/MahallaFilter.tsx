@@ -1,10 +1,10 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export function MahallaFilter({ subMahallas }: { subMahallas: any[] }) {
+export function MahallaFilter({ subMahallas, defaultId = "" }: { subMahallas: any[], defaultId?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedId = searchParams.get("mahallaId") || "";
+  const selectedId = searchParams.get("mahallaId") || defaultId;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;

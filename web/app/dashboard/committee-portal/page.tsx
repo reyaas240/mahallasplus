@@ -14,13 +14,18 @@ export default async function CommitteePortalPage() {
   const committee = await prisma.committee.findUnique({
     where: { id: session.user.committeeId },
     include: {
-      members: {
+      terms: {
+        where: { status: 'ACTIVE' },
         include: {
-          familyMember: {
+          members: {
             include: {
-              familyCard: {
+              familyMember: {
                 include: {
-                  subMahalla: true
+                  familyCard: {
+                    include: {
+                      subMahalla: true
+                    }
+                  }
                 }
               }
             }
@@ -29,6 +34,8 @@ export default async function CommitteePortalPage() {
       }
     }
   });
+
+  const members = committee?.terms?.[0]?.members || [];
 
   if (!committee) return notFound();
 
@@ -63,12 +70,12 @@ export default async function CommitteePortalPage() {
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
               <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" /> My Committee Colleagues ({committee.members.length})
+                <Users className="w-5 h-5 text-blue-600" /> My Committee Colleagues ({members.length})
               </h3>
             </div>
             
             <div className="divide-y divide-slate-100">
-              {committee.members.map((m) => (
+              {members.map((m) => (
                 <div key={m.id} className="p-6 flex justify-between items-center hover:bg-slate-50/50 transition-all group">
                   <div className="flex gap-4 items-center">
                     <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-black text-lg">
