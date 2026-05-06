@@ -6,7 +6,7 @@ import {
   getProjectMasters, createProjectMaster, deleteProjectMaster,
 } from "@/app/actions/masters";
 
-export function CommitteeMasters({ committeeId }: { committeeId: string }) {
+export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: string, isReadOnly?: boolean }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,25 +102,29 @@ export function CommitteeMasters({ committeeId }: { committeeId: string }) {
 
         <div className="p-5 space-y-4">
           {/* Add Form */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="New category name..."
-              value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
-              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 font-bold text-slate-900 text-xs transition-all placeholder:text-slate-400"
-            />
-            <button
-              onClick={handleAddCategory}
-              disabled={catSubmitting || !newCatName.trim()}
-              className="px-4 py-2.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all active:scale-95 shadow-lg shadow-violet-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-            >
-              {catSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              Add
-            </button>
-          </div>
-          {catError && <p className="text-[10px] font-bold text-rose-600 px-1">{catError}</p>}
+          {!isReadOnly && (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="New category name..."
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
+                  className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 font-bold text-slate-900 text-xs transition-all placeholder:text-slate-400"
+                />
+                <button
+                  onClick={handleAddCategory}
+                  disabled={catSubmitting || !newCatName.trim()}
+                  className="px-4 py-2.5 bg-violet-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-violet-700 transition-all active:scale-95 shadow-lg shadow-violet-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                >
+                  {catSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Add
+                </button>
+              </div>
+              {catError && <p className="text-[10px] font-bold text-rose-600 px-1">{catError}</p>}
+            </>
+          )}
 
           {/* List */}
           <div className="space-y-1.5 max-h-[320px] overflow-y-auto custom-scrollbar">
@@ -136,12 +140,14 @@ export function CommitteeMasters({ committeeId }: { committeeId: string }) {
                     <div className="w-2 h-2 bg-violet-500 rounded-full shrink-0" />
                     <span className="text-xs font-black text-slate-800 uppercase tracking-wide">{c.name}</span>
                   </div>
-                  <button
-                    onClick={() => handleDeleteCategory(c.id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => handleDeleteCategory(c.id)}
+                      className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))
             )}
@@ -165,34 +171,38 @@ export function CommitteeMasters({ committeeId }: { committeeId: string }) {
 
         <div className="p-5 space-y-4">
           {/* Add Form */}
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Project name..."
-                value={newProjName}
-                onChange={(e) => setNewProjName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddProject()}
-                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 text-xs transition-all placeholder:text-slate-400"
-              />
-              <button
-                onClick={handleAddProject}
-                disabled={projSubmitting || !newProjName.trim()}
-                className="px-4 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-              >
-                {projSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                Add
-              </button>
-            </div>
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={newProjDesc}
-              onChange={(e) => setNewProjDesc(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 text-[11px] transition-all placeholder:text-slate-400"
-            />
-          </div>
-          {projError && <p className="text-[10px] font-bold text-rose-600 px-1">{projError}</p>}
+          {!isReadOnly && (
+            <>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Project name..."
+                    value={newProjName}
+                    onChange={(e) => setNewProjName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddProject()}
+                    className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-900 text-xs transition-all placeholder:text-slate-400"
+                  />
+                  <button
+                    onClick={handleAddProject}
+                    disabled={projSubmitting || !newProjName.trim()}
+                    className="px-4 py-2.5 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {projSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                    Add
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={newProjDesc}
+                  onChange={(e) => setNewProjDesc(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 text-[11px] transition-all placeholder:text-slate-400"
+                />
+              </div>
+              {projError && <p className="text-[10px] font-bold text-rose-600 px-1">{projError}</p>}
+            </>
+          )}
 
           {/* List */}
           <div className="space-y-1.5 max-h-[320px] overflow-y-auto custom-scrollbar">
@@ -213,12 +223,14 @@ export function CommitteeMasters({ committeeId }: { committeeId: string }) {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDeleteProject(p.id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => handleDeleteProject(p.id)}
+                      className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))
             )}

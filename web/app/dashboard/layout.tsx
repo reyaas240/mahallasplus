@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building, Shield } from "lucide-react";
+import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building, Shield, ShieldAlert, UserCircle2 } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import { PlatformLogo } from "./PlatformLogo";
 
@@ -28,6 +28,38 @@ export default async function DashboardLayout({
     : null;
 
   const activeBranding = role === "SUB_ADMIN" ? subMahalla : mainMahalla;
+
+  // Access blocking logic
+  if (role !== "PLATFORM_ADMIN") {
+    const isMainBlocked = mainMahalla && mainMahalla.status === "INACTIVE";
+    const isSubBlocked = subMahalla && subMahalla.status === "INACTIVE";
+    
+    if (isMainBlocked || isSubBlocked) {
+      return (
+        <div className="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-6">
+          <div className="absolute top-0 left-0 w-full h-full bg-blue-600/5 blur-[120px]" />
+          <div className="bg-white rounded-[40px] max-w-lg w-full p-12 text-center shadow-2xl relative animate-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-rose-100 ring-4 ring-rose-50/50">
+              <ShieldAlert className="w-10 h-10" />
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight mb-4">Account Restricted</h1>
+            <p className="text-slate-500 font-bold uppercase text-xs tracking-widest leading-loose mb-8">
+              {isMainBlocked ? "Your Main Mahalla has been deactivated by the platform administration." : "Your Sub-Mahalla has been deactivated."} Access to all operational modules is currently suspended.
+            </p>
+            <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Next Steps</p>
+              <p className="text-sm font-bold text-slate-700 leading-relaxed">
+                Please contact the Platform Administrator to resolve this restriction and restore your operational status.
+              </p>
+            </div>
+            <LogoutButton className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl shadow-slate-100 flex items-center justify-center gap-3">
+               <LogOut className="w-4 h-4" /> Sign Out
+            </LogoutButton>
+          </div>
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="h-screen bg-[#F8FAFC] flex overflow-hidden font-sans selection:bg-blue-100 selection:text-blue-900">
@@ -67,6 +99,18 @@ export default async function DashboardLayout({
                 <FileText className="w-5 h-5" />
                 <span className="font-bold text-sm tracking-wide">Pending Requests</span>
               </Link>
+              <Link href="/dashboard/licenses" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                <Shield className="w-5 h-5" />
+                <span className="font-bold text-sm tracking-wide">License Plans</span>
+              </Link>
+              <Link href="/dashboard/invoices" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                <FileText className="w-5 h-5" />
+                <span className="font-bold text-sm tracking-wide">Invoices</span>
+              </Link>
+              <Link href="/dashboard/settings" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                <Settings className="w-5 h-5 transition-transform group-hover:rotate-90" />
+                <span className="font-bold text-sm tracking-wide">System Settings</span>
+              </Link>
             </>
           )}
 
@@ -95,6 +139,20 @@ export default async function DashboardLayout({
               )}
             </>
           )}
+
+          <div className="mt-8 mb-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">System & Account</div>
+          
+          {role === "MAIN_ADMIN" && (
+            <Link href="/dashboard/mahalla-profile" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+              <Building className="w-5 h-5 transition-transform group-hover:scale-110" />
+              <span className="font-bold text-sm tracking-wide">Mahalla Profile</span>
+            </Link>
+          )}
+
+          <Link href="/dashboard/profile" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+            <UserCircle2 className="w-5 h-5 transition-transform group-hover:scale-110" />
+            <span className="font-bold text-sm tracking-wide">My Account</span>
+          </Link>
         </div>
 
         <div className="p-6 border-t border-white/5 bg-black/20 flex-shrink-0">

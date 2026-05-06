@@ -4,7 +4,7 @@ import { Plus, Trash2, Calendar, LayoutGrid, X, Loader2, Edit3, ShieldCheck, Wal
 import { createCommitteeTerm, deleteCommitteeTerm, updateCommitteeTerm, toggleTermActive } from "@/app/actions/committee";
 import { FinancialSetup } from "./FinancialSetup";
 
-export function TermManager({ committeeId, terms }: { committeeId: string, terms: any[] }) {
+export function TermManager({ committeeId, terms, isReadOnly }: { committeeId: string, terms: any[], isReadOnly?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingTerm, setEditingTerm] = useState<any | null>(null);
   const [financialTerm, setFinancialTerm] = useState<any | null>(null);
@@ -52,12 +52,14 @@ export function TermManager({ committeeId, terms }: { committeeId: string, terms
         <h3 className="font-black text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
           <Calendar className="w-5 h-5 text-blue-600" /> Operational Terms
         </h3>
-        <button 
-          onClick={() => { setEditingTerm(null); setIsAdding(true); }}
-          className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
+        {!isReadOnly && (
+          <button 
+            onClick={() => { setEditingTerm(null); setIsAdding(true); }}
+            className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="divide-y divide-slate-100">
@@ -71,9 +73,9 @@ export function TermManager({ committeeId, terms }: { committeeId: string, terms
               <div className="flex gap-3 items-center">
                 <button 
                   type="button"
-                  onClick={() => handleToggleActive(t.id)}
+                  onClick={() => !isReadOnly && handleToggleActive(t.id)}
                   title={t.status === 'ACTIVE' ? 'Currently Active' : 'Set as Active'}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${t.status === 'ACTIVE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105' : 'bg-slate-100 text-slate-400 hover:bg-blue-100 hover:text-blue-600'}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${t.status === 'ACTIVE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105' : 'bg-slate-100 text-slate-400 hover:bg-blue-100 hover:text-blue-600'} ${isReadOnly ? 'cursor-default' : ''}`}
                 >
                   <ShieldCheck className="w-5 h-5" />
                 </button>
@@ -97,18 +99,22 @@ export function TermManager({ committeeId, terms }: { committeeId: string, terms
                 >
                   {t.financialsStatus === 'APPROVED' ? <Lock className="w-4 h-4" /> : <Wallet className="w-4 h-4" />}
                 </button>
-                <button 
-                  onClick={() => { setEditingTerm(t); setIsAdding(true); }}
-                  className="p-2 text-slate-300 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(t.id)}
-                  className="p-2 text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {!isReadOnly && (
+                  <>
+                    <button 
+                      onClick={() => { setEditingTerm(t); setIsAdding(true); }}
+                      className="p-2 text-slate-300 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(t.id)}
+                      className="p-2 text-slate-300 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))
@@ -119,6 +125,7 @@ export function TermManager({ committeeId, terms }: { committeeId: string, terms
         <FinancialSetup 
           term={financialTerm} 
           onClose={() => setFinancialTerm(null)} 
+          isReadOnly={isReadOnly}
         />
       )}
 

@@ -26,7 +26,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   DISBURSED: { label: "Disbursed", color: "bg-teal-100 text-teal-700" },
 };
 
-export function FundDistributionManager({ committeeId, terms }: { committeeId: string; terms: any[] }) {
+export function FundDistributionManager({ committeeId, terms, isReadOnly }: { committeeId: string; terms: any[]; isReadOnly?: boolean }) {
   const [requests, setRequests] = useState<any[]>([]);
   const [distStats, setDistStats] = useState({ totalDisbursed: 0, activeRequests: 0, approvedPending: 0 });
   const [settings, setSettings] = useState({ currency: "LKR", decimals: 2 });
@@ -125,12 +125,14 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Disbursed</p>
               <p className="text-sm font-black text-slate-900">{settings.currency} {formatValue(distStats.totalDisbursed)}</p>
             </div>
-            <button
-              onClick={() => setShowNewRequest(true)}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> New Request
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => setShowNewRequest(true)}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> New Request
+              </button>
+            )}
           </div>
         </div>
 
@@ -215,7 +217,7 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
                     <button onClick={() => setSelectedRequest(r)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all" title="View Details">
                       <Eye className="w-4 h-4" />
                     </button>
-                    {r.status !== "DISBURSED" && (
+                    {!isReadOnly && r.status !== "DISBURSED" && (
                       <button
                         onClick={async () => {
                           if (confirm("Delete this fund request? This cannot be undone.")) {
@@ -251,6 +253,7 @@ export function FundDistributionManager({ committeeId, terms }: { committeeId: s
           settings={settings}
           members={currentTerm?.members || []}
           onClose={() => setSelectedRequest(null)}
+          isReadOnly={isReadOnly}
         />
       )}
     </div>

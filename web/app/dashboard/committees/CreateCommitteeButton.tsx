@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { CommitteeForm } from "./CommitteeForm";
 
-export function CreateCommitteeButton() {
+export function CreateCommitteeButton({ userRole, canOversight }: { userRole: string, canOversight?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -41,6 +41,8 @@ export function CreateCommitteeButton() {
             
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               <CommitteeForm 
+                userRole={userRole} 
+                canOversight={canOversight}
                 onComplete={() => setIsOpen(false)} 
               />
             </div>

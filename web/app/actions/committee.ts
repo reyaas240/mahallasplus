@@ -43,6 +43,8 @@ export async function createCommittee(formData: FormData) {
       await writeFile(absolutePath, buffer);
     }
 
+    const allowMainMahallaView = formData.get("allowMainMahallaView") === "on";
+
     const committee = await prisma.committee.create({
       data: {
         name,
@@ -60,6 +62,7 @@ export async function createCommittee(formData: FormData) {
         accountHolderName,
         branch,
         defaultCurrency,
+        allowMainMahallaView,
         mainMahallaId: session.user.mainMahallaId as string,
         subMahallaId: session.user.role === "SUB_ADMIN" ? session.user.subMahallaId : (formData.get("subMahallaId") as string || null),
       },
@@ -108,6 +111,16 @@ export async function updateCommittee(id: string, formData: FormData) {
       await writeFile(absolutePath, buffer);
     }
 
+    const committee = await prisma.committee.findUnique({ where: { id } });
+    if (!committee) return { success: false, error: "Committee not found" };
+
+    // READ-ONLY RESTRICTION: Main Admin cannot edit Sub Mahalla committees
+    if (session.user.role === "MAIN_ADMIN" && committee.subMahallaId) {
+      return { success: false, error: "Read-only access: Main Admins cannot modify Sub Mahalla committees." };
+    }
+
+    const allowMainMahallaView = formData.get("allowMainMahallaView") === "on";
+
     await prisma.committee.update({
       where: { id },
       data: { 
@@ -126,7 +139,8 @@ export async function updateCommittee(id: string, formData: FormData) {
         accountNumber,
         accountHolderName,
         branch,
-        defaultCurrency
+        defaultCurrency,
+        allowMainMahallaView
       },
     });
     revalidatePath("/dashboard/committees");
@@ -168,7 +182,7 @@ export async function addCommitteeMember(committeeTermId: string, familyMemberId
 
 export async function updateCommitteeMember(id: string, data: { role: string, status: string, activeDateFrom?: string, activeDateTo?: string }) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -192,7 +206,7 @@ export async function updateCommitteeMember(id: string, data: { role: string, st
 
 export async function removeCommitteeMember(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -210,7 +224,7 @@ export async function removeCommitteeMember(id: string) {
 
 export async function toggleMemberAccess(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -317,7 +331,7 @@ export async function deleteCommittee(id: string) {
 
 export async function createCommitteeTerm(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -344,7 +358,7 @@ export async function createCommitteeTerm(formData: FormData) {
 
 export async function updateCommitteeTerm(id: string, formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -366,7 +380,7 @@ export async function updateCommitteeTerm(id: string, formData: FormData) {
 
 export async function toggleTermActive(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -394,7 +408,7 @@ export async function toggleTermActive(id: string) {
 
 export async function deleteCommitteeTerm(id: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") {
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -469,7 +483,7 @@ export async function createOpeningBalanceCategory(name: string) {
 
 export async function saveOpeningBalances(committeeTermId: string, balances: { categoryId: string, amount: number }[]) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") return { success: false, error: "Unauthorized" };
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) return { success: false, error: "Unauthorized" };
 
   try {
     const term = await prisma.committeeTerm.findUnique({
@@ -554,7 +568,7 @@ export async function getCommitteeStats(committeeId: string, termId: string) {
 
 export async function approveOpeningBalances(committeeTermId: string) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN") return { success: false, error: "Unauthorized" };
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) return { success: false, error: "Unauthorized" };
 
   try {
     const term = await prisma.committeeTerm.update({

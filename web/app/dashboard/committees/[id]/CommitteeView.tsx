@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Users, Shield, Calendar, MapPin, UserPlus, ShieldCheck, History, Wallet, HeartHandshake, ArrowUpRight, ArrowDownRight, Target, TrendingUp, Info, Landmark, Banknote } from "lucide-react";
+import { Users, Shield, Calendar, MapPin, UserPlus, ShieldCheck, History, Wallet, HeartHandshake, ArrowUpRight, ArrowDownRight, Target, TrendingUp, Info, Landmark, Banknote, ChevronLeft, Lock } from "lucide-react";
+import Link from "next/link";
 import { MemberSelector } from "./MemberSelector";
 import { CommitteeMemberActions } from "./CommitteeMemberActions";
 import { TermManager } from "./TermManager";
@@ -9,7 +10,7 @@ import { FundDistributionManager } from "./FundDistributionManager";
 import { CommitteeMasters } from "./CommitteeMasters";
 import { QRCallButton } from "@/components/QRCallButton";
 
-export function CommitteeView({ committee, currentTerm, members, allMembers, stats, settings }: any) {
+export function CommitteeView({ committee, currentTerm, members, allMembers, stats, settings, isReadOnly, userRole }: any) {
   const [activeTab, setActiveTab] = useState<'overview' | 'financials' | 'distributions' | 'members' | 'masters'>('overview');
 
   const formatValue = (val: number) => {
@@ -21,6 +22,51 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      
+      {/* Header Section */}
+      <div className="flex justify-between items-center">
+        <div className="flex gap-6 items-start">
+          <div className="w-20 h-20 bg-transparent rounded-[28px] flex items-center justify-center text-slate-900 font-black text-3xl shadow-xl shadow-slate-100 overflow-hidden border-2 border-slate-200">
+            {committee.logo ? (
+              <img src={committee.logo} alt={committee.name} className="w-full h-full object-contain p-1" />
+            ) : (
+              committee.name.charAt(0)
+            )}
+          </div>
+          <div>
+            <Link href="/dashboard/committees" className="inline-flex items-center text-[10px] font-black text-slate-400 hover:text-blue-600 transition-all mb-2 uppercase tracking-[0.2em]">
+              <ChevronLeft className="w-4 h-4 mr-1" /> Back to Committees
+            </Link>
+            <div className="flex items-center gap-4">
+              <h2 className="text-4xl font-black text-slate-900 tracking-tight uppercase">{committee.name}</h2>
+              <div className="flex gap-3 items-center">
+                <span className="px-4 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-200">
+                  {committee.status}
+                </span>
+                {currentTerm && (
+                  <span className="px-4 py-1 bg-blue-100 text-blue-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-blue-200">
+                    {currentTerm.name}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isReadOnly && (
+        <div className="bg-amber-50 border border-amber-200 p-6 rounded-[32px] flex items-center gap-4 shadow-sm shadow-amber-100/50">
+          <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
+             <Lock className="w-6 h-6" />
+          </div>
+          <div>
+             <h4 className="text-[11px] font-black text-amber-900 uppercase tracking-widest">Oversight View (Read-Only)</h4>
+             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-1 opacity-80">
+               You are viewing this Sub Mahalla committee under oversight access. Management features are disabled.
+             </p>
+          </div>
+        </div>
+      )}
       
       {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -95,7 +141,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
               <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="md:col-span-1">
-                      <TermManager committeeId={committee.id} terms={committee.terms} />
+                      <TermManager committeeId={committee.id} terms={committee.terms} isReadOnly={isReadOnly} />
                    </div>
                    <div className="md:col-span-1 space-y-8">
                      <div className="bg-white rounded-[40px] border border-slate-200 p-10 flex flex-col items-center justify-center text-center space-y-4 h-full">
@@ -118,19 +164,19 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
 
             {activeTab === 'financials' && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                 <DonorDonationManager committeeId={committee.id} terms={committee.terms} />
+                 <DonorDonationManager committeeId={committee.id} terms={committee.terms} isReadOnly={isReadOnly} />
               </div>
             )}
 
             {activeTab === 'masters' && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                 <CommitteeMasters committeeId={committee.id} />
+                 <CommitteeMasters committeeId={committee.id} isReadOnly={isReadOnly} />
               </div>
             )}
 
             {activeTab === 'distributions' && (
               <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                 <FundDistributionManager committeeId={committee.id} terms={committee.terms} />
+                 <FundDistributionManager committeeId={committee.id} terms={committee.terms} isReadOnly={isReadOnly} />
               </div>
             )}
 
@@ -148,7 +194,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
                       <div key={m.id} className="p-8 flex justify-between items-center hover:bg-slate-50/30 transition-all group">
                          <div className="flex gap-5 items-center">
                             <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-blue-100">
-                              {m.familyMember.fullName.charAt(0)}
+                               {m.familyMember.fullName.charAt(0)}
                             </div>
                             <div className="space-y-1">
                                <div className="flex items-center gap-3">
@@ -161,17 +207,19 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
                                </p>
                             </div>
                          </div>
-                         <CommitteeMemberActions member={m} />
+                         {!isReadOnly && <CommitteeMemberActions member={m} />}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="lg:col-span-4">
-                  <div className="sticky top-28">
-                    <MemberSelector terms={committee.terms} allMembers={allMembers} />
+                {!isReadOnly && (
+                  <div className="lg:col-span-4">
+                    <div className="sticky top-28">
+                      <MemberSelector terms={committee.terms} allMembers={allMembers} />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>

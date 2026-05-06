@@ -4,7 +4,9 @@ import { Power, PowerOff, Loader2, Edit3, Trash2, X } from "lucide-react";
 import { toggleCommitteeStatus, deleteCommittee } from "@/app/actions/committee";
 import { CommitteeForm } from "./CommitteeForm";
 
-export function CommitteeActions({ committee }: { committee: any }) {
+export function CommitteeActions({ committee, isReadOnly, userRole, canOversight }: { committee: any, isReadOnly?: boolean, userRole?: string, canOversight?: boolean }) {
+  if (isReadOnly) return null;
+  const [showMenu, setShowMenu] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -92,6 +94,8 @@ export function CommitteeActions({ committee }: { committee: any }) {
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               <CommitteeForm 
                 initialData={committee} 
+                userRole={userRole}
+                canOversight={canOversight}
                 onComplete={() => setIsEditing(false)} 
               />
             </div>

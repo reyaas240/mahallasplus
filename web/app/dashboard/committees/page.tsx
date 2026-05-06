@@ -6,6 +6,7 @@ import { Users, Plus, Shield, Search, Calendar, ChevronRight } from "lucide-reac
 import Link from "next/link";
 import { CreateCommitteeButton } from "./CreateCommitteeButton";
 import { CommitteeActions } from "./CommitteeActions";
+import { checkFeature } from "@/lib/features";
 
 export default async function CommitteesPage() {
   const session = await getServerSession(authOptions);
@@ -13,12 +14,23 @@ export default async function CommitteesPage() {
     redirect("/dashboard");
   }
 
+  const canOversight = await checkFeature(session.user.mainMahallaId as string, "ALLOW_COMMITTEE_OVERSIGHT");
+
   const where: any = {
     mainMahallaId: session.user.mainMahallaId as string,
   };
 
   if (session.user.role === "SUB_ADMIN") {
     where.subMahallaId = session.user.subMahallaId as string;
+  } else if (session.user.role === "MAIN_ADMIN") {
+    if (canOversight) {
+      where.OR = [
+        { subMahallaId: null }, // Committees directly under Main Mahalla
+        { allowMainMahallaView: true } // Sub Mahalla committees that granted view access
+      ];
+    } else {
+      where.subMahallaId = null; // Only directly owned committees
+    }
   }
 
   const committees = await prisma.committee.findMany({
@@ -35,10 +47,12 @@ export default async function CommitteesPage() {
     <div className="space-y-8 pb-20">
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">COMMITTEE MANAGEMENT</h2>
-          <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">Main Mahalla Oversight</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Committee Management</h2>
+          <p className="text-slate-500 font-bold mt-1 uppercase text-[10px] tracking-[0.2em]">
+            {session.user.role === "MAIN_ADMIN" ? "Central Control & Sub-Mahalla Oversight" : "Local Board Administration"}
+          </p>
         </div>
-        <CreateCommitteeButton />
+        <CreateCommitteeButton userRole={session.user.role} canOversight={canOversight} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -67,45 +81,48 @@ export default async function CommitteesPage() {
                   <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">No committees found</p>
                 </div>
               ) : (
-                committees.map((c) => (
-                  <div key={c.id} className="p-6 hover:bg-slate-50/50 transition-all group flex items-center justify-between">
-                    <div className="flex gap-5 items-center">
-                      <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm overflow-hidden border border-slate-100">
-                        {c.logo ? (
-                          <img src={c.logo} alt={c.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Users className="w-7 h-7" />
-                        )}
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-black text-slate-900 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
-                          {c.name}
-                        </h4>
-                        <div className="flex gap-4 items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          <span className={`px-2 py-0.5 rounded-md border ${c.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
-                            {c.status}
-                          </span>
-                          <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {c._count.terms} Terms</span>
-                          <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Created {new Date(c.createdAt).toLocaleDateString()}</span>
+                committees.map((c) => {
+                  const isOversight = session.user.role === "MAIN_ADMIN" && !!c.subMahallaId;
+                  return (
+                    <div key={c.id} className="p-6 hover:bg-slate-50/50 transition-all group flex items-center justify-between">
+                      <div className="flex gap-5 items-center">
+                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm overflow-hidden border border-slate-100">
+                          {c.logo ? (
+                            <img src={c.logo} alt={c.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Users className="w-7 h-7" />
+                          )}
                         </div>
-                        {c.description && (
-                          <p className="text-sm text-slate-500 font-medium line-clamp-1 max-w-md">
-                            {c.description}
-                          </p>
-                        )}
+                        <div className="space-y-1">
+                          <h4 className="font-black text-slate-900 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                            {c.name}
+                          </h4>
+                          <div className="flex gap-4 items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <span className={`px-2 py-0.5 rounded-md border ${c.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                              {c.status}
+                            </span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {c._count.terms} Terms</span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Created {new Date(c.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          {c.description && (
+                            <p className="text-sm text-slate-500 font-medium line-clamp-1 max-w-md">
+                              {c.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CommitteeActions committee={c} isReadOnly={isOversight} userRole={session.user.role} canOversight={canOversight} />
+                        <Link 
+                          href={`/dashboard/committees/${c.id}`}
+                          className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
+                        >
+                          {isOversight ? "View Committee" : "Manage Committee"} <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <CommitteeActions committee={c} />
-                      <Link 
-                        href={`/dashboard/committees/${c.id}`}
-                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-slate-200"
-                      >
-                        Manage Committee <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

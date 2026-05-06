@@ -9,7 +9,7 @@ import {
   approveOpeningBalances
 } from "@/app/actions/committee";
 
-export function FinancialSetup({ term, onClose }: { term: any, onClose: () => void }) {
+export function FinancialSetup({ term, onClose, isReadOnly }: { term: any, onClose: () => void, isReadOnly?: boolean }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [settings, setSettings] = useState({ currency: "LKR", decimals: 2 });
   const [balances, setBalances] = useState<{ [key: string]: string }>({});
@@ -140,15 +140,15 @@ export function FinancialSetup({ term, onClose }: { term: any, onClose: () => vo
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar">
-          {isApproved && (
-            <div className="p-5 bg-emerald-50 rounded-3xl border border-emerald-100 flex gap-4 items-start animate-in slide-in-from-top-4">
-              <div className="p-3 bg-white rounded-2xl shadow-sm text-emerald-600">
-                <ShieldCheck className="w-6 h-6" />
+          {(isApproved || isReadOnly) && (
+            <div className={`p-5 rounded-3xl border flex gap-4 items-start animate-in slide-in-from-top-4 ${isReadOnly ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
+              <div className={`p-3 bg-white rounded-2xl shadow-sm ${isReadOnly ? 'text-amber-600' : 'text-emerald-600'}`}>
+                {isReadOnly ? <Lock className="w-6 h-6" /> : <ShieldCheck className="w-6 h-6" />}
               </div>
               <div>
-                <p className="text-xs font-black text-emerald-900 uppercase tracking-wide">Financial Position Locked</p>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">
-                  Approved on {term.financialsApprovedAt ? new Date(term.financialsApprovedAt).toLocaleDateString() : 'N/A'}
+                <p className={`text-xs font-black uppercase tracking-wide ${isReadOnly ? 'text-amber-900' : 'text-emerald-900'}`}>{isReadOnly ? 'Read-Only Oversight' : 'Financial Position Locked'}</p>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isReadOnly ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  {isReadOnly ? 'Management actions are disabled' : `Approved on ${term.financialsApprovedAt ? new Date(term.financialsApprovedAt).toLocaleDateString() : 'N/A'}`}
                 </p>
               </div>
             </div>
@@ -171,7 +171,7 @@ export function FinancialSetup({ term, onClose }: { term: any, onClose: () => vo
                   <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-lg transition-colors group-focus-within:text-blue-600">{settings.currency}</span>
                   <input 
                     type="text"
-                    disabled={isApproved}
+                    disabled={isApproved || isReadOnly}
                     value={balances[cat.id] || ""}
                     onBlur={() => handleBlur(cat.id)}
                     onChange={(e) => handleInputChange(cat.id, e.target.value)}
@@ -182,7 +182,7 @@ export function FinancialSetup({ term, onClose }: { term: any, onClose: () => vo
               </div>
             ))}
 
-            {!isApproved && (
+            {!isApproved && !isReadOnly && (
               <div className="pt-4 space-y-4">
                 {isAddingCategory ? (
                   <div className="flex gap-3 animate-in zoom-in-95">
@@ -206,7 +206,7 @@ export function FinancialSetup({ term, onClose }: { term: any, onClose: () => vo
         </div>
 
         {/* Footer Actions */}
-        {!isApproved && (
+        {!isApproved && !isReadOnly && (
           <div className="p-10 border-t border-slate-100 bg-slate-50/30 flex gap-4">
             <button 
               onClick={handleSave}

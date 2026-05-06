@@ -8,7 +8,12 @@ import { authOptions } from "@/lib/auth";
 
 export async function updateMainMahalla(id: string, formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "PLATFORM_ADMIN") {
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const isPlatformAdmin = session.user.role === "PLATFORM_ADMIN";
+  const isMainAdminOfThisMahalla = session.user.role === "MAIN_ADMIN" && session.user.mainMahallaId === id;
+
+  if (!isPlatformAdmin && !isMainAdminOfThisMahalla) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -33,10 +38,12 @@ export async function updateMainMahalla(id: string, formData: FormData) {
     let activatedDate = current.activatedDate;
     let deactivatedDate = current.deactivatedDate;
 
-    if (status === "ACTIVE" && current.status === "INACTIVE") {
+    const effectiveStatus = status || current.status;
+
+    if (effectiveStatus === "ACTIVE" && current.status === "INACTIVE") {
       activatedDate = new Date();
-      deactivatedDate = null; // Remove deactivated date on reactivation
-    } else if (status === "INACTIVE" && current.status === "ACTIVE") {
+      deactivatedDate = null;
+    } else if (effectiveStatus === "INACTIVE" && current.status === "ACTIVE") {
       deactivatedDate = new Date();
     }
 
@@ -46,16 +53,16 @@ export async function updateMainMahalla(id: string, formData: FormData) {
     await prisma.mainMahalla.update({
       where: { id },
       data: {
-        name,
-        email,
-        phone,
-        address,
-        country,
-        province,
-        district,
-        area,
-        defaultCurrency,
-        status: status as any,
+        name: name || current.name,
+        email: email || current.email,
+        phone: phone || current.phone,
+        address: address || current.address,
+        country: country || current.country,
+        province: province || current.province,
+        district: district || current.district,
+        area: area || current.area,
+        defaultCurrency: defaultCurrency || current.defaultCurrency,
+        status: (effectiveStatus as any) || current.status,
         activatedDate,
         deactivatedDate,
         ...(logo && { logo }),
@@ -64,8 +71,10 @@ export async function updateMainMahalla(id: string, formData: FormData) {
     });
 
     revalidatePath("/dashboard/main-mahallas");
+    revalidatePath("/dashboard/mahalla-profile");
     return { success: true };
-  } catch (e) {
-    return { success: false, error: "Failed to update mahalla" };
+  } catch (e: any) {
+    console.error("Failed to update mahalla:", e);
+    return { success: false, error: e.message || "Failed to update mahalla" };
   }
 }

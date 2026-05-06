@@ -5,17 +5,27 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function searchInternalMembers(query: string) {
+export async function searchInternalMembers(query: string, committeeId?: string) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user.mainMahallaId) return [];
 
   const mainMahallaId = session.user.mainMahallaId;
+  let subMahallaId = session.user.subMahallaId;
+
+  if (committeeId) {
+    const committee = await prisma.committee.findUnique({
+      where: { id: committeeId },
+      select: { subMahallaId: true }
+    });
+    if (committee) subMahallaId = committee.subMahallaId;
+  }
 
   const members = await prisma.familyMember.findMany({
     where: {
       familyCard: {
         subMahalla: {
-          mainMahallaId
+          mainMahallaId,
+          ...(subMahallaId ? { id: subMahallaId } : { id: { not: undefined } }) 
         }
       },
       OR: [
@@ -72,9 +82,19 @@ export async function updateDonor(donorId: string, data: any) {
   }
 }
 
-export async function createDonor(data: any) {
+export async function createDonor(data: any, committeeId?: string) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user.mainMahallaId) return { success: false, error: "Unauthorized" };
+
+  let subMahallaId = session.user.subMahallaId;
+
+  if (committeeId) {
+    const committee = await prisma.committee.findUnique({
+      where: { id: committeeId },
+      select: { subMahallaId: true }
+    });
+    if (committee) subMahallaId = committee.subMahallaId;
+  }
 
   const { contacts, ...donorData } = data;
 
@@ -83,6 +103,7 @@ export async function createDonor(data: any) {
       data: {
         ...donorData,
         mainMahallaId: session.user.mainMahallaId,
+        subMahallaId: subMahallaId || null,
         contacts: contacts ? {
           create: contacts
         } : undefined
@@ -121,24 +142,48 @@ export async function recordDonation(data: any) {
   }
 }
 
-export async function getDonors() {
+export async function getDonors(committeeId?: string) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user.mainMahallaId) return [];
 
+  let subMahallaId = session.user.subMahallaId;
+
+  if (committeeId) {
+    const committee = await prisma.committee.findUnique({
+      where: { id: committeeId },
+      select: { subMahallaId: true }
+    });
+    if (committee) subMahallaId = committee.subMahallaId;
+  }
+
   return prisma.donor.findMany({
-    where: { mainMahallaId: session.user.mainMahallaId },
+    where: { 
+      mainMahallaId: session.user.mainMahallaId,
+      subMahallaId: subMahallaId || null
+    },
     include: { contacts: true },
     orderBy: { name: "asc" }
   });
 }
 
-export async function searchAllDonors(query: string) {
+export async function searchAllDonors(query: string, committeeId?: string) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user.mainMahallaId) return [];
+
+  let subMahallaId = session.user.subMahallaId;
+
+  if (committeeId) {
+    const committee = await prisma.committee.findUnique({
+      where: { id: committeeId },
+      select: { subMahallaId: true }
+    });
+    if (committee) subMahallaId = committee.subMahallaId;
+  }
 
   return prisma.donor.findMany({
     where: {
       mainMahallaId: session.user.mainMahallaId,
+      subMahallaId: subMahallaId || null,
       OR: [
         { name: { contains: query, mode: "insensitive" } },
         { phone: { contains: query, mode: "insensitive" } }

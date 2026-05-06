@@ -799,7 +799,10 @@ export async function searchFamilyMembers(query: string) {
   return prisma.familyMember.findMany({
     where: {
       familyCard: {
-        subMahalla: { mainMahallaId: session.user.mainMahallaId },
+        subMahalla: { 
+          mainMahallaId: session.user.mainMahallaId,
+          ...(session.user.role === "SUB_ADMIN" && { id: session.user.subMahallaId })
+        },
       },
       OR: [
         { fullName: { contains: query, mode: "insensitive" } },

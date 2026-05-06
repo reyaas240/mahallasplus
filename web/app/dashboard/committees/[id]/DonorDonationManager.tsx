@@ -5,7 +5,7 @@ import { searchInternalMembers, createDonor, updateDonor, recordDonation, getCom
 import { getFinancialSettings } from "@/app/actions/committee";
 import { QRCallButton } from "@/components/QRCallButton";
 
-export function DonorDonationManager({ committeeId, terms }: { committeeId: string, terms: any[] }) {
+export function DonorDonationManager({ committeeId, terms, isReadOnly }: { committeeId: string, terms: any[], isReadOnly?: boolean }) {
   const [activeTab, setActiveTab] = useState<'donors' | 'donations'>('donations');
   const [showAddDonation, setShowAddDonation] = useState(false);
   const [showEditDonor, setShowEditDonor] = useState<any | null>(null);
@@ -23,7 +23,7 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
     setIsLoading(true);
     const [donationsList, donorsList, finSettings] = await Promise.all([
       getCommitteeDonations(committeeId, currentTerm?.id),
-      getDonors(),
+      getDonors(committeeId),
       getFinancialSettings()
     ]);
     setDonations(donationsList);
@@ -85,12 +85,14 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
             <HeartHandshake className="w-4 h-4" /> Donor Registry
           </button>
         </div>
-        <button 
-          onClick={() => setShowAddDonation(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-50 active:scale-95"
-        >
-          <Plus className="w-4 h-4" /> Record Donation
-        </button>
+        {!isReadOnly && (
+          <button 
+            onClick={() => setShowAddDonation(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-50 active:scale-95"
+          >
+            <Plus className="w-4 h-4" /> Record Donation
+          </button>
+        )}
       </div>
 
       <div className="p-4 border-b border-slate-100 bg-white">
@@ -141,26 +143,28 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
                       {d.reference && <p className="text-[8px] font-black text-slate-600 uppercase tracking-tight">Ref: {d.reference}</p>}
                     </div>
                     
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                       <button 
-                         onClick={() => setShowEditDonation(d)}
-                         className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                         title="Edit Donation"
-                       >
-                         <Edit3 className="w-4 h-4" />
-                       </button>
-                       <button 
-                         onClick={async () => {
-                           if (confirm("Are you sure you want to delete this donation record? This action cannot be undone.")) {
-                             await deleteDonation(d.id);
-                           }
-                         }}
-                         className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
-                         title="Delete Donation"
-                       >
-                         <Trash2 className="w-4 h-4" />
-                       </button>
-                    </div>
+                    {!isReadOnly && (
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                         <button 
+                           onClick={() => setShowEditDonation(d)}
+                           className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                           title="Edit Donation"
+                         >
+                           <Edit3 className="w-4 h-4" />
+                         </button>
+                         <button 
+                           onClick={async () => {
+                             if (confirm("Are you sure you want to delete this donation record? This action cannot be undone.")) {
+                               await deleteDonation(d.id);
+                             }
+                           }}
+                           className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                           title="Delete Donation"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -249,14 +253,25 @@ export function DonorDonationManager({ committeeId, terms }: { committeeId: stri
 function EditDonationModal({ donation, settings, onClose }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [displayAmount, setDisplayAmount] = useState(donation.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/,/g, "");
+    if (!isNaN(Number(val)) || val === "" || val === ".") {
+      const parts = val.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setDisplayAmount(parts.join("."));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    const rawAmount = displayAmount.replace(/,/g, "");
     
     const res = await updateDonation(donation.id, {
-      amount: formData.get("amount"),
+      amount: rawAmount,
       date: formData.get("date"),
       paymentMethod: formData.get("paymentMethod"),
       reference: formData.get("reference"),
@@ -298,20 +313,19 @@ function EditDonationModal({ donation, settings, onClose }: any) {
           </div>
 
           <div className="grid grid-cols-12 gap-4">
-             <div className="col-span-12">
-               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
-               <div className="relative">
-                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
-                 <input 
-                   name="amount" 
-                   type="number" 
-                   step="0.01" 
-                   required 
-                   defaultValue={donation.amount}
-                   className="w-full pl-16 pr-5 py-4 bg-white border-2 border-slate-300 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-2xl" 
-                 />
-               </div>
-             </div>
+              <div className="col-span-12">
+                <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
+                  <input 
+                    type="text" 
+                    required 
+                    value={displayAmount}
+                    onChange={handleAmountChange}
+                    className="w-full pl-16 pr-5 py-4 bg-white border-2 border-slate-300 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-2xl" 
+                  />
+                </div>
+              </div>
              
              <div className="col-span-6">
                <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Date</label>
@@ -548,12 +562,22 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
   const [contacts, setContacts] = useState<any[]>([]);
   const [newContact, setNewContact] = useState({ name: "", phone: "", whatsapp: "", email: "" });
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [displayAmount, setDisplayAmount] = useState("");
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/,/g, "");
+    if (!isNaN(Number(val)) || val === "" || val === ".") {
+      const parts = val.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setDisplayAmount(parts.join("."));
+    }
+  };
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 2) {
         setIsSearching(true);
-        const results = await searchAllDonors(searchQuery);
+        const results = await searchAllDonors(searchQuery, committeeId);
         setMasterResults(results);
         setIsSearching(false);
       } else {
@@ -567,7 +591,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
     const delayDebounceFn = setTimeout(async () => {
       if (memberQuery.length > 2) {
         setIsSearching(true);
-        const results = await searchInternalMembers(memberQuery);
+        const results = await searchInternalMembers(memberQuery, committeeId);
         setMemberResults(results);
         setIsSearching(false);
       }
@@ -589,6 +613,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
     e.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    const rawAmount = displayAmount.replace(/,/g, "");
     
     let donorId = selectedDonor?.id;
 
@@ -600,7 +625,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
           phone: externalData.phone,
           email: externalData.email,
           contacts: contacts
-        });
+        }, committeeId);
         if (res.success && res.donor) donorId = res.donor.id;
         else { alert(res.error); setIsSubmitting(false); return; }
       } else {
@@ -610,14 +635,14 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
           type: 'INTERNAL',
           name: member.name,
           familyMemberId: member.id
-        });
+        }, committeeId);
         if (res.success && res.donor) donorId = res.donor.id;
         else { alert(res.error); setIsSubmitting(false); return; }
       }
     }
 
     const donationRes = await recordDonation({
-      amount: formData.get("amount"),
+      amount: rawAmount,
       date: formData.get("date"),
       paymentMethod: formData.get("paymentMethod"),
       reference: formData.get("reference"),
@@ -664,7 +689,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                 placeholder="Search Name / Phone..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setSelectedDonor(null); setShowRegistration(false); }}
-                className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl outline-none focus:border-blue-600 transition-all font-bold text-xs text-slate-900 placeholder:text-slate-500"
+                className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl outline-none focus:border-blue-600 transition-all font-bold text-xs text-slate-900 placeholder:text-slate-600"
               />
             </div>
 
@@ -716,7 +741,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                       placeholder="Search Member..."
                       value={memberQuery}
                       onChange={(e) => setMemberQuery(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-500"
+                      className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl outline-none font-bold text-[11px] text-slate-900 placeholder:text-slate-600"
                     />
                     <div className="max-h-20 overflow-y-auto space-y-1">
                        {memberResults.map(m => (
@@ -728,9 +753,9 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                  </div>
                ) : (
                  <div className="grid grid-cols-2 gap-2">
-                    <input value={externalData.name} onChange={e => setExternalData({...externalData, name: e.target.value})} placeholder="Org Name" className="col-span-2 px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase placeholder:text-slate-500" />
-                    <input value={externalData.phone} onChange={e => setExternalData({...externalData, phone: e.target.value})} placeholder="Phone" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] placeholder:text-slate-500" />
-                    <input value={externalData.email} onChange={e => setExternalData({...externalData, email: e.target.value})} placeholder="Email" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] placeholder:text-slate-500" />
+                    <input value={externalData.name} onChange={e => setExternalData({...externalData, name: e.target.value})} placeholder="Org Name" className="col-span-2 px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase placeholder:text-slate-600" />
+                    <input value={externalData.phone} onChange={e => setExternalData({...externalData, phone: e.target.value})} placeholder="Phone" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] text-slate-900 placeholder:text-slate-600" />
+                    <input value={externalData.email} onChange={e => setExternalData({...externalData, email: e.target.value})} placeholder="Email" className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-[10px] text-slate-900 placeholder:text-slate-600" />
                  </div>
                )}
             </div>
@@ -739,13 +764,20 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
           <div className="h-px bg-slate-100" />
 
           <div className="grid grid-cols-12 gap-3">
-             <div className="col-span-12 lg:col-span-12">
-               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
-               <div className="relative">
-                 <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
-                 <input name="amount" type="number" step="0.01" required className="w-full pl-16 pr-5 py-3.5 bg-white border-2 border-slate-300 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-xl" placeholder="0.00" />
-               </div>
-             </div>
+              <div className="col-span-12 lg:col-span-12">
+                <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-2 px-1">Amount ({settings.currency})</label>
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 font-black text-base">{settings.currency}</span>
+                  <input 
+                    type="text" 
+                    required 
+                    value={displayAmount}
+                    onChange={handleAmountChange}
+                    className="w-full pl-16 pr-5 py-3.5 bg-white border-2 border-slate-300 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-xl" 
+                    placeholder="0.00" 
+                  />
+                </div>
+              </div>
              
              <div className="col-span-6">
                <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Date</label>
@@ -766,7 +798,7 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                 <div className="flex gap-3">
                    <div className="flex-1">
                       <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Reference (Ref No)</label>
-                      <input name="reference" placeholder="Ref No / Cheque No" className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-[11px] placeholder:text-slate-500" />
+                      <input name="reference" placeholder="Ref No / Cheque No" className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 text-[11px] placeholder:text-slate-600" />
                    </div>
                    <div className="w-1/2">
                       <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Attachment</label>

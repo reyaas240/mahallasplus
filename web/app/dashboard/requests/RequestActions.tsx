@@ -1,15 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, Loader2 } from "lucide-react";
-import { approveRequest, rejectRequest } from "@/app/actions/requests";
+import { Check, X, Loader2, ShieldCheck, Eye, ShieldAlert, XCircle } from "lucide-react";
+import { approveRequest, rejectRequest, verifyRequest } from "@/app/actions/requests";
 
-export function RequestActions({ requestId }: { requestId: string }) {
+export function RequestActions({ request }: { request: any }) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+
+  const handleVerify = async () => {
+    setIsProcessing(true);
+    const res = await verifyRequest(request.id);
+    if (res.success) {
+      setShowVerifyModal(false);
+    } else {
+      alert(res.error);
+    }
+    setIsProcessing(false);
+  };
 
   const handleApprove = async () => {
+    if (!request.isVerified) {
+      alert("Please verify the identity documents before approving.");
+      setShowVerifyModal(true);
+      return;
+    }
     setIsProcessing(true);
-    const res = await approveRequest(requestId);
+    const res = await approveRequest(request.id);
     if (!res.success) {
       alert(res.error);
     }
@@ -19,7 +36,7 @@ export function RequestActions({ requestId }: { requestId: string }) {
   const handleReject = async () => {
     if (!confirm("Are you sure you want to reject this request?")) return;
     setIsProcessing(true);
-    const res = await rejectRequest(requestId);
+    const res = await rejectRequest(request.id);
     if (!res.success) {
       alert(res.error);
     }
@@ -28,26 +45,125 @@ export function RequestActions({ requestId }: { requestId: string }) {
 
   if (isProcessing) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-slate-500">
+      <div className="flex items-center gap-2 px-4 py-2 text-slate-500 font-medium text-sm">
         <Loader2 className="w-4 h-4 animate-spin" /> Processing...
       </div>
     );
   }
 
+  if (request.status !== "PENDING") {
+    return (
+      <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold ${request.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+        {request.status === 'APPROVED' ? <Check className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+        {request.status}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-3">
-      <button 
-        onClick={handleApprove}
-        className="flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors font-medium text-sm"
-      >
-        <Check className="w-4 h-4" /> Approve
-      </button>
-      <button 
-        onClick={handleReject}
-        className="flex items-center gap-2 px-4 py-2 border border-red-200 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
-      >
-        <X className="w-4 h-4" /> Reject
-      </button>
-    </div>
+    <>
+      <div className="flex items-center gap-3">
+        {!request.isVerified && (
+          <button 
+            onClick={() => setShowVerifyModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-bold text-sm"
+          >
+            <Eye className="w-4 h-4" /> Verify Identity
+          </button>
+        )}
+        
+        {request.isVerified && (
+          <button 
+            onClick={handleApprove}
+            className="flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors font-bold text-sm"
+          >
+            <Check className="w-4 h-4" /> Approve
+          </button>
+        )}
+
+        <button 
+          onClick={handleReject}
+          className="flex items-center gap-2 px-4 py-2 border border-rose-200 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-colors font-bold text-sm"
+        >
+          <X className="w-4 h-4" /> Reject
+        </button>
+      </div>
+
+      {showVerifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Identity Verification</h3>
+                  <p className="text-sm text-slate-500 font-medium">{request.mahallaName} Registration Request</p>
+                </div>
+              </div>
+              <button onClick={() => setShowVerifyModal(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                <X className="w-6 h-6 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-8 overflow-y-auto flex-1 bg-slate-50/30">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Government ID</h4>
+                  <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
+                    {request.governmentIdUrl ? (
+                      <img src={request.governmentIdUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Government ID" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <ShieldAlert className="w-12 h-12 mb-2" />
+                        <p className="font-bold">No ID Uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Applicant Selfie</h4>
+                  <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
+                    {request.selfieUrl ? (
+                      <img src={request.selfieUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Selfie" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <ShieldAlert className="w-12 h-12 mb-2" />
+                        <p className="font-bold">No Selfie Uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
+                <h4 className="font-black text-blue-900 mb-2 flex items-center gap-2">
+                   <ShieldCheck className="w-5 h-5" /> Applicant Declaration
+                </h4>
+                <p className="text-sm text-blue-800 leading-relaxed font-medium">
+                  I, <span className="font-bold underline decoration-blue-300 decoration-2 underline-offset-2">{request.fullName}</span>, hereby certify that the information provided is accurate and I am authorized to represent <span className="font-bold underline decoration-blue-300 decoration-2 underline-offset-2">{request.mahallaName}</span>.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 bg-white border-t border-slate-100 flex gap-4">
+              <button 
+                onClick={handleVerify}
+                className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 flex items-center justify-center gap-3 active:scale-[0.98]"
+              >
+                <ShieldCheck className="w-6 h-6" /> Mark as Verified
+              </button>
+              <button 
+                onClick={handleReject}
+                className="px-8 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black hover:bg-rose-100 transition-all border border-rose-100 active:scale-[0.98]"
+              >
+                Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -60,7 +60,7 @@ export default async function RequestsPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <RequestActions requestId={req.id} />
+                  <RequestActions request={req} />
                 </div>
               </div>
             ))}

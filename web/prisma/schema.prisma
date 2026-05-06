@@ -28,6 +28,7 @@ model Committee {
   defaultCurrency   String? @default("LKR")
 
   status        Status            @default(ACTIVE)
+  allowMainMahallaView Boolean         @default(false)
   mainMahallaId String
   subMahallaId  String?
   createdAt     DateTime          @default(now())
@@ -104,13 +105,19 @@ model User {
 
 model RegistrationRequest {
   id              String             @id @default(cuid())
-  licensePlan     String
+  licensePlanId   String?
+  licensePlan     LicensePlan?       @relation(fields: [licensePlanId], references: [id])
   fullName        String
   email           String             @unique
   phone           String?
   mahallaName     String
+  country         String?
+  province        String?
+  district        String?
+  address         String?
   selfieUrl       String?
   governmentIdUrl String?
+  isVerified      Boolean            @default(false)
   status          RegistrationStatus @default(PENDING)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
@@ -135,6 +142,9 @@ model MainMahalla {
   status                  Status                   @default(ACTIVE)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+  licensePlanId           String?
+  licensePlan             LicensePlan?             @relation(fields: [licensePlanId], references: [id])
+  subscription            Subscription?
   committees              Committee[]
   subMahallas             SubMahalla[]
   users                   User[]
@@ -184,6 +194,7 @@ model SubMahalla {
   committees     Committee[]
   mainMahalla    MainMahalla  @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
   users          User[]
+  donors         Donor[]
 }
 
 model FamilyCard {
@@ -320,14 +331,17 @@ model Donor {
   email          String?
   familyMemberId String?
   mainMahallaId  String
+  subMahallaId   String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   donations      Donation[]
   contacts       DonorContact[]
   familyMember   FamilyMember?  @relation(fields: [familyMemberId], references: [id], onDelete: SetNull)
   mainMahalla    MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  subMahalla     SubMahalla?    @relation(fields: [subMahallaId], references: [id], onDelete: Cascade)
 
   @@index([mainMahallaId])
+  @@index([subMahallaId])
 }
 
 model DonorContact {
@@ -555,4 +569,104 @@ model FundRequestEvent {
   note            String?
 
   createdAt       DateTime     @default(now())
+}
+
+model SystemSettings {
+  id              String   @id @default("global")
+  smtpHost        String?
+  smtpPort        Int?
+  smtpUser        String?
+  smtpPassword    String?
+  smtpFromEmail   String?
+  smtpFromName    String?
+  smtpEncryption  String?  // SSL or TLS
+  recaptchaSiteKey  String?
+  recaptchaSecretKey String?
+  
+  // Payment Details
+  bankName          String?
+  accountHolder     String?
+  accountNumber     String?
+  bankInstructions  String?
+  
+  // Branding
+  logoUrl           String?
+  
+  updatedAt       DateTime @updatedAt
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ───────────────── Licensing & Invoicing ─────────────────
+
+enum PlanType {
+  MONTHLY
+  ANNUALLY
+  LIFETIME
+}
+
+model LicensePlan {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  type          PlanType @default(MONTHLY)
+  basePrice     Float    // Original Price
+  salePrice     Float?   // Discounted Price
+  isSaleActive  Boolean  @default(false)
+  description   String?
+  features      String[] // For display
+  featureConfig Json     @default("{}") // For logic
+  status        Status   @default(ACTIVE)
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  mainMahallas  MainMahalla[]
+  requests      RegistrationRequest[]
+  invoices      Invoice[]
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id                    String         @id @default(cuid())
+  invoiceNo             String         @unique
+  amount                Float
+  status                InvoiceStatus  @default(UNPAID)
+  dueDate               DateTime
+  paidAt                DateTime?
+  
+  // Relations
+  licensePlanId         String
+  licensePlan           LicensePlan    @relation(fields: [licensePlanId], references: [id])
+  
+  mainMahallaId         String?        // Link after approval
+  registrationRequestId String?        // Link during registration phase
+  
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+}
+
+model Subscription {
+  id              String       @id @default(cuid())
+  mainMahallaId   String       @unique
+  mainMahalla     MainMahalla  @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  licensePlanId   String
+  status          Status       @default(ACTIVE)
+  startDate       DateTime     @default(now())
+  nextInvoiceDate DateTime
+  lastInvoicedAt  DateTime?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }

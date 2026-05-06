@@ -21,6 +21,25 @@ export async function createSubMahalla(formData: FormData) {
   const coverFile = formData.get("coverImage") as File;
 
   try {
+    // Enforce MAX_SUB_MAHALLAS limit from licence plan
+    const mahalla = await prisma.mainMahalla.findUnique({
+      where: { id: session.user.mainMahallaId },
+      include: { 
+        licensePlan: { select: { featureConfig: true } },
+        _count: { select: { subMahallas: true } }
+      }
+    });
+
+    if (mahalla?.licensePlan?.featureConfig) {
+      const config = mahalla.licensePlan.featureConfig as Record<string, any>;
+      const maxAllowed = config.MAX_SUB_MAHALLAS;
+      if (maxAllowed !== undefined && maxAllowed !== null) {
+        if (mahalla._count.subMahallas >= Number(maxAllowed)) {
+          return { success: false, error: `Sub Mahalla limit reached. Your plan allows a maximum of ${maxAllowed} sub mahallas.` };
+        }
+      }
+    }
+
     const logo = await saveFile(logoFile, "sub-mahallas");
     const coverImage = await saveFile(coverFile, "sub-mahallas");
 

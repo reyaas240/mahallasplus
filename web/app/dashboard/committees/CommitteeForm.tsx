@@ -4,7 +4,7 @@ import { createCommittee, updateCommittee } from "@/app/actions/committee";
 import { Loader2, ShieldCheck, Edit3 } from "lucide-react";
 import { LogoUpload } from "./LogoUpload";
 
-export function CommitteeForm({ initialData, onComplete }: { initialData?: any, onComplete?: () => void }) {
+export function CommitteeForm({ initialData, userRole, onComplete }: { initialData?: any, userRole?: string, onComplete?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
 
@@ -205,16 +205,50 @@ export function CommitteeForm({ initialData, onComplete }: { initialData?: any, 
             name="description" 
             rows={3}
             defaultValue={initialData?.description}
-            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-bold text-slate-900 text-sm" 
+            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-bold text-slate-900 text-sm resize-none" 
             placeholder="Define the purpose of this committee..." 
           />
         </div>
+
+        {userRole !== 'MAIN_ADMIN' && canOversight && (
+          <div>
+            <label className="flex items-center gap-4 p-5 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl cursor-pointer group hover:bg-slate-100/50 hover:border-blue-200 transition-all">
+              <div className="relative flex items-center justify-center">
+                <input 
+                  name="allowMainMahallaView" 
+                  type="checkbox" 
+                  defaultChecked={initialData?.allowMainMahallaView}
+                  className="peer w-6 h-6 rounded-lg border-2 border-slate-300 text-blue-600 focus:ring-blue-600/10 transition-all cursor-pointer opacity-0 absolute"
+                />
+                <div className="w-6 h-6 border-2 border-slate-300 rounded-lg peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                </div>
+              </div>
+              <div>
+                <span className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">Allow Main Mahalla Oversight</span>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 opacity-80">Grant view-only access to the platform administration for transparency</p>
+              </div>
+            </label>
+          </div>
+        )}
+
+        {!canOversight && userRole !== 'MAIN_ADMIN' && (
+          <div className="p-5 bg-amber-50 border-2 border-dashed border-amber-200 rounded-3xl flex items-center gap-4 opacity-70">
+            <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="block text-[10px] font-black text-amber-900 uppercase tracking-widest">Oversight Locked</span>
+              <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest mt-1">Upgrade your plan to enable Main Mahalla oversight.</p>
+            </div>
+          </div>
+        )}
 
         {isEdit && (
           <div>
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Operational Status</label>
             <select 
-              name="status" 
+              name="status"
               defaultValue={initialData.status}
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-black text-slate-900 text-sm uppercase tracking-wide"
             >

@@ -7,7 +7,7 @@ import { resizeImage } from "@/lib/imageResize";
 import { QRCallButton } from "@/components/QRCallButton";
 import { getRequestCategories, getProjectMasters } from "@/app/actions/masters";
 
-export function FundRequestDetailModal({ requestId, settings, members, onClose }: any) {
+export function FundRequestDetailModal({ requestId, settings, members, onClose, isReadOnly }: any) {
   const [req, setReq] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("overview");
@@ -25,7 +25,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
 
   const name = req.beneficiaryType === "INTERNAL" ? req.familyMember?.fullName || "Member" : req.externalName || "External";
   const tabs = ["overview", "investigation", "appointments", "quotations", "decision"];
-  const isLocked = ["DISBURSED", "APPROVED", "REJECTED", "ON_HOLD", "ON_GOING"].includes(req.status);
+  const isLocked = isReadOnly || ["DISBURSED", "APPROVED", "REJECTED", "ON_HOLD", "ON_GOING"].includes(req.status);
   
   const STATUS_MAP: Record<string, { label: string; color: string }> = {
     RECEIVED: { label: "Received", color: "bg-slate-100 text-slate-700" },
@@ -64,7 +64,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isLocked && (
+            {!isReadOnly && !isLocked && (
               <button onClick={() => setIsEditing(true)} className="p-2 text-slate-400 rounded-xl hover:text-blue-600 transition-all border border-slate-100 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3">
                 <Edit3 className="w-4 h-4" /> Edit
               </button>
@@ -90,7 +90,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose }
               {activeSection === "investigation" && <InvestigationSection req={req} members={members} onRefresh={load} setLightbox={setLightbox} isLocked={isLocked} />}
               {activeSection === "appointments" && <AppointmentSection req={req} onRefresh={load} isLocked={isLocked} />}
               {activeSection === "quotations" && <QuotationSection req={req} onRefresh={load} setLightbox={setLightbox} isLocked={isLocked} />}
-              {activeSection === "decision" && <DecisionSection req={req} settings={settings} members={members} fmt={fmt} onRefresh={load} setLightbox={setLightbox} />}
+              {activeSection === "decision" && <DecisionSection req={req} settings={settings} members={members} fmt={fmt} onRefresh={load} setLightbox={setLightbox} isReadOnly={isReadOnly} />}
             </div>
           </div>
 
@@ -975,7 +975,7 @@ function QuotationSection({ req, onRefresh, setLightbox, isLocked }: any) {
 }
 
 /* ──── Decision ──── */
-function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }: any) {
+function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox, isReadOnly }: any) {
   const latestDisbursement = req.disbursements && req.disbursements.length > 0 
     ? req.disbursements[req.disbursements.length - 1] 
     : null;
@@ -993,6 +993,16 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
   const [startMonth, setStartMonth] = useState(req.startMonth || "");
   const [endMonth, setEndMonth] = useState(req.endMonth || "");
   const [calcDuration, setCalcDuration] = useState(req.durationMonths || 0);
+  const [displayAmount, setDisplayAmount] = useState(req.grantedAmount ? req.grantedAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "");
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/,/g, "");
+    if (!isNaN(Number(val)) || val === "" || val === ".") {
+      const parts = val.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setDisplayAmount(parts.join("."));
+    }
+  };
 
   useEffect(() => {
     if (paymentType === "MONTHLY" && startMonth && endMonth) {
@@ -1039,8 +1049,9 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     e.preventDefault(); setSubmitting(true);
     const fd = new FormData(e.currentTarget);
     const { approveFundRequest } = await import("@/app/actions/fundRequests");
+    const rawAmount = displayAmount.replace(/,/g, "");
     const res = await approveFundRequest(req.id, { 
-      grantedAmount: fd.get("grantedAmount"), 
+      grantedAmount: rawAmount, 
       paymentType,
       durationMonths: calcDuration,
       startMonth,
@@ -1458,6 +1469,15 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
     );
   }
 
+  if (isReadOnly) return (
+    <div className="flex flex-col items-center justify-center py-10 opacity-50">
+      <ShieldCheck className="w-12 h-12 text-slate-300 mb-4" />
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
+        Management actions are disabled in Oversight mode.
+      </p>
+    </div>
+  );
+
   // Default: Approve/Reject form
   return (
     <div className="space-y-4">
@@ -1476,7 +1496,14 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox }
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">{paymentType === "MONTHLY" ? "Amount Per Month" : "Total Amount"}</p>
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xs">{settings.currency}</div>
-              <input name="grantedAmount" type="number" step="0.01" required placeholder="0.00" className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" />
+              <input 
+                type="text" 
+                required 
+                value={displayAmount}
+                onChange={handleAmountChange}
+                placeholder="0.00" 
+                className="w-full pl-12 pr-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-lg shadow-sm focus:border-emerald-500 outline-none transition-all" 
+              />
             </div>
           </div>
           {paymentType === "MONTHLY" && (

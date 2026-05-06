@@ -52,3 +52,21 @@ export async function createGenericMasterData(type: string, formData: FormData) 
     return { success: false, error: "Failed to create. It might already exist." };
   }
 }
+
+export async function getCountries() {
+  return prisma.masterCountry.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function getProvinces(countryId?: string) {
+  return prisma.masterProvince.findMany({
+    where: countryId ? { countryId } : {},
+    orderBy: { name: "asc" }
+  });
+}
+
+export async function getDistricts(provinceId?: string) {
+  return prisma.masterDistrict.findMany({
+    where: provinceId ? { provinceId } : {},
+    orderBy: { name: "asc" }
+  });
+}
