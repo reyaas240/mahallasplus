@@ -3,7 +3,7 @@ import { useState } from "react";
 import { createLicensePlan, updateLicensePlan } from "@/app/actions/licensePlans";
 import { Loader2, ShieldCheck, Tag, Info, ListChecks, DollarSign, Calendar } from "lucide-react";
 
-export function LicenseForm({ initialData, onComplete }: { initialData?: any, onComplete?: () => void }) {
+export function LicenseForm({ initialData, onComplete, isCopy }: { initialData?: any, onComplete?: () => void, isCopy?: boolean }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaleActive, setIsSaleActive] = useState(initialData?.isSaleActive || false);
   const [featureConfig, setFeatureConfig] = useState<Record<string, any>>(initialData?.featureConfig || {
@@ -23,7 +23,7 @@ export function LicenseForm({ initialData, onComplete }: { initialData?: any, on
     formData.append("featureConfig", JSON.stringify(featureConfig));
 
     let res;
-    if (initialData) {
+    if (initialData && !isCopy) {
       res = await updateLicensePlan(initialData.id, formData);
     } else {
       res = await createLicensePlan(formData);
@@ -38,7 +38,7 @@ export function LicenseForm({ initialData, onComplete }: { initialData?: any, on
     }
   };
 
-  const isEdit = !!initialData;
+  const isEdit = !!initialData && !isCopy;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -54,7 +54,7 @@ export function LicenseForm({ initialData, onComplete }: { initialData?: any, on
             <input 
               required 
               name="name" 
-              defaultValue={initialData?.name}
+              defaultValue={initialData ? (isCopy ? `${initialData.name} (Copy)` : initialData.name) : ""}
               className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-black text-slate-900 text-sm uppercase tracking-wide" 
               placeholder="e.g. Professional Plan" 
             />
