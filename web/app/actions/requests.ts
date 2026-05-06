@@ -141,6 +141,9 @@ export async function approveRequest(requestId: string) {
     return { success: true };
   } catch (error: any) {
     console.error(error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
+      return { success: false, error: "A Mahalla with this name already exists. Please reject this request or contact the registrant." };
+    }
     return { success: false, error: error.message || "Failed to approve request" };
   }
 }
