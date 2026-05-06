@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import { createCommittee, updateCommittee } from "@/app/actions/committee";
-import { Loader2, ShieldCheck, Edit3 } from "lucide-react";
+import { Loader2, ShieldCheck, Shield, Edit3 } from "lucide-react";
 import { LogoUpload } from "./LogoUpload";
 
-export function CommitteeForm({ initialData, userRole, onComplete }: { initialData?: any, userRole?: string, onComplete?: () => void }) {
+export function CommitteeForm({ initialData, userRole, canOversight, onComplete }: { initialData?: any, userRole?: string, canOversight?: boolean, onComplete?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
 
