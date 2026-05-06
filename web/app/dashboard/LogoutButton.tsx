@@ -2,12 +2,13 @@
 
 import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
+import { ReactNode } from "react";
 
 export default function LogoutButton({
   children,
   className,
 }: {
-  children?: React.ReactNode;
+  children?: ReactNode;
   className?: string;
 }) {
   return (

@@ -60,7 +60,7 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
         familyCard: {
           subMahalla: {
             mainMahallaId: session.user.mainMahallaId as string,
-            ...(session.user.role === "SUB_ADMIN" && { id: session.user.subMahallaId })
+            ...(session.user.role === "SUB_ADMIN" && session.user.subMahallaId ? { id: session.user.subMahallaId } : {})
           }
         }
       },
