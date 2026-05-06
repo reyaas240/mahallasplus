@@ -801,7 +801,7 @@ export async function searchFamilyMembers(query: string) {
       familyCard: {
         subMahalla: { 
           mainMahallaId: session.user.mainMahallaId,
-          ...(session.user.role === "SUB_ADMIN" && { id: session.user.subMahallaId })
+          ...(session.user.role === "SUB_ADMIN" && session.user.subMahallaId ? { id: session.user.subMahallaId } : {})
         },
       },
       OR: [
