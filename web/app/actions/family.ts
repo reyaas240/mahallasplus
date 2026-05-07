@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { LivingType, Status } from "@prisma/client";
+
 
 import { saveFile } from "@/lib/storage";
 
@@ -14,7 +14,7 @@ export async function createFamilyCard(formData: FormData) {
   }
 
   const subMahallaId = formData.get("subMahallaId") as string;
-  const livingType = formData.get("livingType") as LivingType;
+  const livingType = formData.get("livingType") as any;
   const mainMahallaCardNo = formData.get("mainMahallaCardNo") as string;
   const subMahallaCardNo = formData.get("subMahallaCardNo") as string;
   const address = formData.get("address") as string;
@@ -137,7 +137,7 @@ export async function updateFamilyCard(id: string, formData: FormData) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const livingType = formData.get("livingType") as LivingType;
+  const livingType = formData.get("livingType") as any;
   const mainMahallaCardNo = formData.get("mainMahallaCardNo") as string;
   const subMahallaCardNo = formData.get("subMahallaCardNo") as string;
   const address = formData.get("address") as string;
