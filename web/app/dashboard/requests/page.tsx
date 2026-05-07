@@ -4,7 +4,8 @@ import { RequestActions } from "./RequestActions";
 
 export default async function RequestsPage() {
   const requests = await prisma.registrationRequest.findMany({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    include: { licensePlan: true }
   });
 
   return (
@@ -36,7 +37,7 @@ export default async function RequestsPage() {
                       {req.status}
                     </span>
                     <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                      {req.licensePlan} Plan
+                      {req.licensePlan?.name} Plan
                     </span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-600">
