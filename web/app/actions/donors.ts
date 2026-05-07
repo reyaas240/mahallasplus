@@ -45,7 +45,7 @@ export async function searchInternalMembers(query: string, committeeId?: string)
     take: 10
   });
 
-  return members.map(m => ({
+  return members.map((m: any) => ({
     id: m.id,
     name: m.fullName,
     nic: m.nic,
