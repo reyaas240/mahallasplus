@@ -9,7 +9,7 @@ export async function smartUpload(fileOrBuffer: File | Buffer, folder: string, f
   // 1. If running on Vercel (Production)
   if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
     const blob = await put(`${folder}/${filename}`, fileOrBuffer, {
-      access: 'public',
+      access: 'private',
     });
     return blob.url;
   }
