@@ -26,11 +26,16 @@ export async function GET(
     }
   }
   try {
-    // Fetch the file from Vercel Blob using the secret token (automatically used by the SDK)
-    const response = await fetch(fileUrl);
+    // Fetch the file from Vercel Blob using the secret token
+    const response = await fetch(fileUrl, {
+      headers: {
+        Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`,
+      },
+    });
     
     if (!response.ok) {
-      return new NextResponse("Failed to fetch file", { status: response.status });
+      console.error("Blob fetch failed:", response.status, response.statusText);
+      return new NextResponse(`Failed to fetch file: ${response.statusText}`, { status: response.status });
     }
 
     const blob = await response.blob();
