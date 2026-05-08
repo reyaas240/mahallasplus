@@ -152,7 +152,7 @@ export default function RegisterPage() {
           </div>
           <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Request Submitted</h2>
           <p className="text-slate-600 mb-8 font-medium leading-relaxed">
-            Your registration request has been submitted securely. Our administrators will review your documents and contact you shortly.
+            Your registration request has been submitted securely. Our administrators will review your documents and contact you shortly. Check you email inbox or spam folder for invoice and payment details
           </p>
           <Link href="/" className="inline-flex items-center justify-center w-full py-4 px-6 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95">
             Return to Home
