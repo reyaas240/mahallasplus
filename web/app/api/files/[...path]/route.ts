@@ -5,8 +5,9 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const { path } = await params;
   const { searchParams } = new URL(request.url);
   const fileUrl = searchParams.get("url");
 
