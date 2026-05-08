@@ -23,7 +23,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             {logoUrl ? (
-              <img src={logoUrl} alt="MahallasPlus" className="h-10 object-contain" />
+              <img src={logoUrl.includes('blob.vercel-storage.com') ? `/api/files/proxy?url=${encodeURIComponent(logoUrl)}` : logoUrl} alt="MahallasPlus" className="h-10 object-contain" />
             ) : (
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <Users className="w-6 h-6 text-white" />

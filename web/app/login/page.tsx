@@ -69,7 +69,7 @@ export default function LoginPage() {
           <div className="text-center mb-10">
             <div className="flex justify-center mb-6">
               {logoUrl ? (
-                <img src={logoUrl} alt="MahallasPlus" className="h-12 object-contain" />
+                <img src={logoUrl.includes('blob.vercel-storage.com') ? `/api/files/proxy?url=${encodeURIComponent(logoUrl)}` : logoUrl} alt="Logo" className="h-12 object-contain" />
               ) : (
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
                   <Users className="w-8 h-8 text-white" />

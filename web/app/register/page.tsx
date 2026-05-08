@@ -185,7 +185,7 @@ export default function RegisterPage() {
               </div>
               <div className="hidden sm:block">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="h-10 object-contain opacity-80" />
+                  <img src={logoUrl.includes('blob.vercel-storage.com') ? `/api/files/proxy?url=${encodeURIComponent(logoUrl)}` : logoUrl} alt="Logo" className="h-10 object-contain opacity-80" />
                 ) : (
                   <Users className="w-10 h-10 text-blue-600 opacity-40" />
                 )}

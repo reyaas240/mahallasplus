@@ -113,7 +113,13 @@ export function RequestActions({ request }: { request: any }) {
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Government ID</h4>
                   <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
                     {request.governmentIdUrl ? (
-                      <img src={request.governmentIdUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Government ID" />
+                      <img 
+                        src={request.governmentIdUrl.includes('blob.vercel-storage.com') 
+                          ? `/api/files/proxy?url=${encodeURIComponent(request.governmentIdUrl)}` 
+                          : request.governmentIdUrl} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        alt="Government ID" 
+                      />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <ShieldAlert className="w-12 h-12 mb-2" />
@@ -126,7 +132,13 @@ export function RequestActions({ request }: { request: any }) {
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Applicant Selfie</h4>
                   <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
                     {request.selfieUrl ? (
-                      <img src={request.selfieUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Selfie" />
+                      <img 
+                        src={request.selfieUrl.includes('blob.vercel-storage.com') 
+                          ? `/api/files/proxy?url=${encodeURIComponent(request.selfieUrl)}` 
+                          : request.selfieUrl} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        alt="Selfie" 
+                      />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                         <ShieldAlert className="w-12 h-12 mb-2" />
