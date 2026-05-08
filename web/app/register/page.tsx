@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, Upload, Building, User, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight } from "lucide-react";
-import ReCAPTCHA from "react-google-recaptcha";
+
 
 import { submitRegistration } from "@/app/actions/register";
 import { generateAndSendOtp, verifyOtp } from "@/app/actions/otp";
@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -34,21 +34,9 @@ export default function RegisterPage() {
   const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
   const [licensePlan, setLicensePlan] = useState("");
   const [plans, setPlans] = useState<any[]>([]);
-  const [siteKey, setSiteKey] = useState<string>("");
 
-  useEffect(() => {
-    async function loadConfig() {
-      const isLocal = window.location.hostname === 'localhost';
-      if (isLocal) {
-        setSiteKey("6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI");
-        return;
-      }
 
-      const config = await getPublicSettings();
-      setSiteKey(config?.recaptchaSiteKey || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI");
-    }
-    loadConfig();
-  }, []);
+
 
   useEffect(() => {
     if (plans.length > 0) {
@@ -106,7 +94,7 @@ export default function RegisterPage() {
     const res = await generateAndSendOtp(emailVal);
     setSendingOtp(false);
     if (res.success) {
-      setStep(1.5);
+      setStep(2);
     } else {
       alert(res.error || "Failed to send verification code. Please check your SMTP settings.");
     }
@@ -118,7 +106,7 @@ export default function RegisterPage() {
     const res = await verifyOtp(email, otp);
     setIsProcessing(false);
     if (res.success) {
-      setStep(2);
+      setStep(3);
     } else {
       setOtpError(res.error || "Invalid code");
     }
@@ -133,12 +121,12 @@ export default function RegisterPage() {
       return;
     }
 
-    if (step === 1.5) {
+    if (step === 2) {
       handleOtpVerify();
       return;
     }
 
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       setIsProcessing(true);
@@ -180,13 +168,13 @@ export default function RegisterPage() {
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-xl w-full border border-slate-100">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-slate-900">Onboard your Mahalla</h1>
-            <p className="text-slate-600 mt-1">Step {step} of 3</p>
+            <p className="text-slate-600 mt-1">Step {step} of 4</p>
             
             <div className="flex gap-2 mt-4">
               <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-blue-600' : 'bg-slate-200'}`} />
-              <div className={`h-1.5 flex-1 rounded-full ${step >= 1.5 ? 'bg-blue-600' : 'bg-slate-200'}`} />
               <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-blue-600' : 'bg-slate-200'}`} />
               <div className={`h-1.5 flex-1 rounded-full ${step >= 3 ? 'bg-blue-600' : 'bg-slate-200'}`} />
+              <div className={`h-1.5 flex-1 rounded-full ${step >= 4 ? 'bg-blue-600' : 'bg-slate-200'}`} />
             </div>
           </div>
 
@@ -207,22 +195,10 @@ export default function RegisterPage() {
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Phone Number</label>
                   <input required={step === 1} name="phone" type="tel" className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 placeholder:text-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm" placeholder="+1 (555) 000-0000" />
                 </div>
-                <div className="pt-2">
-                  {siteKey ? (
-                    <ReCAPTCHA
-                      sitekey={siteKey}
-                      onChange={(val) => setCaptchaVerified(!!val)}
-                      className="rounded-xl border-2 border-slate-200 overflow-hidden shadow-sm"
-                    />
-                  ) : (
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest p-4 bg-slate-50 border border-slate-100 rounded-xl w-full text-center">
-                      Anti-bot protection is loading...
-                    </div>
-                  )}
-                </div>
+
             </div>
 
-            <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 1.5 ? 'block' : 'hidden'}`}>
+            <div className={`space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 2 ? 'block' : 'hidden'}`}>
                 <div className="text-center">
                   <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-8 h-8" />
@@ -248,20 +224,20 @@ export default function RegisterPage() {
                 </p>
             </div>
 
-            <div className={`space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 2 ? 'block' : 'hidden'}`}>
+            <div className={`space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 3 ? 'block' : 'hidden'}`}>
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
                   <Building className="w-5 h-5 text-blue-600" /> Mahalla Details
                 </h2>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Mahalla Name</label>
-                  <input required={step === 2} name="mahallaName" type="text" className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 placeholder:text-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm" placeholder="Grand Central Mahalla" />
+                  <input required={step === 3} name="mahallaName" type="text" className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 placeholder:text-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm" placeholder="Grand Central Mahalla" />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Country</label>
                     <select 
-                      required={step === 2} 
+                      required={step === 3} 
                       name="country" 
                       value={selectedCountry}
                       onChange={(e) => setSelectedCountry(e.target.value)}
@@ -274,7 +250,7 @@ export default function RegisterPage() {
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Province</label>
                     <select 
-                      required={step === 2} 
+                      required={step === 3} 
                       name="province" 
                       value={selectedProvince}
                       onChange={(e) => setSelectedProvince(e.target.value)}
@@ -288,7 +264,7 @@ export default function RegisterPage() {
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">District</label>
                     <select 
-                      required={step === 2} 
+                      required={step === 3} 
                       name="district" 
                       className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm appearance-none cursor-pointer disabled:opacity-50"
                       disabled={!selectedProvince}
@@ -301,7 +277,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Full Address</label>
-                  <textarea required={step === 2} name="address" rows={2} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 placeholder:text-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm resize-none" placeholder="123, Main Street, Area Name..." />
+                  <textarea required={step === 3} name="address" rows={2} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-bold text-slate-900 placeholder:text-slate-300 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all shadow-sm resize-none" placeholder="123, Main Street, Area Name..." />
                 </div>
 
                 <div>
@@ -360,7 +336,7 @@ export default function RegisterPage() {
                 </div>
             </div>
 
-            <div className={`space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 3 ? 'block' : 'hidden'}`}>
+            <div className={`space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${step === 4 ? 'block' : 'hidden'}`}>
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
                   <Lock className="w-5 h-5 text-blue-600" /> Identity Verification
                 </h2>
@@ -437,19 +413,19 @@ export default function RegisterPage() {
 
             <div className="mt-8 flex gap-4">
               {step > 1 && (
-                <button type="button" onClick={() => setStep(step === 2 ? 1 : step - 1)} className="px-6 py-3 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors w-full">
+                <button type="button" onClick={() => setStep(step - 1)} className="px-6 py-3 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors w-full">
                   Previous
                 </button>
               )}
               <button 
                 type="submit" 
-                disabled={(step === 1 && !captchaVerified) || sendingOtp || isProcessing}
+                disabled={sendingOtp || isProcessing}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors w-full shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {(sendingOtp || isProcessing) && <ShieldCheck className="w-4 h-4 animate-pulse" />}
                 {step === 1 ? (sendingOtp ? "Sending Code..." : "Continue") : 
-                 step === 1.5 ? (isProcessing ? "Verifying..." : "Verify & Continue") :
-                 step === 3 ? "Submit Verification" : "Continue"}
+                 step === 2 ? (isProcessing ? "Verifying..." : "Verify & Continue") :
+                 step === 4 ? "Submit Verification" : "Continue"}
               </button>
             </div>
           </form>
