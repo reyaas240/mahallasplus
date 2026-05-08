@@ -51,9 +51,6 @@ export async function uploadFundRequestAttachments(formData: FormData) {
   const savedPaths: string[] = [];
 
   try {
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "requests");
-    await mkdir(uploadDir, { recursive: true });
-
     for (const file of files) {
       if (file.size === 0) continue;
       
