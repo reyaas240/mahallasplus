@@ -2,10 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import sharp from "sharp";
 import { sendEmail } from "@/lib/email";
+import { smartUpload } from "@/lib/upload";
 
 async function saveFile(file: File, folder: string) {
   if (!file || file.size === 0) return null;
@@ -13,20 +12,17 @@ async function saveFile(file: File, folder: string) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   
-  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
-  await mkdir(uploadDir, { recursive: true });
-  
-  const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-").replace(/\.[^/.]+$/, "")}.jpg`;
-  const relativePath = `/uploads/${folder}/${filename}`;
-  const absolutePath = path.join(process.cwd(), "public", relativePath);
-  
-  await sharp(buffer)
+  // Process image with Sharp
+  const processedBuffer = await sharp(buffer)
     .rotate()
     .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 80 })
-    .toFile(absolutePath);
-    
-  return relativePath;
+    .toBuffer();
+
+  const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-").replace(/\.[^/.]+$/, "")}.jpg`;
+  
+  // Use Smart Upload (Blob in Prod, Local in Dev)
+  return await smartUpload(processedBuffer, folder, filename);
 }
 
 export async function submitRegistration(formData: FormData) {

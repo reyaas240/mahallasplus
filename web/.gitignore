@@ -41,3 +41,13 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# Database dumps, backups and migration scripts
+*.sql
+migrate_to_neon.js
+test-db.js
+test_prisma.ts
+mahallasplus_backup.sql
+neon_data_import.sql
+data_migration.sql
+backup.sql

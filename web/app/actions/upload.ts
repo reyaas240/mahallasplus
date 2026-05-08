@@ -2,9 +2,8 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import sharp from "sharp";
+import { smartUpload } from "@/lib/upload";
 
 export async function uploadInvestigationImages(formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -31,14 +30,14 @@ export async function uploadInvestigationImages(formData: FormData) {
         const absolutePath = path.join(process.cwd(), "public", relativePath);
 
         // Use SHARP to process image (Resize, Convert to JPEG, Compress)
-        await sharp(buffer)
+        const processedBuffer = await sharp(buffer)
           .rotate() // Auto-rotate based on EXIF
           .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 80, progressive: true })
-          .toFile(absolutePath);
+          .toBuffer();
 
-        console.log(`Successfully processed and saved: ${relativePath}`);
-        savedPaths.push(relativePath);
+        const path = await smartUpload(processedBuffer, "investigations", filename);
+        savedPaths.push(path);
       } catch (sharpError: any) {
         console.error(`Sharp processing failed for ${file.name}:`, sharpError.message);
         // If sharp fails, we skip this file but continue with others
@@ -70,22 +69,20 @@ export async function uploadFundRequestAttachments(formData: FormData) {
       
       const isImg = file.type.startsWith("image/") || file.name.toLowerCase().endsWith(".heic");
       const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
-      let relativePath = `/uploads/requests/${filename}`;
-      const absolutePath = path.join(process.cwd(), "public", relativePath);
-
+      let finalPath = "";
       if (isImg) {
-        relativePath = relativePath.replace(/\.[^/.]+$/, ".jpg");
-        const finalAbsolutePath = path.join(process.cwd(), "public", relativePath);
-        await sharp(buffer)
+        const finalFilename = filename.replace(/\.[^/.]+$/, ".jpg");
+        const processedBuffer = await sharp(buffer)
           .rotate()
           .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
           .jpeg({ quality: 80 })
-          .toFile(finalAbsolutePath);
+          .toBuffer();
+        finalPath = await smartUpload(processedBuffer, "requests", finalFilename);
       } else {
-        await writeFile(absolutePath, buffer);
+        finalPath = await smartUpload(file, "requests", filename);
       }
       
-      savedPaths.push(relativePath);
+      savedPaths.push(finalPath);
     }
 
     return { success: true, paths: savedPaths };

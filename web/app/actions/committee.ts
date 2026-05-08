@@ -5,8 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
-import { writeFile } from "fs/promises";
-import path from "path";
+import { smartUpload } from "@/lib/upload";
 
 export async function createCommittee(formData: FormData) {
   console.log("Create Committee Action triggered");
@@ -33,14 +32,8 @@ export async function createCommittee(formData: FormData) {
   const logoFile = formData.get("logo") as File;
   let logoPath = null;
 
-  try {
     if (logoFile && logoFile.size > 0) {
-      const bytes = await logoFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = `${Date.now()}-${logoFile.name.replace(/\s+/g, "-")}`;
-      logoPath = `/uploads/committees/${filename}`;
-      const absolutePath = path.join(process.cwd(), "public", logoPath);
-      await writeFile(absolutePath, buffer);
+      logoPath = await smartUpload(logoFile, "committees");
     }
 
     const allowMainMahallaView = formData.get("allowMainMahallaView") === "on";
@@ -103,12 +96,7 @@ export async function updateCommittee(id: string, formData: FormData) {
 
   try {
     if (logoFile && logoFile.size > 0) {
-      const bytes = await logoFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filename = `${Date.now()}-${logoFile.name.replace(/\s+/g, "-")}`;
-      logoPath = `/uploads/committees/${filename}`;
-      const absolutePath = path.join(process.cwd(), "public", logoPath);
-      await writeFile(absolutePath, buffer);
+      logoPath = await smartUpload(logoFile, "committees");
     }
 
     const committee = await prisma.committee.findUnique({ where: { id } });
