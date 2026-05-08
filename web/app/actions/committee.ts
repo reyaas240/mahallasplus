@@ -32,6 +32,7 @@ export async function createCommittee(formData: FormData) {
   const logoFile = formData.get("logo") as File;
   let logoPath = null;
 
+  try {
     if (logoFile && logoFile.size > 0) {
       logoPath = await smartUpload(logoFile, "committees");
     }

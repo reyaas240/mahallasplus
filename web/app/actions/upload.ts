@@ -13,12 +13,8 @@ export async function uploadInvestigationImages(formData: FormData) {
   const savedPaths: string[] = [];
 
   try {
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "investigations");
-    await mkdir(uploadDir, { recursive: true });
-
     for (const file of files) {
       if (file.size === 0) continue;
-      console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
       
       try {
         const bytes = await file.arrayBuffer();
@@ -26,8 +22,6 @@ export async function uploadInvestigationImages(formData: FormData) {
         
         // Clean filename (always convert to .jpg for web compatibility)
         const filename = `${Date.now()}-${file.name.replace(/\.[^/.]+$/, "").replace(/\s+/g, "-")}.jpg`;
-        const relativePath = `/uploads/investigations/${filename}`;
-        const absolutePath = path.join(process.cwd(), "public", relativePath);
 
         // Use SHARP to process image (Resize, Convert to JPEG, Compress)
         const processedBuffer = await sharp(buffer)
@@ -36,11 +30,10 @@ export async function uploadInvestigationImages(formData: FormData) {
           .jpeg({ quality: 80, progressive: true })
           .toBuffer();
 
-        const path = await smartUpload(processedBuffer, "investigations", filename);
-        savedPaths.push(path);
+        const savedPath = await smartUpload(processedBuffer, "investigations", filename);
+        savedPaths.push(savedPath);
       } catch (sharpError: any) {
         console.error(`Sharp processing failed for ${file.name}:`, sharpError.message);
-        // If sharp fails, we skip this file but continue with others
       }
     }
 
