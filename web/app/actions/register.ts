@@ -260,6 +260,38 @@ export async function submitRegistration(formData: FormData) {
 
     await sendEmail(email, subject, text, html);
 
+    // 4. Notify Platform Admin
+    const platformAdmins = await prisma.user.findMany({
+      where: { role: "PLATFORM_ADMIN" }
+    });
+
+    for (const admin of platformAdmins) {
+      if (admin.email) {
+        await sendEmail(
+          admin.email,
+          "New Registration Request - MahallasPlus",
+          `New registration request from ${fullName} for ${mahallaName}.`,
+          `
+            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb; margin-bottom: 20px;">New Registration Request</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 40%;">Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${fullName}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Contact No</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${phone || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Mahalla Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${mahallaName}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Address</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${address || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Province</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${province?.name || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">District</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${district?.name || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Country</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${country?.name || "N/A"}</td></tr>
+              </table>
+              <div style="margin-top: 30px; text-align: center;">
+                <a href="${process.env.NEXTAUTH_URL}/dashboard/requests" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Review Request</a>
+              </div>
+            </div>
+          `
+        );
+      }
+    }
+
     revalidatePath("/dashboard/requests");
     return { success: true };
   } catch (error: any) {

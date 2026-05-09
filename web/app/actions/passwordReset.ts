@@ -50,28 +50,6 @@ export async function requestPasswordReset(email: string) {
       );
     }
 
-    // 5. Notify Platform Admin (as requested)
-    const platformAdmins = await prisma.user.findMany({
-      where: { role: "PLATFORM_ADMIN" }
-    });
-
-    for (const admin of platformAdmins) {
-      if (admin.email) {
-        await sendEmail(
-          admin.email,
-          "ALERT: Password Reset Request Notification",
-          `A password reset was requested for user: ${email}`,
-          `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-            <h2 style="color: #dc2626;">Admin Notification</h2>
-            <p>A password reset has been requested for the following account:</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-            <p>This is an automated security notification for your oversight.</p>
-          </div>`
-        );
-      }
-    }
-
     return { success: true };
   } catch (err: any) {
     console.error("Password reset request failed:", err);
