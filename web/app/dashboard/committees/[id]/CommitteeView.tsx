@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { Users, Shield, Calendar, MapPin, UserPlus, ShieldCheck, History, Wallet, HeartHandshake, ArrowUpRight, ArrowDownRight, Target, TrendingUp, Info, Landmark, Banknote, ChevronLeft, Lock } from "lucide-react";
 import Link from "next/link";
 import { MemberSelector } from "./MemberSelector";
@@ -28,7 +29,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
         <div className="flex gap-6 items-start">
           <div className="w-20 h-20 bg-transparent rounded-[28px] flex items-center justify-center text-slate-900 font-black text-3xl shadow-xl shadow-slate-100 overflow-hidden border-2 border-slate-200">
             {committee.logo ? (
-              <img src={committee.logo} alt={committee.name} className="w-full h-full object-contain p-1" />
+              <img src={getProxiedImageUrl(committee.logo)} alt={committee.name} className="w-full h-full object-contain p-1" />
             ) : (
               committee.name.charAt(0)
             )}

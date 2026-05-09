@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -181,7 +182,11 @@ export default async function DashboardLayout({
             {activeBranding ? (
               <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
                 {activeBranding.logo ? (
-                  <img src={activeBranding.logo} className="w-8 h-8 rounded-lg object-cover shadow-sm" alt="Logo" />
+                  <img 
+                    src={getProxiedImageUrl(activeBranding.logo)} 
+                    className="w-8 h-8 rounded-lg object-cover shadow-sm" 
+                    alt="Logo" 
+                  />
                 ) : (
                   <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-xs uppercase">
                     {activeBranding.name.charAt(0)}

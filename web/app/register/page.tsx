@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight, Loader2, Globe, MapPin } from "lucide-react";
 
 import { submitRegistration } from "@/app/actions/register";
@@ -10,7 +11,10 @@ import { getCountries, getProvinces, getDistricts } from "@/app/actions/master-d
 import { getPublicSettings } from "@/app/actions/systemSettings";
 import { getPublicLicensePlans } from "@/app/actions/licensePlans";
 
-export default function RegisterPage() {
+function RegisterContent() {
+  const searchParams = useSearchParams();
+  const initialPlanId = searchParams.get("plan");
+
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,6 +49,15 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (plans.length > 0) {
+      if (initialPlanId) {
+        const preSelected = plans.find(p => p.id === initialPlanId);
+        if (preSelected) {
+          setSelectedPlanType(preSelected.type);
+          setLicensePlan(preSelected.id);
+          return;
+        }
+      }
+
       const availablePlans = plans.filter(p => p.type === selectedPlanType);
       if (availablePlans.length > 0) {
         setLicensePlan(availablePlans[0].id);
@@ -52,20 +65,18 @@ export default function RegisterPage() {
         setLicensePlan("");
       }
     }
-  }, [selectedPlanType, plans]);
+  }, [selectedPlanType, plans, initialPlanId]);
 
   useEffect(() => {
     async function loadMasters() {
-      const [c, p] = await Promise.all([
+      const [c, p, lp] = await Promise.all([
         getCountries(),
+        getProvinces(),
         getPublicLicensePlans()
       ]);
       setCountries(c);
-      setPlans(p);
-      if (p.length > 0) {
-        const defaultPlan = p.find((pl: any) => pl.isDefault) || p[0];
-        setLicensePlan(defaultPlan.id);
-      }
+      setProvinces(p);
+      setPlans(lp);
     }
     loadMasters();
   }, []);
@@ -474,5 +485,17 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }

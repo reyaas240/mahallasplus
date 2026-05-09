@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { Save, Loader2, Plus, Building, Mail, Phone, MapPin, Globe } from "lucide-react";
 import { updateMainMahalla } from "@/app/actions/mahalla";
 
@@ -76,7 +77,7 @@ export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters
               />
               <div className="w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-2 group-hover/logo:border-blue-400 transition-all overflow-hidden relative">
                 {previewLogo ? (
-                  <img src={previewLogo} className="w-full h-full object-cover" />
+                  <img src={getProxiedImageUrl(previewLogo)} className="w-full h-full object-cover" />
                 ) : (
                   <>
                     <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center">
@@ -107,7 +108,7 @@ export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters
               />
               <div className="w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-2 group-hover/cover:border-blue-400 transition-all overflow-hidden relative">
                 {previewCover ? (
-                  <img src={previewCover} className="w-full h-full object-cover" />
+                  <img src={getProxiedImageUrl(previewCover)} className="w-full h-full object-cover" />
                 ) : (
                   <>
                     <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center">

@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { Building, Pencil, MapPin } from "lucide-react";
 import { SubMahallaForm } from "./SubMahallaForm";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -86,7 +87,7 @@ export default function SubMahallasPage() {
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex-shrink-0 overflow-hidden flex items-center justify-center">
                               {sm.logo ? (
-                                <img src={sm.logo} className="w-full h-full object-contain" alt={sm.name} />
+                                <img src={getProxiedImageUrl(sm.logo)} className="w-full h-full object-contain" alt={sm.name} />
                               ) : (
                                 <Building className="w-5 h-5 text-slate-400" />
                               )}

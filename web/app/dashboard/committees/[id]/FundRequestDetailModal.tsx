@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { X, Loader2, ShieldCheck, Users, Calendar, FileText, Banknote, CheckCircle2, XCircle, Clock, Plus, Paperclip, User, Building2, ChevronDown, Search, Trash2, Edit3, Image as ImageIcon, Eye } from "lucide-react";
 import { getFundRequestDetail, verifyBeneficiary, addInvestigation, updateInvestigation, deleteInvestigation, scheduleAppointment, updateAppointmentOutcome, addQuotation, approveFundRequest, rejectFundRequest, disburseFunds } from "@/app/actions/fundRequests";
 import { uploadInvestigationImages } from "@/app/actions/upload";
@@ -133,7 +134,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose, 
           <button className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all">
             <X className="w-6 h-6" />
           </button>
-          <img src={lightbox} className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()} />
+          <img src={getProxiedImageUrl(lightbox)} className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>
@@ -299,7 +300,7 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
               {attachments.map((path, i) => (
                 <div key={i} className="relative group">
                   <div className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
-                    {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={path} className="w-full h-full object-cover" /> : <FileText className="w-5 h-5 text-slate-400" />}
+                    {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" /> : <FileText className="w-5 h-5 text-slate-400" />}
                   </div>
                   <button type="button" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <X className="w-3 h-3" />
@@ -615,7 +616,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isLocked }
               {/* Existing Images */}
               {attachments.map((path, i) => (
                 <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden group border-2 border-white shadow-sm">
-                  <img src={path} className="w-full h-full object-cover" />
+                  <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" />
                   <button type="button" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} 
                     className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <X className="w-3 h-3" />
@@ -707,7 +708,7 @@ function InvestigationSection({ req, members, onRefresh, setLightbox, isLocked }
             <div className="flex flex-wrap gap-2 pt-1">
               {inv.attachments.map((path: string, i: number) => (
                 <div key={i} onClick={() => setLightbox(path)} className="w-20 h-20 rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:border-purple-400 transition-all">
-                  <img src={path} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                  <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
                 </div>
               ))}
             </div>
@@ -905,7 +906,7 @@ function QuotationSection({ req, onRefresh, setLightbox, isLocked }: any) {
             <div className="flex flex-wrap gap-2">
               {attachments.map((path, i) => (
                 <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden group border border-teal-200 bg-white shadow-sm">
-                   {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={path} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold text-[8px]">FILE</div>}
+                   {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold text-[8px]">FILE</div>}
                   <button type="button" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-2.5 h-2.5" /></button>
                 </div>
               ))}
@@ -1238,7 +1239,7 @@ function DecisionSection({ req, settings, members, fmt, onRefresh, setLightbox, 
               <div className="flex flex-wrap gap-2">
                 {currentAttachments.map((path, i) => (
                   <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden group border border-teal-200 bg-white shadow-sm">
-                    {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={path} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold text-[8px]">FILE</div>}
+                    {/\.(jpg|jpeg|png|webp|gif)$/i.test(path) ? <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-teal-600 font-bold text-[8px]">FILE</div>}
                     <button type="button" onClick={() => setCurrentAttachments(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-2.5 h-2.5" /></button>
                   </div>
                 ))}

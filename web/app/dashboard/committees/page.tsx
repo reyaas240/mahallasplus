@@ -7,6 +7,7 @@ import Link from "next/link";
 import { CreateCommitteeButton } from "./CreateCommitteeButton";
 import { CommitteeActions } from "./CommitteeActions";
 import { checkFeature } from "@/lib/features";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default async function CommitteesPage() {
   const session = await getServerSession(authOptions);
@@ -88,7 +89,7 @@ export default async function CommitteesPage() {
                       <div className="flex gap-5 items-center">
                         <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm overflow-hidden border border-slate-100">
                           {c.logo ? (
-                            <img src={c.logo} alt={c.name} className="w-full h-full object-cover" />
+                            <img src={getProxiedImageUrl(c.logo)} alt={c.name} className="w-full h-full object-cover" />
                           ) : (
                             <Users className="w-7 h-7" />
                           )}

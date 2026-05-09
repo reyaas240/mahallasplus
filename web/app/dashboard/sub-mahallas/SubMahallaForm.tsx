@@ -1,5 +1,6 @@
 "use client";
 import { createSubMahalla, updateSubMahalla } from "@/app/actions/main-admin";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Loader2, Camera, Image as ImageIcon } from "lucide-react";
 
@@ -56,7 +57,7 @@ export function SubMahallaForm({ initialData, areas = [], onCancel }: { initialD
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Logo</label>
             <div className="relative group cursor-pointer h-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden hover:border-blue-400 transition-all">
               {logoPreview ? (
-                <img src={logoPreview} className="w-full h-full object-contain" alt="Logo" />
+                <img src={getProxiedImageUrl(logoPreview)} className="w-full h-full object-contain" alt="Logo" />
               ) : (
                 <Camera className="w-6 h-6 text-slate-300" />
               )}
@@ -76,7 +77,7 @@ export function SubMahallaForm({ initialData, areas = [], onCancel }: { initialD
             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cover Image</label>
             <div className="relative group cursor-pointer h-24 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden hover:border-blue-400 transition-all">
               {coverPreview ? (
-                <img src={coverPreview} className="w-full h-full object-cover" alt="Cover" />
+                <img src={getProxiedImageUrl(coverPreview)} className="w-full h-full object-cover" alt="Cover" />
               ) : (
                 <ImageIcon className="w-6 h-6 text-slate-300" />
               )}

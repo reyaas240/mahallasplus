@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { Edit3, X, Loader2, Save, Power, CheckCircle2, AlertTriangle, Calendar, Plus } from "lucide-react";
 import { updateMainMahalla } from "@/app/actions/mahalla";
 
@@ -108,7 +109,7 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
                         />
                         <div className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-blue-400 transition-all overflow-hidden">
                           {previewLogo ? (
-                            <img src={previewLogo} className="w-full h-full object-cover" />
+                            <img src={getProxiedImageUrl(previewLogo)} className="w-full h-full object-cover" />
                           ) : (
                             <>
                               <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
@@ -135,7 +136,7 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
                         />
                         <div className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 group-hover:border-blue-400 transition-all overflow-hidden">
                           {previewCover ? (
-                            <img src={previewCover} className="w-full h-full object-cover" />
+                            <img src={getProxiedImageUrl(previewCover)} className="w-full h-full object-cover" />
                           ) : (
                             <>
                               <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">

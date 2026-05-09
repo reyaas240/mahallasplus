@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Building, MapPin, Globe, Mail, Phone, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { MahallaProfileForm } from "./MahallaProfileForm";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default async function MahallaProfilePage() {
   const session = await getServerSession(authOptions);
@@ -34,7 +35,7 @@ export default async function MahallaProfilePage() {
     <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="relative h-64 rounded-[40px] overflow-hidden group shadow-2xl border-4 border-white">
         {mahalla.coverImage ? (
-          <img src={mahalla.coverImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Cover" />
+          <img src={getProxiedImageUrl(mahalla.coverImage)} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Cover" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-900 to-slate-800" />
         )}
@@ -42,7 +43,7 @@ export default async function MahallaProfilePage() {
         <div className="absolute bottom-8 left-8 flex items-end gap-6">
           <div className="w-32 h-32 bg-white rounded-3xl p-1 shadow-2xl border-4 border-white/20 backdrop-blur-sm overflow-hidden">
             {mahalla.logo ? (
-              <img src={mahalla.logo} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
+              <img src={getProxiedImageUrl(mahalla.logo)} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
             ) : (
               <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
                 <Building className="w-12 h-12" />

@@ -2,18 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield, Users, Layers, Lock, PhoneCall, ChevronRight, Activity, FileText, Globe, CheckCircle2 } from "lucide-react";
+import { Shield, Users, Layers, Lock, PhoneCall, ChevronRight, Activity, FileText, Globe, CheckCircle2, Zap } from "lucide-react";
 import { getPublicSettings } from "@/app/actions/systemSettings";
+import { getPublicLicensePlans } from "@/app/actions/licensePlans";
 
 export default function LandingPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
 
   useEffect(() => {
-    async function loadSettings() {
-      const settings = await getPublicSettings();
+    async function loadData() {
+      const [settings, licensePlans] = await Promise.all([
+        getPublicSettings(),
+        getPublicLicensePlans()
+      ]);
       if (settings?.logoUrl) setLogoUrl(settings.logoUrl);
+      setPlans(licensePlans);
     }
-    loadSettings();
+    loadData();
   }, []);
 
   return (
@@ -21,18 +28,12 @@ export default function LandingPage() {
       {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            {logoUrl ? (
-              <img src={logoUrl.includes('blob.vercel-storage.com') ? `/api/files/proxy?url=${encodeURIComponent(logoUrl)}` : logoUrl} alt="MahallasPlus" className="h-10 object-contain" />
-            ) : (
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-            )}
-            <span className="text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">MahallasPlus</span>
+          <Link href="/" className="flex items-center group">
+            <img src="/Logomahallasplus.png" alt="MahallasPlus" className="h-15 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
           <nav className="hidden lg:flex gap-10">
             <Link href="#features" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Features</Link>
+            <Link href="#pricing" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Pricing</Link>
             <Link href="#about" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">About</Link>
             <Link href="#contact" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Contact</Link>
           </nav>
@@ -49,7 +50,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="relative pt-20 pb-32 overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
-          
+
           {/* Abstract blobs */}
           <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
             <div className="w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-[120px]"></div>
@@ -57,7 +58,7 @@ export default function LandingPage() {
           <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
             <div className="w-[600px] h-[600px] bg-indigo-100/40 rounded-full blur-[120px]"></div>
           </div>
-          
+
           <div className="container mx-auto px-4 relative z-10 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-[0.2em] mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
               <Activity className="w-4 h-4" />
@@ -84,24 +85,24 @@ export default function LandingPage() {
 
         {/* Stats Section */}
         <section className="py-20 bg-slate-900 relative overflow-hidden">
-           <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
-              <div className="space-y-2">
-                <p className="text-4xl font-black text-white tracking-tighter">100%</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Privacy</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-4xl font-black text-white tracking-tighter">Enterprise</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Security Level</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-4xl font-black text-white tracking-tighter">Real-time</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Audit Logs</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-4xl font-black text-white tracking-tighter">24/7</p>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cloud Access</p>
-              </div>
-           </div>
+          <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
+            <div className="space-y-2">
+              <p className="text-4xl font-black text-white tracking-tighter">100%</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Privacy</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-4xl font-black text-white tracking-tighter">Enterprise</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Security Level</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-4xl font-black text-white tracking-tighter">Real-time</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Audit Logs</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-4xl font-black text-white tracking-tighter">24/7</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cloud Access</p>
+            </div>
+          </div>
         </section>
 
         {/* Features Section */}
@@ -116,38 +117,70 @@ export default function LandingPage() {
                 Every feature in MahallasPlus is crafted to handle complex community hierarchies with absolute precision.
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-              <FeatureCard 
+              <FeatureCard
                 icon={<Layers className="w-6 h-6 text-blue-600" />}
                 title="Hierarchical Logic"
                 description="Manage Main and Sub Mahallas with dedicated admin roles and jurisdiction-locked data access."
               />
-              <FeatureCard 
+              <FeatureCard
                 icon={<Shield className="w-6 h-6 text-blue-600" />}
                 title="Verified Onboarding"
                 description="Manual ID verification ensures only legitimate community leaders can operate on the platform."
               />
-              <FeatureCard 
+              <FeatureCard
                 icon={<Lock className="w-6 h-6 text-blue-600" />}
                 title="Privacy First"
                 description="Sensitive member data is encrypted at rest and protected by strict role-based access controls."
               />
-              <FeatureCard 
+              <FeatureCard
                 icon={<FileText className="w-6 h-6 text-blue-600" />}
                 title="Digital Family Cards"
                 description="Full lifecycle management of family records, member relationships, and demographic trends."
               />
-              <FeatureCard 
+              <FeatureCard
                 icon={<Users className="w-6 h-6 text-blue-600" />}
                 title="NIC Tracking"
                 description="Unique system-wide identity tracking to prevent duplicate registrations and ensure data integrity."
               />
-              <FeatureCard 
+              <FeatureCard
                 icon={<Globe className="w-6 h-6 text-blue-600" />}
                 title="Cloud Native"
                 description="Highly available infrastructure powered by Vercel and Neon, accessible from any device."
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="py-32 bg-slate-50 relative overflow-hidden">
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center max-w-3xl mx-auto mb-20">
+              <h2 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mb-4">Flexible Licensing</h2>
+              <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-8">Choose the Perfect Plan for Your Mahalla</h3>
+
+              <div className="inline-flex bg-white p-1.5 rounded-[20px] shadow-sm border border-slate-200">
+                {['MONTHLY', 'ANNUALLY'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedPlanType(type)}
+                    className={`px-8 py-3 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all ${selectedPlanType === type ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-900'}`}
+                  >
+                    {type.toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+              {plans.filter(p => p.type === selectedPlanType).map((plan) => (
+                <PricingCard
+                  key={plan.id}
+                  plan={plan}
+                  isAnnual={selectedPlanType === 'ANNUALLY'}
+                />
+              ))}
             </div>
           </div>
         </section>
@@ -179,11 +212,8 @@ export default function LandingPage() {
       <footer className="bg-white py-20 border-t border-slate-100">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-10">
-            <div className="flex items-center gap-3">
-              <div className="bg-slate-900 p-1.5 rounded-lg">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-black text-slate-900 tracking-tight">MahallasPlus</span>
+            <div className="flex items-center">
+              <img src="/Logomahallasplus.png" alt="MahallasPlus" className="h-10 w-auto object-contain" />
             </div>
             <div className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">
               &copy; {new Date().getFullYear()} MahallasPlus &bull; Enterprise Community Core
@@ -207,6 +237,47 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       <p className="text-slate-500 font-medium leading-relaxed">
         {description}
       </p>
+    </div>
+  );
+}
+
+function PricingCard({ plan, isAnnual }: { plan: any, isAnnual: boolean }) {
+  const price = plan.isSaleActive ? plan.salePrice : plan.basePrice;
+  const isPremium = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('enterprise');
+
+  return (
+    <div className={`flex flex-col p-10 rounded-[40px] border-2 transition-all hover:scale-[1.02] duration-300 ${isPremium ? 'bg-slate-900 text-white border-slate-800 shadow-2xl shadow-slate-900/20' : 'bg-white text-slate-900 border-slate-100 shadow-xl shadow-slate-900/5'}`}>
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className={`text-sm font-black uppercase tracking-[0.2em] ${isPremium ? 'text-blue-400' : 'text-blue-600'}`}>{plan.name}</h4>
+          {plan.isSaleActive && (
+            <span className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Sale</span>
+          )}
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-5xl font-black tracking-tighter">
+            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(price)}
+          </span>
+          <span className={`text-xs font-bold uppercase tracking-widest opacity-50`}>/ {isAnnual ? 'year' : 'month'}</span>
+        </div>
+        <p className={`mt-4 text-sm font-medium leading-relaxed opacity-60`}>{plan.description}</p>
+      </div>
+
+      <div className="flex-grow space-y-4 mb-10">
+        {plan.features.map((feature: string, idx: number) => (
+          <div key={idx} className="flex items-start gap-3">
+            <CheckCircle2 className={`w-5 h-5 shrink-0 ${isPremium ? 'text-blue-400' : 'text-blue-600'}`} />
+            <span className="text-sm font-bold tracking-tight opacity-80">{feature}</span>
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href={`/register?plan=${plan.id}`}
+        className={`w-full py-5 rounded-[24px] text-sm font-black uppercase tracking-[0.2em] text-center transition-all active:scale-95 ${isPremium ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20' : 'bg-slate-900 text-white hover:bg-blue-600 shadow-xl shadow-slate-900/10'}`}
+      >
+        Get Started
+      </Link>
     </div>
   );
 }
