@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield, Users, Layers, Lock, PhoneCall, ChevronRight, Activity, FileText, Globe, CheckCircle2, Zap } from "lucide-react";
+import { Shield, Users, Layers, Lock, PhoneCall, ChevronRight, Activity, FileText, Globe, CheckCircle2, Zap, Menu, X } from "lucide-react";
 import { getPublicSettings } from "@/app/actions/systemSettings";
 import { getPublicLicensePlans } from "@/app/actions/licensePlans";
 
@@ -10,6 +10,8 @@ export default function LandingPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
   const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -31,31 +33,70 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center group">
             <img src="/Logomahallasplus.png" alt="MahallasPlus" className="h-15 w-auto object-contain transition-transform group-hover:scale-105" />
           </Link>
+
+          {/* Desktop Nav */}
           <nav className="hidden lg:flex gap-10">
             <Link href="#features" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Features</Link>
             <Link href="#pricing" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Pricing</Link>
             <Link href="#about" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">About</Link>
             <Link href="#contact" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Contact</Link>
           </nav>
-          <div className="flex items-center gap-6">
-            <Link href="/login" className="hidden sm:block text-sm font-black text-slate-900 hover:text-blue-600 transition-colors uppercase tracking-widest">Login</Link>
-            <Link href="/register" className="text-sm font-black bg-slate-900 text-white px-6 py-3 rounded-2xl hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-95 uppercase tracking-widest">
+
+          <div className="flex items-center gap-4 lg:gap-6">
+            <Link href="/login" className="hidden lg:block text-sm font-black text-slate-900 hover:text-blue-600 transition-colors uppercase tracking-widest">Login</Link>
+            <Link href="/register" className="text-sm font-black bg-slate-900 text-white px-6 py-3 rounded-2xl hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-95 uppercase tracking-widest whitespace-nowrap">
               Join Now
             </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden p-2 text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+            >
+              {isMenuOpen ? (
+                <X className="w-6 h-6 text-slate-900" />
+              ) : (
+                <Menu className="w-6 h-6 text-slate-900" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {isMenuOpen && (
+          <div className="lg:hidden bg-white border-t border-slate-100 p-6 space-y-6 animate-in slide-in-from-top-4 duration-300">
+            <nav className="flex flex-col gap-6">
+              <Link href="#features" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Features</Link>
+              <Link href="#pricing" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Pricing</Link>
+              <Link href="#about" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">About</Link>
+              <Link href="#contact" onClick={() => setIsMenuOpen(false)} className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Contact</Link>
+              <Link href="/login" onClick={() => setIsMenuOpen(false)} className="text-sm font-black text-slate-900 hover:text-blue-600 transition-colors uppercase tracking-widest pt-6 border-t border-slate-50">Login</Link>
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
+        <section className="relative pt-32 pb-48 overflow-hidden min-h-[90vh] flex items-center">
+          {/* Hero Background Image with Overlay */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/hero-dashboard.png"
+              alt="MahallasPlus Dashboard"
+              className="w-full h-full object-cover opacity-100 scale-105"
+            />
+            {/* Sophisticated gradient overlay to keep text readable */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white via-white/60 to-white backdrop-blur-[2px]"></div>
+          </div>
+
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none z-10"></div>
 
           {/* Abstract blobs */}
-          <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+          <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 z-0">
             <div className="w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-[120px]"></div>
           </div>
-          <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+          <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 z-0">
             <div className="w-[600px] h-[600px] bg-indigo-100/40 rounded-full blur-[120px]"></div>
           </div>
 
@@ -254,11 +295,18 @@ function PricingCard({ plan, isAnnual }: { plan: any, isAnnual: boolean }) {
             <span className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Sale</span>
           )}
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-5xl font-black tracking-tighter">
-            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(price)}
-          </span>
-          <span className={`text-xs font-bold uppercase tracking-widest opacity-50`}>/ {isAnnual ? 'year' : 'month'}</span>
+        <div className="flex flex-col gap-1">
+          {plan.isSaleActive && (
+            <span className={`text-3xl font-bold line-through tracking-tight ${isPremium ? 'text-slate-500' : 'text-slate-400'}`}>
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(plan.basePrice)}
+            </span>
+          )}
+          <div className="flex items-baseline gap-1">
+            <span className="text-5xl font-black tracking-tighter">
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(price)}
+            </span>
+            <span className={`text-xs font-bold uppercase tracking-widest opacity-50`}>/ {isAnnual ? 'year' : 'month'}</span>
+          </div>
         </div>
         <p className={`mt-4 text-sm font-medium leading-relaxed opacity-60`}>{plan.description}</p>
       </div>
