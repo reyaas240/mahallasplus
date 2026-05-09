@@ -11,7 +11,7 @@ export async function GET() {
 
   const mainMahalla = await prisma.mainMahalla.findUnique({
     where: { id: session.user.mainMahallaId },
-    select: { district: true, province: true }
+    select: { district: true, province: true, area: true }
   });
 
   const subMahallas = await prisma.subMahalla.findMany({
@@ -33,25 +33,22 @@ export async function GET() {
     memberCount: sm.familyCards.reduce((acc, fc) => acc + fc._count.members, 0)
   }));
 
-  let areas: any[] = [];
-  if (mainMahalla?.district) {
-    // Find the district in master data, matching province if available
-    const district = await prisma.masterDistrict.findFirst({
+  let subAreas: any[] = [];
+  if (mainMahalla?.area) {
+    // Find the city (MasterArea) to get its sub-areas
+    const area = await prisma.masterArea.findFirst({
       where: { 
-        name: { equals: mainMahalla.district, mode: 'insensitive' },
-        ...(mainMahalla.province && {
-          province: { name: { equals: mainMahalla.province, mode: 'insensitive' } }
-        })
+        name: { equals: mainMahalla.area, mode: 'insensitive' }
       }
     });
 
-    if (district) {
-      areas = await prisma.masterArea.findMany({
-        where: { districtId: district.id },
+    if (area) {
+      subAreas = await prisma.masterSubArea.findMany({
+        where: { areaId: area.id },
         orderBy: { name: 'asc' }
       });
     }
   }
 
-  return NextResponse.json({ subMahallas: subMahallasWithCount, areas });
+  return NextResponse.json({ subMahallas: subMahallasWithCount, subAreas });
 }

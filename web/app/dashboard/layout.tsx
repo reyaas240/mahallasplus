@@ -119,10 +119,16 @@ export default async function DashboardLayout({
             <>
               <div className="mt-8 mb-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Core Operations</div>
               {role === "MAIN_ADMIN" && (
-                <Link href="/dashboard/sub-mahallas" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-                  <Building className="w-5 h-5" />
-                  <span className="font-bold text-sm tracking-wide">Sub Mahallas</span>
-                </Link>
+                <>
+                  <Link href="/dashboard/sub-mahallas" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <Building className="w-5 h-5" />
+                    <span className="font-bold text-sm tracking-wide">Sub Mahallas</span>
+                  </Link>
+                  <Link href="/dashboard/jurisdictions" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <Globe className="w-5 h-5 transition-transform group-hover:rotate-12" />
+                    <span className="font-bold text-sm tracking-wide">Jurisdictions</span>
+                  </Link>
+                </>
               )}
               <Link href="/dashboard/families" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
                 <Users className="w-5 h-5" />

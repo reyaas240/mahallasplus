@@ -3,11 +3,22 @@ import { ChevronLeft, Database } from "lucide-react";
 import Link from "next/link";
 import { MasterDataForm } from "./MasterDataForm";
 import { notFound } from "next/navigation";
+import { MasterDataActions } from "./MasterDataActions";
+import { SubAreaManager } from "../../components/SubAreaManager";
 
 const config: any = {
   provinces: { model: "masterProvince", title: "Provinces", singular: "Province", parentModel: "masterCountry", parentKey: "countryId", parentName: "Country" },
   districts: { model: "masterDistrict", title: "Districts", singular: "District", parentModel: "masterProvince", parentKey: "provinceId", parentName: "Province" },
-  areas: { model: "masterArea", title: "Areas", singular: "Area", parentModel: "masterDistrict", parentKey: "districtId", parentName: "District" },
+  areas: { 
+    model: "masterArea", 
+    title: "Areas", 
+    singular: "Area", 
+    parentModel: "masterDistrict", 
+    parentKey: "districtId", 
+    parentName: "District",
+    include: { subAreas: true }
+  },
+  'sub-areas': { model: "masterSubArea", title: "Sub Areas", singular: "Sub Area", parentModel: "masterArea", parentKey: "areaId", parentName: "Area" },
   schools: { model: "masterSchool", title: "Schools", singular: "School" },
   grades: { model: "masterGrade", title: "Grades", singular: "Grade" },
   occupations: { model: "masterOccupation", title: "Occupations", singular: "Occupation" },
@@ -20,7 +31,13 @@ export default async function GenericMasterDataPage(props: { params: Promise<{ t
   if (!typeConfig) return notFound();
 
   // @ts-ignore - dynamic prisma call
-  const items = await prisma[typeConfig.model].findMany({ orderBy: { name: 'asc' }, include: typeConfig.parentKey ? { [typeConfig.parentModel.replace("master", "").toLowerCase()]: true } : undefined });
+  const items = await prisma[typeConfig.model].findMany({ 
+    orderBy: { name: 'asc' }, 
+    include: {
+      ...(typeConfig.parentKey ? { [typeConfig.parentModel.replace("master", "").toLowerCase()]: true } : {}),
+      ...(typeConfig.include || {})
+    }
+  });
   
   let parentRecords = [];
   if (typeConfig.parentModel) {
@@ -58,13 +75,23 @@ export default async function GenericMasterDataPage(props: { params: Promise<{ t
                   <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                     <th className="font-medium p-4">Name</th>
                     {typeConfig.parentName && <th className="font-medium p-4">{typeConfig.parentName}</th>}
+                    {params.type === 'areas' && <th className="font-medium p-4">Sub Areas</th>}
+                    <th className="font-medium p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item: any) => (
-                    <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 group transition-colors">
                       <td className="p-4 font-medium text-slate-900">{item.name}</td>
                       {typeConfig.parentName && <td className="p-4 text-slate-600">{item[typeConfig.parentModel.replace("master", "").toLowerCase()]?.name}</td>}
+                      {params.type === 'areas' && (
+                        <td className="p-4 min-w-[200px]">
+                          <SubAreaManager areaId={item.id} initialSubAreas={item.subAreas || []} />
+                        </td>
+                      )}
+                      <td className="p-4 text-right">
+                        <MasterDataActions item={item} type={params.type} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

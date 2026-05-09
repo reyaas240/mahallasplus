@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { Plus, Search, Building, Calendar, Power, CheckCircle2 } from "lucide-react";
 import { MainMahallaActions } from "./MainMahallaActions";
+import { SubMahallaDrawer } from "./SubMahallaDrawer";
 
 export default async function MainMahallasPage() {
   const [mahallas, countries, provinces, districts, areas] = await Promise.all([
-    prisma.mainMahalla.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.mainMahalla.findMany({ 
+      orderBy: { createdAt: "desc" },
+      include: { subMahallas: true }
+    }),
     prisma.masterCountry.findMany({ orderBy: { name: "asc" } }),
     prisma.masterProvince.findMany({ orderBy: { name: "asc" } }),
     prisma.masterDistrict.findMany({ orderBy: { name: "asc" } }),
@@ -50,6 +54,7 @@ export default async function MainMahallasPage() {
                 <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
                   <th className="p-6">Mahalla Identity</th>
                   <th className="p-6">Currency</th>
+                  <th className="p-6">Jurisdiction</th>
                   <th className="p-6">Status</th>
                   <th className="p-6">Operational Dates</th>
                   <th className="p-6 text-right">Actions</th>
@@ -73,6 +78,9 @@ export default async function MainMahallasPage() {
                       <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-black uppercase tracking-widest">
                         {m.defaultCurrency}
                       </span>
+                    </td>
+                    <td className="p-6">
+                      <SubMahallaDrawer mainMahallaName={m.name} subMahallas={m.subMahallas} />
                     </td>
                     <td className="p-6">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${

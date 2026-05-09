@@ -4,7 +4,7 @@ import { getProxiedImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Loader2, Camera, Image as ImageIcon } from "lucide-react";
 
-export function SubMahallaForm({ initialData, areas = [], onCancel }: { initialData?: any, areas?: any[], onCancel?: () => void }) {
+export function SubMahallaForm({ initialData, subAreas = [], onCancel }: { initialData?: any, subAreas?: any[], onCancel?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logo || null);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.coverImage || null);
@@ -120,14 +120,14 @@ export function SubMahallaForm({ initialData, areas = [], onCancel }: { initialD
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Area / Locality</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Sub Area / Locality</label>
               <select 
                 name="area" 
                 defaultValue={initialData?.area}
                 className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-600 font-black text-slate-900 text-[10px] uppercase cursor-pointer"
               >
-                <option value="">Select Area</option>
-                {areas.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+                <option value="">Select Sub Area</option>
+                {subAreas.map(sa => <option key={sa.id} value={sa.name}>{sa.name}</option>)}
               </select>
             </div>
           </div>

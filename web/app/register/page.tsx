@@ -7,7 +7,7 @@ import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldC
 
 import { submitRegistration } from "@/app/actions/register";
 import { generateAndSendOtp, verifyOtp } from "@/app/actions/otp";
-import { getCountries, getProvinces, getDistricts } from "@/app/actions/master-data";
+import { getCountries, getProvinces, getDistricts, getCities } from "@/app/actions/master-data";
 import { getPublicSettings } from "@/app/actions/systemSettings";
 import { getPublicLicensePlans } from "@/app/actions/licensePlans";
 
@@ -32,9 +32,11 @@ function RegisterContent() {
   const [countries, setCountries] = useState<any[]>([]);
   const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
 
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
   const [licensePlan, setLicensePlan] = useState("");
   const [plans, setPlans] = useState<any[]>([]);
@@ -98,10 +100,22 @@ function RegisterContent() {
       if (selectedProvince) {
         const d = await getDistricts(selectedProvince);
         setDistricts(d);
+        setCities([]);
+        setSelectedDistrict("");
       }
     }
     loadDistricts();
   }, [selectedProvince]);
+
+  useEffect(() => {
+    async function loadCities() {
+      if (selectedDistrict) {
+        const c = await getCities(selectedDistrict);
+        setCities(c);
+      }
+    }
+    loadCities();
+  }, [selectedDistrict]);
 
   const handleStep1Submit = async (formData: FormData) => {
     const emailVal = formData.get("email") as string;
@@ -282,7 +296,7 @@ function RegisterContent() {
                   <input required={step === 3} name="mahallaName" type="text" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Grand Central Mahalla" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Country</label>
                     <select
@@ -315,6 +329,8 @@ function RegisterContent() {
                     <select
                       required={step === 3}
                       name="district"
+                      value={selectedDistrict}
+                      onChange={(e) => setSelectedDistrict(e.target.value)}
                       className="w-full px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
                       disabled={!selectedProvince}
                     >
@@ -322,11 +338,23 @@ function RegisterContent() {
                       {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">City (Area)</label>
+                    <select
+                      required={step === 3}
+                      name="city"
+                      className="w-full px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
+                      disabled={!selectedDistrict}
+                    >
+                      <option value="">Select</option>
+                      {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Address</label>
-                  <textarea required={step === 3} name="address" rows={2} className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all resize-none" placeholder="123, Main Street, Area Name..." />
+                  <textarea required={step === 3} name="address" rows={2} className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all resize-none" placeholder="123, Main Street..." />
                 </div>
 
                 <div className="pt-4 border-t border-slate-200/50">

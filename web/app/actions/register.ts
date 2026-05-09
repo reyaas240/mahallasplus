@@ -33,6 +33,7 @@ export async function submitRegistration(formData: FormData) {
   const countryId = formData.get("country") as string;
   const provinceId = formData.get("province") as string;
   const districtId = formData.get("district") as string;
+  const city = formData.get("city") as string;
   const address = formData.get("address") as string;
   const licensePlanId = formData.get("licensePlanId") as string;
   
@@ -87,6 +88,7 @@ export async function submitRegistration(formData: FormData) {
       country: country?.name || null,
       province: province?.name || null,
       district: district?.name || null,
+      city: city || null,
       address,
       licensePlanId,
       governmentIdUrl,
@@ -278,6 +280,7 @@ export async function submitRegistration(formData: FormData) {
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 40%;">Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${fullName}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Contact No</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${phone || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Mahalla Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${mahallaName}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">City</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${city || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Address</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${address || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Province</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${province?.name || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">District</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${district?.name || "N/A"}</td></tr>

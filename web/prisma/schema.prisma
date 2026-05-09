@@ -122,6 +122,7 @@ model RegistrationRequest {
   country         String?
   province        String?
   district        String?
+  city            String?
   address         String?
   selfieUrl       String?
   governmentIdUrl String?
@@ -286,8 +287,18 @@ model MasterArea {
   name       String
   districtId String
   district   MasterDistrict @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  subAreas   MasterSubArea[]
 
   @@unique([name, districtId])
+}
+
+model MasterSubArea {
+  id         String @id @default(cuid())
+  name       String
+  areaId     String
+  area       MasterArea @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model MasterSchool {

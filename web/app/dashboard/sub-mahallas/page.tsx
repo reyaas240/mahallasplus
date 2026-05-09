@@ -11,7 +11,7 @@ export default function SubMahallasPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [subMahallas, setSubMahallas] = useState<any[]>([]);
-  const [areas, setAreas] = useState<any[]>([]);
+  const [subAreas, setSubAreas] = useState<any[]>([]);
   const [selectedSubMahalla, setSelectedSubMahalla] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,7 +32,7 @@ export default function SubMahallasPage() {
       const data = await response.json();
       
       setSubMahallas(data.subMahallas);
-      setAreas(data.areas);
+      setSubAreas(data.subAreas);
     } catch (e) {
       console.error(e);
     } finally {
@@ -55,7 +55,7 @@ export default function SubMahallasPage() {
         <div className="lg:col-span-4 sticky top-6">
           <SubMahallaForm 
             initialData={selectedSubMahalla} 
-            areas={areas} 
+            subAreas={subAreas} 
             onCancel={() => { setSelectedSubMahalla(null); fetchData(); }}
           />
         </div>
