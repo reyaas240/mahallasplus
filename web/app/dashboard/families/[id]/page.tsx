@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FamilyMemberForm } from "./FamilyMemberForm";
 import { FamilyMemberActions } from "./FamilyMemberActions";
 import { FamilyCardEditShortcut } from "./FamilyCardEditShortcut";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export default async function FamilyDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -156,7 +157,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                     className="group relative aspect-square bg-slate-50 rounded-xl border border-slate-100 overflow-hidden hover:border-blue-200 transition-all"
                   >
                     {path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img src={path} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={`Attachment ${i+1}`} />
+                      <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={`Attachment ${i+1}`} />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
                         <FileText className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />

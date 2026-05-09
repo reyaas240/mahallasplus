@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, X, Loader2, ShieldCheck, Eye, ShieldAlert, XCircle } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 import { approveRequest, rejectRequest, verifyRequest } from "@/app/actions/requests";
 
 export function RequestActions({ request }: { request: any }) {
@@ -114,9 +115,7 @@ export function RequestActions({ request }: { request: any }) {
                   <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
                     {request.governmentIdUrl ? (
                       <img 
-                        src={request.governmentIdUrl.includes('blob.vercel-storage.com') 
-                          ? `/api/files/proxy?url=${encodeURIComponent(request.governmentIdUrl)}` 
-                          : request.governmentIdUrl} 
+                        src={getProxiedImageUrl(request.governmentIdUrl)} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                         alt="Government ID" 
                       />
@@ -133,9 +132,7 @@ export function RequestActions({ request }: { request: any }) {
                   <div className="aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-slate-200 group relative">
                     {request.selfieUrl ? (
                       <img 
-                        src={request.selfieUrl.includes('blob.vercel-storage.com') 
-                          ? `/api/files/proxy?url=${encodeURIComponent(request.selfieUrl)}` 
-                          : request.selfieUrl} 
+                        src={getProxiedImageUrl(request.selfieUrl)} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                         alt="Selfie" 
                       />

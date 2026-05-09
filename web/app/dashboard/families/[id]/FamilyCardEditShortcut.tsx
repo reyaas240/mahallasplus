@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Edit3, X, Loader2, Image as ImageIcon, CreditCard } from "lucide-react";
 import { updateFamilyCard } from "@/app/actions/family";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export function FamilyCardEditShortcut({ family, subMahallas }: { family: any, subMahallas: any[] }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -127,7 +128,7 @@ export function FamilyCardEditShortcut({ family, subMahallas }: { family: any, s
                       {family.attachments.map((path: string, i: number) => (
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-blue-100 bg-blue-50/30 group">
                           {path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <img src={path} className="w-full h-full object-cover" alt="Existing" />
+                            <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" alt="Existing" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="text-[8px] font-black text-blue-500 uppercase">Doc</span>

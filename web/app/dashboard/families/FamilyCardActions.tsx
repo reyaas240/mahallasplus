@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Edit3, Trash2, X, Loader2, Image as ImageIcon, CreditCard } from "lucide-react";
 import { deleteFamilyCard, updateFamilyCard } from "@/app/actions/family";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 export function FamilyCardActions({ family }: { family: any }) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -147,7 +148,7 @@ export function FamilyCardActions({ family }: { family: any }) {
                       {family.attachments.map((path: string, i: number) => (
                         <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-blue-100 bg-blue-50/30 group">
                           {path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                            <img src={path} className="w-full h-full object-cover" alt="Existing" />
+                            <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover" alt="Existing" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <span className="text-[8px] font-black text-blue-500 uppercase">Doc</span>
