@@ -39,6 +39,8 @@ function RegisterContent() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedDivisionalSecretariat, setSelectedDivisionalSecretariat] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [customCity, setCustomCity] = useState("");
   const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
   const [licensePlan, setLicensePlan] = useState("");
   const [plans, setPlans] = useState<any[]>([]);
@@ -371,14 +373,28 @@ function RegisterContent() {
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">City (Area)</label>
                     <select
-                      required={step === 3}
-                      name="city"
+                      required={step === 3 && selectedCity !== 'OTHER'}
+                      name={selectedCity === 'OTHER' ? undefined : "city"}
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
                       className="w-full px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
                       disabled={!selectedDivisionalSecretariat}
                     >
                       <option value="">Select</option>
                       {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      <option value="OTHER">Other (Type manually)</option>
                     </select>
+                    {selectedCity === 'OTHER' && (
+                      <input 
+                        type="text" 
+                        name="city" 
+                        required={step === 3}
+                        value={customCity}
+                        onChange={(e) => setCustomCity(e.target.value)}
+                        placeholder="Enter custom City/Area name"
+                        className="w-full mt-3 px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 outline-none transition-all"
+                      />
+                    )}
                   </div>
                 </div>
 
