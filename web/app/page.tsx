@@ -119,23 +119,23 @@ function LandingContent() {
           </div>
 
           <div className="container mx-auto px-4 relative z-10 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-[0.2em] mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
               <Activity className="w-4 h-4" />
               <span>{t('hero.badge')}</span>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 max-w-5xl mx-auto leading-[0.95] mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-slate-900 max-w-5xl mx-auto leading-[1.1] md:leading-[0.95] mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
               {t('hero.title1')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{t('hero.title2')}</span>
             </h1>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-12 font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 px-4">
               {t('hero.subtitle')}
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
-              <Link href="/register" className="flex items-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-[24px] text-lg font-black hover:bg-blue-700 transition-all hover:scale-105 shadow-2xl shadow-blue-600/20 uppercase tracking-widest group">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 px-4">
+              <Link href="/register" className="w-full sm:w-auto flex items-center justify-center gap-3 bg-blue-600 text-white px-8 py-4 md:px-10 md:py-5 rounded-[24px] text-base md:text-lg font-black hover:bg-blue-700 transition-all hover:scale-105 shadow-2xl shadow-blue-600/20 uppercase tracking-widest group">
                 {t('hero.cta_register')}
                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="#features" className="px-10 py-5 rounded-[24px] text-lg font-black text-slate-900 bg-white border-2 border-slate-100 hover:bg-slate-50 transition-all uppercase tracking-widest">
+              <Link href="#features" className="w-full sm:w-auto px-8 py-4 md:px-10 md:py-5 rounded-[24px] text-base md:text-lg font-black text-slate-900 bg-white border-2 border-slate-100 hover:bg-slate-50 transition-all uppercase tracking-widest text-center">
                 {t('hero.cta_features')}
               </Link>
             </div>
