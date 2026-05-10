@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "join": "Join Now"
+  },
+  "hero": {
+    "badge": "Next-Gen Community Management",
+    "title1": "The Digital Backbone",
+    "title2": "for Modern Mahallas",
+    "subtitle": "Empower your community with enterprise-grade security, automated family records, and seamless administrative controls in one unified platform.",
+    "cta_register": "Register Your Mahalla",
+    "cta_features": "See Features"
+  },
+  "stats": {
+    "data_privacy": "Data Privacy",
+    "security": "Security Level",
+    "audit": "Audit Logs",
+    "cloud": "Cloud Access"
+  },
+  "features": {
+    "badge": "Core Capabilities",
+    "title": "Built for Trust, Designed for Scale",
+    "subtitle": "Every feature in MahallasPlus is crafted to handle complex community hierarchies with absolute precision.",
+    "f1_title": "Hierarchical Logic",
+    "f1_desc": "Manage Main and Sub Mahallas with dedicated admin roles and jurisdiction-locked data access.",
+    "f2_title": "Verified Onboarding",
+    "f2_desc": "Manual ID verification ensures only legitimate community leaders can operate on the platform.",
+    "f3_title": "Privacy First",
+    "f3_desc": "Sensitive member data is encrypted at rest and protected by strict role-based access controls.",
+    "f4_title": "Digital Family Cards",
+    "f4_desc": "Full lifecycle management of family records, member relationships, and demographic trends.",
+    "f5_title": "NIC Tracking",
+    "f5_desc": "Unique system-wide identity tracking to prevent duplicate registrations and ensure data integrity.",
+    "f6_title": "Cloud Native",
+    "f6_desc": "Highly available infrastructure powered by Vercel and Neon, accessible from any device."
+  },
+  "pricing": {
+    "badge": "Flexible Licensing",
+    "title": "Choose the Perfect Plan for Your Mahalla",
+    "monthly": "monthly",
+    "annually": "annually",
+    "sale": "Sale",
+    "per_month": "/ month",
+    "per_year": "/ year",
+    "get_started": "Get Started"
+  },
+  "cta": {
+    "title": "Ready to Digitize Your Community?",
+    "register": "Register Your Mahalla",
+    "support": "Talk to Support"
+  },
+  "footer": {
+    "rights": "Enterprise Community Core"
+  }
+}
