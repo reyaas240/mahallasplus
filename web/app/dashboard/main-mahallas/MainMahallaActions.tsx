@@ -13,6 +13,7 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
   const [selectedCountryId, setSelectedCountryId] = useState("");
   const [selectedProvinceId, setSelectedProvinceId] = useState("");
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
+  const [selectedDivisionalSecretariatId, setSelectedDivisionalSecretariatId] = useState("");
   const [previewLogo, setPreviewLogo] = useState<string | null>(null);
   const [previewCover, setPreviewCover] = useState<string | null>(null);
 
@@ -28,6 +29,9 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
 
     const district = masters.districts.find((d: any) => d.name === mahalla.district);
     if (district) setSelectedDistrictId(district.id);
+    
+    const divSec = masters.divisionalSecretariats.find((ds: any) => ds.name === mahalla.divisionalSecretariat);
+    if (divSec) setSelectedDivisionalSecretariatId(divSec.id);
 
     setSelectedStatus(mahalla.status);
     setIsEditing(true);
@@ -43,10 +47,12 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
     const countryName = masters.countries.find((c: any) => c.id === selectedCountryId)?.name || "";
     const provinceName = masters.provinces.find((p: any) => p.id === selectedProvinceId)?.name || "";
     const districtName = masters.districts.find((d: any) => d.id === selectedDistrictId)?.name || "";
+    const divSecName = masters.divisionalSecretariats.find((ds: any) => ds.id === selectedDivisionalSecretariatId)?.name || "";
     
     formData.set("country", countryName);
     formData.set("province", provinceName);
     formData.set("district", districtName);
+    formData.set("divisionalSecretariat", divSecName);
     
     const res = await updateMainMahalla(mahalla.id, formData);
     setIsUpdating(false);
@@ -59,7 +65,8 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
 
   const filteredProvinces = masters.provinces.filter((p: any) => p.countryId === selectedCountryId);
   const filteredDistricts = masters.districts.filter((d: any) => d.provinceId === selectedProvinceId);
-  const filteredAreas = masters.areas.filter((a: any) => a.districtId === selectedDistrictId);
+  const filteredDivisionalSecretariats = masters.divisionalSecretariats.filter((ds: any) => ds.districtId === selectedDistrictId);
+  const filteredAreas = masters.areas.filter((a: any) => a.divisionalSecretariatId === selectedDivisionalSecretariatId);
 
   return (
     <>
@@ -210,7 +217,7 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
                       <select 
                         value={selectedDistrictId}
                         disabled={!selectedProvinceId}
-                        onChange={(e) => setSelectedDistrictId(e.target.value)}
+                        onChange={(e) => { setSelectedDistrictId(e.target.value); setSelectedDivisionalSecretariatId(""); }}
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900 text-xs disabled:opacity-50"
                       >
                         <option value="">Select District</option>
@@ -218,11 +225,23 @@ export function MainMahallaActions({ mahalla, masters }: { mahalla: any, masters
                       </select>
                     </div>
                     <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Divisional Secretariat</label>
+                      <select 
+                        value={selectedDivisionalSecretariatId}
+                        disabled={!selectedDistrictId}
+                        onChange={(e) => setSelectedDivisionalSecretariatId(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900 text-xs disabled:opacity-50"
+                      >
+                        <option value="">Select Secretariat</option>
+                        {filteredDivisionalSecretariats.map((ds: any) => <option key={ds.id} value={ds.id}>{ds.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1 text-left">Area / City</label>
                       <select 
                         name="area"
                         defaultValue={mahalla.area}
-                        disabled={!selectedDistrictId}
+                        disabled={!selectedDivisionalSecretariatId}
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900 text-xs disabled:opacity-50"
                       >
                         <option value="">Select Area</option>

@@ -7,24 +7,9 @@ import { updateMainMahalla } from "@/app/actions/mahalla";
 
 export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters: any }) {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [selectedCountryId, setSelectedCountryId] = useState("");
-  const [selectedProvinceId, setSelectedProvinceId] = useState("");
-  const [selectedDistrictId, setSelectedDistrictId] = useState("");
   const [previewLogo, setPreviewLogo] = useState<string | null>(mahalla.logo);
   const [previewCover, setPreviewCover] = useState<string | null>(mahalla.coverImage);
   const [message, setMessage] = useState({ type: "", text: "" });
-
-  // Initialize selections if mahalla has names
-  useState(() => {
-    const country = masters.countries.find((c: any) => c.name === mahalla.country);
-    if (country) setSelectedCountryId(country.id);
-    
-    const province = masters.provinces.find((p: any) => p.name === mahalla.province);
-    if (province) setSelectedProvinceId(province.id);
-
-    const district = masters.districts.find((d: any) => d.name === mahalla.district);
-    if (district) setSelectedDistrictId(district.id);
-  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,13 +19,12 @@ export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters
     const formData = new FormData(e.currentTarget);
     formData.append("status", mahalla.status);
     
-    const countryName = masters.countries.find((c: any) => c.id === selectedCountryId)?.name || "";
-    const provinceName = masters.provinces.find((p: any) => p.id === selectedProvinceId)?.name || "";
-    const districtName = masters.districts.find((d: any) => d.id === selectedDistrictId)?.name || "";
-    
-    formData.set("country", countryName);
-    formData.set("province", provinceName);
-    formData.set("district", districtName);
+    // Keep existing geographic values (read-only for main admin)
+    formData.set("country", mahalla.country || "");
+    formData.set("province", mahalla.province || "");
+    formData.set("district", mahalla.district || "");
+    formData.set("divisionalSecretariat", mahalla.divisionalSecretariat || "");
+    formData.set("area", mahalla.area || "");
     
     const res = await updateMainMahalla(mahalla.id, formData);
     setIsUpdating(false);
@@ -51,10 +35,6 @@ export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters
       setMessage({ type: "error", text: res.error || "Failed to update" });
     }
   };
-
-  const filteredProvinces = masters.provinces.filter((p: any) => p.countryId === selectedCountryId);
-  const filteredDistricts = masters.districts.filter((d: any) => d.provinceId === selectedProvinceId);
-  const filteredAreas = masters.areas.filter((a: any) => a.districtId === selectedDistrictId);
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm space-y-10 relative group">
@@ -164,50 +144,38 @@ export function MahallaProfileForm({ mahalla, masters }: { mahalla: any, masters
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Country</label>
-              <select 
-                value={selectedCountryId}
-                onChange={(e) => { setSelectedCountryId(e.target.value); setSelectedProvinceId(""); setSelectedDistrictId(""); }}
-                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-black text-slate-900 text-xs uppercase tracking-widest focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none"
-              >
-                <option value="">Select Country</option>
-                {masters.countries.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest cursor-not-allowed">
+                {mahalla.country || "—"}
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Province / State</label>
-              <select 
-                value={selectedProvinceId}
-                disabled={!selectedCountryId}
-                onChange={(e) => { setSelectedProvinceId(e.target.value); setSelectedDistrictId(""); }}
-                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-black text-slate-900 text-xs uppercase tracking-widest focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none disabled:opacity-50"
-              >
-                <option value="">Select Province</option>
-                {filteredProvinces.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <div className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest cursor-not-allowed">
+                {mahalla.province || "—"}
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">District</label>
-              <select 
-                value={selectedDistrictId}
-                disabled={!selectedProvinceId}
-                onChange={(e) => setSelectedDistrictId(e.target.value)}
-                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-black text-slate-900 text-xs uppercase tracking-widest focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none disabled:opacity-50"
-              >
-                <option value="">Select District</option>
-                {filteredDistricts.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
+              <div className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest cursor-not-allowed">
+                {mahalla.district || "—"}
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Divisional Secretariat</label>
+              <div className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest cursor-not-allowed">
+                {mahalla.divisionalSecretariat || "—"}
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Area / City</label>
-              <select 
-                name="area"
-                defaultValue={mahalla.area}
-                disabled={!selectedDistrictId}
-                className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-black text-slate-900 text-xs uppercase tracking-widest focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none disabled:opacity-50"
-              >
-                <option value="">Select Area</option>
-                {filteredAreas.map((a: any) => <option key={a.id} value={a.name}>{a.name}</option>)}
-              </select>
+              <div className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent rounded-2xl font-black text-slate-600 text-xs uppercase tracking-widest cursor-not-allowed">
+                {mahalla.area || "—"}
+              </div>
+            </div>
+            <div className="col-span-2">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                ⓘ Geographic details can only be changed by the Platform Administrator.
+              </p>
             </div>
           </div>
         </div>

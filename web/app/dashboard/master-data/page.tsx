@@ -15,6 +15,7 @@ export default function MasterDataPage() {
         <DataCard href="/dashboard/master-data/countries" title="Countries" description="Manage countries, currencies and codes." icon={<MapPin className="w-6 h-6 text-blue-600" />} />
         <DataCard href="/dashboard/master-data/provinces" title="Provinces" description="Manage regional provinces and states." icon={<Map className="w-6 h-6 text-indigo-600" />} />
         <DataCard href="/dashboard/master-data/districts" title="Districts" description="Manage sub-regional districts." icon={<Map className="w-6 h-6 text-emerald-600" />} />
+        <DataCard href="/dashboard/master-data/divisional-secretariats" title="Divisional Secretariats" description="Manage local divisional secretariats." icon={<Map className="w-6 h-6 text-teal-600" />} />
         <DataCard href="/dashboard/master-data/areas" title="Areas" description="Manage local areas and territories." icon={<MapPin className="w-6 h-6 text-amber-600" />} />
         <DataCard href="/dashboard/master-data/schools" title="Schools" description="Manage educational institutions." icon={<GraduationCap className="w-6 h-6 text-purple-600" />} />
         <DataCard href="/dashboard/master-data/grades" title="Grades" description="Manage education grade levels." icon={<GraduationCap className="w-6 h-6 text-purple-500" />} />

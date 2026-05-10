@@ -24,6 +24,7 @@ export async function updateMainMahalla(id: string, formData: FormData) {
   const country = formData.get("country") as string;
   const province = formData.get("province") as string;
   const district = formData.get("district") as string;
+  const divisionalSecretariat = formData.get("divisionalSecretariat") as string;
   const area = formData.get("area") as string;
   const defaultCurrency = formData.get("defaultCurrency") as string;
   const status = formData.get("status") as string;
@@ -60,6 +61,7 @@ export async function updateMainMahalla(id: string, formData: FormData) {
         country: country || current.country,
         province: province || current.province,
         district: district || current.district,
+        divisionalSecretariat: divisionalSecretariat || current.divisionalSecretariat,
         area: area || current.area,
         defaultCurrency: defaultCurrency || current.defaultCurrency,
         status: (effectiveStatus as any) || current.status,

@@ -12,7 +12,7 @@ export default async function MahallaProfilePage() {
     redirect("/dashboard");
   }
 
-  const [mahalla, countries, provinces, districts, areas] = await Promise.all([
+  const [mahalla, countries, provinces, districts, divisionalSecretariats, areas] = await Promise.all([
     prisma.mainMahalla.findUnique({ 
       where: { id: session.user.mainMahallaId },
       include: {
@@ -23,6 +23,7 @@ export default async function MahallaProfilePage() {
     prisma.masterCountry.findMany({ orderBy: { name: "asc" } }),
     prisma.masterProvince.findMany({ orderBy: { name: "asc" } }),
     prisma.masterDistrict.findMany({ orderBy: { name: "asc" } }),
+    prisma.masterDivisionalSecretariat.findMany({ orderBy: { name: "asc" } }),
     prisma.masterArea.findMany({ orderBy: { name: "asc" } }),
   ]);
 
@@ -68,7 +69,7 @@ export default async function MahallaProfilePage() {
         <div className="lg:col-span-2">
           <MahallaProfileForm 
             mahalla={mahalla} 
-            masters={{ countries, provinces, districts, areas }} 
+            masters={{ countries, provinces, districts, divisionalSecretariats, areas }} 
           />
         </div>
 

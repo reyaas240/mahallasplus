@@ -22,7 +22,8 @@ export async function createCountry(formData: FormData) {
 const configMap: any = {
   provinces: { model: "masterProvince", parentKey: "countryId" },
   districts: { model: "masterDistrict", parentKey: "provinceId" },
-  areas: { model: "masterArea", parentKey: "districtId" },
+  'divisional-secretariats': { model: "masterDivisionalSecretariat", parentKey: "districtId" },
+  areas: { model: "masterArea", parentKey: "divisionalSecretariatId" },
   'sub-areas': { model: "masterSubArea", parentKey: "areaId" },
   schools: { model: "masterSchool" },
   grades: { model: "masterGrade" },
@@ -60,11 +61,19 @@ export async function updateGenericMasterData(type: string, id: string, formData
 
   if (!config) return { success: false, error: "Invalid master data type" };
 
+  const dataToUpdate: any = { name };
+  if (config.parentKey) {
+    const parentId = formData.get(config.parentKey) as string;
+    if (parentId) {
+      dataToUpdate[config.parentKey] = parentId;
+    }
+  }
+
   try {
     // @ts-ignore
     await prisma[config.model].update({
       where: { id },
-      data: { name }
+      data: dataToUpdate
     });
     revalidatePath(`/dashboard/master-data/${type}`);
     return { success: true };
@@ -115,6 +124,7 @@ export async function deleteGenericMasterData(type: string, id: string) {
               { country: type === "countries" ? item.name : undefined },
               { province: type === "provinces" ? item.name : undefined },
               { district: type === "districts" ? item.name : undefined },
+              { divisionalSecretariat: type === "divisional-secretariats" ? item.name : undefined },
             ].filter(condition => Object.values(condition)[0] !== undefined)
           }
         });
@@ -154,9 +164,16 @@ export async function getDistricts(provinceId?: string) {
   });
 }
 
-export async function getCities(districtId?: string) {
-  return prisma.masterArea.findMany({
+export async function getDivisionalSecretariats(districtId?: string) {
+  return prisma.masterDivisionalSecretariat.findMany({
     where: districtId ? { districtId } : {},
+    orderBy: { name: "asc" }
+  });
+}
+
+export async function getCities(divisionalSecretariatId?: string) {
+  return prisma.masterArea.findMany({
+    where: divisionalSecretariatId ? { divisionalSecretariatId } : {},
     orderBy: { name: "asc" }
   });
 }

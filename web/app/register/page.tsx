@@ -7,7 +7,7 @@ import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldC
 
 import { submitRegistration } from "@/app/actions/register";
 import { generateAndSendOtp, verifyOtp } from "@/app/actions/otp";
-import { getCountries, getProvinces, getDistricts, getCities } from "@/app/actions/master-data";
+import { getCountries, getProvinces, getDistricts, getDivisionalSecretariats, getCities } from "@/app/actions/master-data";
 import { getPublicSettings } from "@/app/actions/systemSettings";
 import { getPublicLicensePlans } from "@/app/actions/licensePlans";
 
@@ -32,11 +32,13 @@ function RegisterContent() {
   const [countries, setCountries] = useState<any[]>([]);
   const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
+  const [divisionalSecretariats, setDivisionalSecretariats] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
 
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedDivisionalSecretariat, setSelectedDivisionalSecretariat] = useState("");
   const [selectedPlanType, setSelectedPlanType] = useState("MONTHLY");
   const [licensePlan, setLicensePlan] = useState("");
   const [plans, setPlans] = useState<any[]>([]);
@@ -100,22 +102,36 @@ function RegisterContent() {
       if (selectedProvince) {
         const d = await getDistricts(selectedProvince);
         setDistricts(d);
+        setDivisionalSecretariats([]);
         setCities([]);
         setSelectedDistrict("");
+        setSelectedDivisionalSecretariat("");
       }
     }
     loadDistricts();
   }, [selectedProvince]);
 
   useEffect(() => {
-    async function loadCities() {
+    async function loadDivisionalSecretariats() {
       if (selectedDistrict) {
-        const c = await getCities(selectedDistrict);
+        const ds = await getDivisionalSecretariats(selectedDistrict);
+        setDivisionalSecretariats(ds);
+        setCities([]);
+        setSelectedDivisionalSecretariat("");
+      }
+    }
+    loadDivisionalSecretariats();
+  }, [selectedDistrict]);
+
+  useEffect(() => {
+    async function loadCities() {
+      if (selectedDivisionalSecretariat) {
+        const c = await getCities(selectedDivisionalSecretariat);
         setCities(c);
       }
     }
     loadCities();
-  }, [selectedDistrict]);
+  }, [selectedDivisionalSecretariat]);
 
   const handleStep1Submit = async (formData: FormData) => {
     const emailVal = formData.get("email") as string;
@@ -339,12 +355,26 @@ function RegisterContent() {
                     </select>
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Divisional Secretariat</label>
+                    <select
+                      required={step === 3}
+                      name="divisionalSecretariat"
+                      value={selectedDivisionalSecretariat}
+                      onChange={(e) => setSelectedDivisionalSecretariat(e.target.value)}
+                      className="w-full px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
+                      disabled={!selectedDistrict}
+                    >
+                      <option value="">Select</option>
+                      {divisionalSecretariats.map(ds => <option key={ds.id} value={ds.id}>{ds.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">City (Area)</label>
                     <select
                       required={step === 3}
                       name="city"
                       className="w-full px-4 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all appearance-none cursor-pointer disabled:opacity-50"
-                      disabled={!selectedDistrict}
+                      disabled={!selectedDivisionalSecretariat}
                     >
                       <option value="">Select</option>
                       {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}

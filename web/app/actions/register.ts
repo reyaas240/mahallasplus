@@ -33,6 +33,7 @@ export async function submitRegistration(formData: FormData) {
   const countryId = formData.get("country") as string;
   const provinceId = formData.get("province") as string;
   const districtId = formData.get("district") as string;
+  const divisionalSecretariatId = formData.get("divisionalSecretariat") as string;
   const city = formData.get("city") as string;
   const address = formData.get("address") as string;
   const licensePlanId = formData.get("licensePlanId") as string;
@@ -50,10 +51,11 @@ export async function submitRegistration(formData: FormData) {
 
   try {
     // Guard against empty string IDs — Prisma will throw on findUnique with ""
-    const [country, province, district] = await Promise.all([
+    const [country, province, district, divSec] = await Promise.all([
       countryId ? prisma.masterCountry.findUnique({ where: { id: countryId }, select: { name: true } }) : null,
       provinceId ? prisma.masterProvince.findUnique({ where: { id: provinceId }, select: { name: true } }) : null,
       districtId ? prisma.masterDistrict.findUnique({ where: { id: districtId }, select: { name: true } }) : null,
+      divisionalSecretariatId ? prisma.masterDivisionalSecretariat.findUnique({ where: { id: divisionalSecretariatId }, select: { name: true } }) : null,
     ]);
 
     const governmentIdUrl = await saveFile(governmentIdFile, "registrations/ids");
@@ -88,6 +90,7 @@ export async function submitRegistration(formData: FormData) {
       country: country?.name || null,
       province: province?.name || null,
       district: district?.name || null,
+      divisionalSecretariat: divSec?.name || null,
       city: city || null,
       address,
       licensePlanId,
@@ -284,6 +287,7 @@ export async function submitRegistration(formData: FormData) {
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Address</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${address || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Province</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${province?.name || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">District</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${district?.name || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Divisional Sec.</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${divSec?.name || "N/A"}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Country</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${country?.name || "N/A"}</td></tr>
               </table>
               <div style="margin-top: 30px; text-align: center;">

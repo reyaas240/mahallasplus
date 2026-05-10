@@ -7,18 +7,20 @@ import { MasterDataActions } from "./MasterDataActions";
 import { SubAreaManager } from "../../components/SubAreaManager";
 
 const config: any = {
-  provinces: { model: "masterProvince", title: "Provinces", singular: "Province", parentModel: "masterCountry", parentKey: "countryId", parentName: "Country" },
-  districts: { model: "masterDistrict", title: "Districts", singular: "District", parentModel: "masterProvince", parentKey: "provinceId", parentName: "Province" },
+  provinces: { model: "masterProvince", title: "Provinces", singular: "Province", parentModel: "masterCountry", parentRelation: "country", parentKey: "countryId", parentName: "Country" },
+  districts: { model: "masterDistrict", title: "Districts", singular: "District", parentModel: "masterProvince", parentRelation: "province", parentKey: "provinceId", parentName: "Province" },
+  'divisional-secretariats': { model: "masterDivisionalSecretariat", title: "Divisional Secretariats", singular: "Divisional Secretariat", parentModel: "masterDistrict", parentRelation: "district", parentKey: "districtId", parentName: "District" },
   areas: { 
     model: "masterArea", 
     title: "Areas", 
     singular: "Area", 
-    parentModel: "masterDistrict", 
-    parentKey: "districtId", 
-    parentName: "District",
+    parentModel: "masterDivisionalSecretariat", 
+    parentRelation: "divisionalSecretariat",
+    parentKey: "divisionalSecretariatId", 
+    parentName: "Divisional Secretariat",
     include: { subAreas: true }
   },
-  'sub-areas': { model: "masterSubArea", title: "Sub Areas", singular: "Sub Area", parentModel: "masterArea", parentKey: "areaId", parentName: "Area" },
+  'sub-areas': { model: "masterSubArea", title: "Sub Areas", singular: "Sub Area", parentModel: "masterArea", parentRelation: "area", parentKey: "areaId", parentName: "Area" },
   schools: { model: "masterSchool", title: "Schools", singular: "School" },
   grades: { model: "masterGrade", title: "Grades", singular: "Grade" },
   occupations: { model: "masterOccupation", title: "Occupations", singular: "Occupation" },
@@ -34,7 +36,7 @@ export default async function GenericMasterDataPage(props: { params: Promise<{ t
   const items = await prisma[typeConfig.model].findMany({ 
     orderBy: { name: 'asc' }, 
     include: {
-      ...(typeConfig.parentKey ? { [typeConfig.parentModel.replace("master", "").toLowerCase()]: true } : {}),
+      ...(typeConfig.parentKey ? { [typeConfig.parentRelation]: true } : {}),
       ...(typeConfig.include || {})
     }
   });
@@ -83,14 +85,14 @@ export default async function GenericMasterDataPage(props: { params: Promise<{ t
                   {items.map((item: any) => (
                     <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 group transition-colors">
                       <td className="p-4 font-medium text-slate-900">{item.name}</td>
-                      {typeConfig.parentName && <td className="p-4 text-slate-600">{item[typeConfig.parentModel.replace("master", "").toLowerCase()]?.name}</td>}
+                      {typeConfig.parentName && <td className="p-4 text-slate-600">{item[typeConfig.parentRelation]?.name}</td>}
                       {params.type === 'areas' && (
                         <td className="p-4 min-w-[200px]">
                           <SubAreaManager areaId={item.id} initialSubAreas={item.subAreas || []} />
                         </td>
                       )}
                       <td className="p-4 text-right">
-                        <MasterDataActions item={item} type={params.type} />
+                        <MasterDataActions item={item} type={params.type} parentKey={typeConfig.parentKey} parentName={typeConfig.parentName} parents={parentRecords} />
                       </td>
                     </tr>
                   ))}

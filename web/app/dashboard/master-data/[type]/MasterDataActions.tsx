@@ -3,13 +3,23 @@ import { useState } from "react";
 import { Edit2, Trash2, Check, X, Loader2 } from "lucide-react";
 import { updateGenericMasterData, deleteGenericMasterData } from "@/app/actions/master-data";
 
-export function MasterDataActions({ item, type }: { item: any, type: string }) {
+export function MasterDataActions({ item, type, parentKey, parentName, parents }: { 
+  item: any, 
+  type: string, 
+  parentKey?: string, 
+  parentName?: string, 
+  parents?: { id: string, name: string }[] 
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(item.name);
+  const [newParentId, setNewParentId] = useState(parentKey ? item[parentKey] || "" : "");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUpdate = async () => {
-    if (!newName || newName === item.name) {
+    const nameChanged = newName && newName !== item.name;
+    const parentChanged = parentKey && newParentId && newParentId !== item[parentKey];
+
+    if (!nameChanged && !parentChanged) {
       setIsEditing(false);
       return;
     }
@@ -17,6 +27,9 @@ export function MasterDataActions({ item, type }: { item: any, type: string }) {
     setIsLoading(true);
     const formData = new FormData();
     formData.append("name", newName);
+    if (parentKey && newParentId) {
+      formData.append(parentKey, newParentId);
+    }
     
     const res = await updateGenericMasterData(type, item.id, formData);
     setIsLoading(false);
@@ -45,19 +58,33 @@ export function MasterDataActions({ item, type }: { item: any, type: string }) {
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2">
-        <input 
-          autoFocus
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          className="px-2 py-1 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600"
-        />
-        <button disabled={isLoading} onClick={handleUpdate} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md">
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-        </button>
-        <button disabled={isLoading} onClick={() => setIsEditing(false)} className="p-1 text-slate-400 hover:bg-slate-50 rounded-md">
-          <X className="w-4 h-4" />
-        </button>
+      <div className="flex flex-col gap-2">
+        {parentKey && parents && parents.length > 0 && (
+          <select
+            value={newParentId}
+            onChange={(e) => setNewParentId(e.target.value)}
+            className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+          >
+            <option value="">-- {parentName} --</option>
+            {parents.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        )}
+        <div className="flex items-center gap-2">
+          <input 
+            autoFocus
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="flex-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600"
+          />
+          <button disabled={isLoading} onClick={handleUpdate} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md">
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+          </button>
+          <button disabled={isLoading} onClick={() => { setIsEditing(false); setNewName(item.name); setNewParentId(parentKey ? item[parentKey] || "" : ""); }} className="p-1 text-slate-400 hover:bg-slate-50 rounded-md">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     );
   }

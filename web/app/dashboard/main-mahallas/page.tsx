@@ -4,7 +4,7 @@ import { MainMahallaActions } from "./MainMahallaActions";
 import { SubMahallaDrawer } from "./SubMahallaDrawer";
 
 export default async function MainMahallasPage() {
-  const [mahallas, countries, provinces, districts, areas] = await Promise.all([
+  const [mahallas, countries, provinces, districts, divisionalSecretariats, areas] = await Promise.all([
     prisma.mainMahalla.findMany({ 
       orderBy: { createdAt: "desc" },
       include: { subMahallas: true }
@@ -12,6 +12,7 @@ export default async function MainMahallasPage() {
     prisma.masterCountry.findMany({ orderBy: { name: "asc" } }),
     prisma.masterProvince.findMany({ orderBy: { name: "asc" } }),
     prisma.masterDistrict.findMany({ orderBy: { name: "asc" } }),
+    prisma.masterDivisionalSecretariat.findMany({ orderBy: { name: "asc" } }),
     prisma.masterArea.findMany({ orderBy: { name: "asc" } }),
   ]);
 
@@ -108,7 +109,7 @@ export default async function MainMahallasPage() {
                     <td className="p-6 text-right">
                       <MainMahallaActions 
                         mahalla={m} 
-                        masters={{ countries, provinces, districts, areas }}
+                        masters={{ countries, provinces, districts, divisionalSecretariats, areas }}
                       />
                     </td>
                   </tr>

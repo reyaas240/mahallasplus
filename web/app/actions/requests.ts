@@ -43,6 +43,7 @@ export async function approveRequest(requestId: string) {
         country: request.country,
         province: request.province,
         district: request.district,
+        divisionalSecretariat: request.divisionalSecretariat,
         status: "ACTIVE",
         licensePlanId: request.licensePlanId
       }
