@@ -266,7 +266,7 @@ function RegisterContent() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
-                    <input required={step === 1} name="phone" type="tel" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="+94 7X XXX XXXX" />
+                    <input required={step === 1} name="phone" type="tel" pattern="0[0-9]{9}" maxLength={10} title="Phone number must start with 0 and be exactly 10 digits long (e.g. 0771234567)" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="077XXXXXXX" />
                   </div>
                 </div>
               </div>

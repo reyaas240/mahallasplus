@@ -40,18 +40,26 @@ export default async function RequestsPage() {
                       {req.licensePlan?.name} Plan
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-slate-600">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm text-slate-600">
                     <div>
                       <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Applicant</p>
-                      <p>{req.fullName}</p>
+                      <p className="truncate">{req.fullName}</p>
                     </div>
                     <div>
                       <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Email</p>
-                      <p>{req.email}</p>
+                      <p className="truncate">{req.email}</p>
                     </div>
                     <div>
                       <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Phone</p>
-                      <p>{req.phone}</p>
+                      <p>{req.phone || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Div. Sec.</p>
+                      <p className="truncate">{req.divisionalSecretariat || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Area</p>
+                      <p className="truncate">{req.city || '—'}</p>
                     </div>
                     <div>
                       <p className="font-medium text-slate-400 text-xs uppercase mb-0.5">Date</p>
