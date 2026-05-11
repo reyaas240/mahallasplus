@@ -21,8 +21,9 @@ export async function checkEmailAvailability(email: string) {
     if (existingUser) return { available: false, reason: "An account with this email already exists." };
 
     return { available: true };
-  } catch (err) {
-    return { available: false, reason: "Error checking email availability." };
+  } catch (err: any) {
+    console.error("Email check error:", err);
+    return { available: false, reason: `Error checking email availability: ${err.message}` };
   }
 }
 
