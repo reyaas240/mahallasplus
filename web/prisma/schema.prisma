@@ -129,6 +129,7 @@ model RegistrationRequest {
   governmentIdUrl String?
   isVerified      Boolean            @default(false)
   status          RegistrationStatus @default(PENDING)
+  termsAccepted   Boolean            @default(false)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 }

@@ -8,6 +8,7 @@ import { FamilyMemberForm } from "./FamilyMemberForm";
 import { FamilyMemberActions } from "./FamilyMemberActions";
 import { FamilyCardEditShortcut } from "./FamilyCardEditShortcut";
 import { getProxiedImageUrl } from "@/lib/utils";
+import { FamilyAttachmentsList } from "./FamilyAttachmentsList";
 
 export default async function FamilyDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -143,31 +144,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
           </div>
 
           {family.attachments.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <ImageIcon className="w-5 h-5 text-blue-600" /> Documents & Images
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {family.attachments.map((path: string, i: number) => (
-                  <a 
-                    key={i} 
-                    href={path} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="group relative aspect-square bg-slate-50 rounded-xl border border-slate-100 overflow-hidden hover:border-blue-200 transition-all"
-                  >
-                    {path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img src={getProxiedImageUrl(path)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={`Attachment ${i+1}`} />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
-                        <FileText className="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
-                        <span className="text-[8px] font-black uppercase text-slate-400 mt-1">View Document</span>
-                      </div>
-                    )}
-                  </a>
-                ))}
-              </div>
-            </div>
+            <FamilyAttachmentsList attachments={family.attachments} />
           )}
         </div>
       </div>

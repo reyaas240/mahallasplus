@@ -6,6 +6,26 @@ import sharp from "sharp";
 import { sendEmail } from "@/lib/email";
 import { smartUpload } from "@/lib/upload";
 
+export async function checkEmailAvailability(email: string) {
+  try {
+    // Check pending requests
+    const existingReq = await prisma.registrationRequest.findUnique({
+      where: { email }
+    });
+    if (existingReq) return { available: false, reason: "A registration request with this email is already pending." };
+
+    // Check active users
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    if (existingUser) return { available: false, reason: "An account with this email already exists." };
+
+    return { available: true };
+  } catch (err) {
+    return { available: false, reason: "Error checking email availability." };
+  }
+}
+
 async function saveFile(file: File, folder: string) {
   if (!file || file.size === 0) return null;
   
@@ -40,6 +60,7 @@ export async function submitRegistration(formData: FormData) {
   
   const governmentIdFile = formData.get("governmentId") as File;
   const selfieFile = formData.get("selfie") as File;
+  const termsAccepted = formData.get("termsAccepted") === "on";
 
   // Validate required fields
   if (!fullName || !email || !mahallaName) {
@@ -47,6 +68,9 @@ export async function submitRegistration(formData: FormData) {
   }
   if (!licensePlanId) {
     return { success: false, error: "Please select a license plan." };
+  }
+  if (!termsAccepted) {
+    return { success: false, error: "You must accept the Terms & Conditions and Privacy Policy to register." };
   }
 
   try {
@@ -96,6 +120,7 @@ export async function submitRegistration(formData: FormData) {
       licensePlanId,
       governmentIdUrl,
       selfieUrl,
+      termsAccepted,
       status: "PENDING" as any
     };
 
