@@ -257,12 +257,12 @@ function RegisterContent() {
               <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-2">
                   <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Name</label>
-                  <input required={step === 1} name="fullName" type="text" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="John Doe" />
+                  <input required={step === 1} name="fullName" type="text" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Mohamed" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
-                    <input required={step === 1} name="email" type="email" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="john@example.com" />
+                    <input required={step === 1} name="email" type="email" className="w-full px-5 py-4 bg-white/50 border border-slate-200 rounded-2xl font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="mohamed@example.com" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
@@ -385,9 +385,9 @@ function RegisterContent() {
                       <option value="OTHER">Other (Type manually)</option>
                     </select>
                     {selectedCity === 'OTHER' && (
-                      <input 
-                        type="text" 
-                        name="city" 
+                      <input
+                        type="text"
+                        name="city"
                         required={step === 3}
                         value={customCity}
                         onChange={(e) => setCustomCity(e.target.value)}
