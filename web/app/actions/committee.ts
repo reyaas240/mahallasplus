@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
 import { smartUpload } from "@/lib/upload";
+import { checkLicenseLimit } from "@/lib/license";
 
 export async function createCommittee(formData: FormData) {
   console.log("Create Committee Action triggered");
@@ -33,6 +34,18 @@ export async function createCommittee(formData: FormData) {
   let logoPath = null;
 
   try {
+    const existing = await prisma.committee.findFirst({
+      where: { name, mainMahallaId: session.user.mainMahallaId as string }
+    });
+    if (existing) {
+      return { success: false, error: `A committee named "${name}" already exists in your Mahalla.` };
+    }
+
+    const limitCheck = await checkLicenseLimit(session.user.mainMahallaId as string, "MAX_SOCIETIES");
+    if (!limitCheck.allowed) {
+      return { success: false, error: limitCheck.error };
+    }
+
     if (logoFile && logoFile.size > 0) {
       logoPath = await smartUpload(logoFile, "committees");
     }

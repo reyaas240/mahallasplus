@@ -37,6 +37,11 @@ export async function createLicensePlan(formData: FormData) {
   const featureConfig = JSON.parse(formData.get("featureConfig") as string || "{}");
 
   try {
+    const existing = await prisma.licensePlan.findUnique({ where: { name } });
+    if (existing) {
+      return { success: false, error: `A license plan named "${name}" already exists. Please choose a unique name.` };
+    }
+
     await prisma.licensePlan.create({
       data: {
         name,
@@ -52,7 +57,8 @@ export async function createLicensePlan(formData: FormData) {
     revalidatePath("/dashboard/licenses");
     return { success: true };
   } catch (e: any) {
-    return { success: false, error: e.message };
+    console.error("License Plan Create Error:", e);
+    return { success: false, error: e.message || "Failed to establish license plan" };
   }
 }
 

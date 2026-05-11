@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight, Loader2, Globe, MapPin, X, ExternalLink, Zap, Eye } from "lucide-react";
+import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight, Loader2, Globe, MapPin, X, ExternalLink, Zap, Eye, Info } from "lucide-react";
 
 import { submitRegistration, checkEmailAvailability } from "@/app/actions/register";
 import { generateAndSendOtp, verifyOtp } from "@/app/actions/otp";
@@ -534,18 +534,60 @@ function RegisterContent() {
                           </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            {p.name.includes('Basic') ? 'Core Management' : p.name.includes('Pro') ? 'Advanced Analytics' : 'Enterprise Tools'}
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            Unlimited Members
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                            Cloud Storage
+                        <div className="space-y-3">
+                          {p.featureConfig && (
+                            <div className="grid grid-cols-1 gap-2.5 p-3 bg-slate-50/80 rounded-2xl border border-slate-100/50">
+                              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tight">
+                                <span className="text-slate-400">Families</span>
+                                <span className="text-slate-900">{(p.featureConfig as any).MAX_FAMILY_CARDS || 'Unlimited'}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tight">
+                                <span className="text-slate-400">Members</span>
+                                <span className="text-slate-900">{(p.featureConfig as any).MAX_MEMBERS || 'Unlimited'}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tight">
+                                <span className="text-slate-400">Sub-Mahallas</span>
+                                <span className="text-slate-900">{(p.featureConfig as any).MAX_SUB_MAHALLAS || 'Unlimited'}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="space-y-2 px-1">
+                            {p.features.length > 0 ? p.features.map((feat: string, i: number) => {
+                              const feature = feat.toLowerCase();
+                              let Icon = CheckCircle2;
+                              let iconColor = "text-emerald-500";
+
+                              if (feature.includes('analytic') || feature.includes('report') || feature.includes('trend')) {
+                                Icon = Zap;
+                                iconColor = "text-blue-500";
+                              } else if (feature.includes('storage') || feature.includes('cloud') || feature.includes('file')) {
+                                Icon = Upload;
+                                iconColor = "text-indigo-500";
+                              } else if (feature.includes('support') || feature.includes('help')) {
+                                Icon = ShieldCheck;
+                                iconColor = "text-blue-500";
+                              } else if (feature.includes('admin') || feature.includes('user') || feature.includes('security')) {
+                                Icon = Lock;
+                                iconColor = "text-slate-600";
+                              }
+
+                              return (
+                                <div key={i} className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
+                                  <div className={`w-5 h-5 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-white transition-colors`}>
+                                    <Icon className={`w-3 h-3 ${iconColor}`} />
+                                  </div>
+                                  <span className="leading-tight">{feat}</span>
+                                </div>
+                              );
+                            }) : (
+                              <div className="flex items-center gap-3 text-[11px] font-bold text-slate-400 italic">
+                                <div className="w-5 h-5 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0">
+                                  <Info className="w-3 h-3" />
+                                </div>
+                                Standard plan features
+                              </div>
+                            )}
                           </div>
                         </div>
                         

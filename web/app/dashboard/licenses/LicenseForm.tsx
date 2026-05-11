@@ -168,6 +168,54 @@ export function LicenseForm({ initialData, onComplete, isCopy }: { initialData?:
 
           <div className="h-px bg-slate-200" />
 
+          {/* Max Family Cards */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">Max Family Cards</span>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total household units allowed</p>
+            </div>
+            <input 
+              type="number"
+              value={featureConfig.MAX_FAMILY_CARDS || 0}
+              onChange={(e) => setFeatureConfig({ ...featureConfig, MAX_FAMILY_CARDS: parseInt(e.target.value) || 0 })}
+              className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-900 text-center"
+            />
+          </div>
+
+          <div className="h-px bg-slate-200" />
+
+          {/* Max Members */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">Max Members</span>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Global individual population limit</p>
+            </div>
+            <input 
+              type="number"
+              value={featureConfig.MAX_MEMBERS || 0}
+              onChange={(e) => setFeatureConfig({ ...featureConfig, MAX_MEMBERS: parseInt(e.target.value) || 0 })}
+              className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-900 text-center"
+            />
+          </div>
+
+          <div className="h-px bg-slate-200" />
+
+          {/* Max Societies */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">Max Societies</span>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Committees and social groups</p>
+            </div>
+            <input 
+              type="number"
+              value={featureConfig.MAX_SOCIETIES || 0}
+              onChange={(e) => setFeatureConfig({ ...featureConfig, MAX_SOCIETIES: parseInt(e.target.value) || 0 })}
+              className="w-20 px-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-900 text-center"
+            />
+          </div>
+
+          <div className="h-px bg-slate-200" />
+
           {/* Boolean Toggles */}
           {[
             { key: "ALLOW_COMMITTEE_OVERSIGHT", label: "Committee Oversight", desc: "Main Mahalla view of sub-committees" },

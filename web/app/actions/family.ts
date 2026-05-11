@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 
 import { saveFile } from "@/lib/storage";
+import { checkLicenseLimit } from "@/lib/license";
 
 export async function createFamilyCard(formData: FormData) {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,11 @@ export async function createFamilyCard(formData: FormData) {
   const attachmentPaths: string[] = [];
 
   try {
+    const limitCheck = await checkLicenseLimit(session.user.mainMahallaId as string, "MAX_FAMILY_CARDS");
+    if (!limitCheck.allowed) {
+      return { success: false, error: limitCheck.error };
+    }
+
     // Duplicate Checks
     if (mainMahallaCardNo) {
       const existingMain = await prisma.familyCard.findFirst({
@@ -58,9 +64,9 @@ export async function createFamilyCard(formData: FormData) {
     });
     revalidatePath("/dashboard/families");
     return { success: true, id: card.id };
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
-    return { success: false, error: "Failed to create Family Card" };
+    return { success: false, error: e.message || "Failed to create Family Card" };
   }
 }
 
@@ -92,6 +98,11 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   }
 
   try {
+    const limitCheck = await checkLicenseLimit(session.user.mainMahallaId as string, "MAX_MEMBERS");
+    if (!limitCheck.allowed) {
+      return { success: false, error: limitCheck.error };
+    }
+
     // Check NIC uniqueness
     if (nic) {
       const existing = await prisma.familyMember.findUnique({ where: { nic } });
