@@ -45,7 +45,14 @@ export async function downloadWhatsAppMedia(mediaId: string, folder: string) {
 export async function sendWhatsAppMessage(to: string, content: any) {
   try {
     const phoneId = process.env.WHATSAPP_PHONE_ID;
-    if (!WHATSAPP_ACCESS_TOKEN || !phoneId) return null;
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+    console.log(`Attempting to send WA message to ${to} using PhoneID: ${phoneId}`);
+
+    if (!accessToken || !phoneId) {
+      console.error("WhatsApp configuration missing: Access Token or Phone ID is null.");
+      return null;
+    }
 
     const response = await axios.post(
       `https://graph.facebook.com/v21.0/${phoneId}/messages`,
@@ -55,13 +62,20 @@ export async function sendWhatsAppMessage(to: string, content: any) {
         ...content
       },
       {
-        headers: { Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}` }
+        headers: { Authorization: `Bearer ${accessToken}` }
       }
     );
 
+    console.log("WhatsApp message sent successfully:", response.data);
     return response.data;
-  } catch (error) {
-    console.error("Error sending WhatsApp message:", error);
+  } catch (error: any) {
+    console.error("Error sending WhatsApp message:");
+    if (error.response) {
+      console.error("Data:", JSON.stringify(error.response.data, null, 2));
+      console.error("Status:", error.response.status);
+    } else {
+      console.error("Message:", error.message);
+    }
     return null;
   }
 }

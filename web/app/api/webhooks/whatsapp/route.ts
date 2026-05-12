@@ -144,13 +144,15 @@ export async function POST(req: NextRequest) {
         // 3. Handle Text Messages (General Queries)
         if (type === "text") {
           const text = message.text.body.toLowerCase();
-          if (text.includes("register") || text.includes("start")) {
-            // TODO: Trigger the Registration Flow Template
-            console.log("Triggering registration flow for", from);
-            await sendWhatsAppMessage(from, {
+          console.log(`Received text message from ${from}: "${text}"`);
+
+          if (text.includes("register") || text.includes("start") || text.includes("hi")) {
+            console.log("Keyword detected. Sending welcome message...");
+            const sendResult = await sendWhatsAppMessage(from, {
               type: "text",
-              text: { body: "👋 Welcome to MahallasPlus! I'll help you register your Mahalla. (Flow Template would be triggered here in production)" }
+              text: { body: "👋 Welcome to MahallasPlus! I'll help you register your Mahalla. Please wait a moment while I prepare the form..." }
             });
+            console.log("Welcome message send result:", sendResult ? "SUCCESS" : "FAILED");
           }
         }
       }
