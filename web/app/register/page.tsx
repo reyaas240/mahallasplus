@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, Upload, Building, User, Users, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight, Loader2, Globe, MapPin, X, ExternalLink, Zap, Eye, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Upload, Building, User, Users, Lock, CheckCircle2, ShieldCheck, Mail, ArrowRight, Loader2, Globe, MapPin, X, ExternalLink, Zap, Eye, Info } from "lucide-react";
 
 import { submitRegistration, checkEmailAvailability } from "@/app/actions/register";
 import { generateAndSendOtp, verifyOtp } from "@/app/actions/otp";
