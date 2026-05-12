@@ -46,52 +46,31 @@ async function saveFile(file: File, folder: string) {
   return await smartUpload(processedBuffer, folder, filename);
 }
 
-export async function submitRegistration(formData: FormData) {
-  const fullName = formData.get("fullName") as string;
-  const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
-  const mahallaName = formData.get("mahallaName") as string;
-  const countryId = formData.get("country") as string;
-  const provinceId = formData.get("province") as string;
-  const districtId = formData.get("district") as string;
-  const divisionalSecretariatId = formData.get("divisionalSecretariat") as string;
-  const city = formData.get("city") as string;
-  const address = formData.get("address") as string;
-  const licensePlanId = formData.get("licensePlanId") as string;
-  
-  const governmentIdFile = formData.get("governmentId") as File;
-  const selfieFile = formData.get("selfie") as File;
-  const termsAccepted = formData.get("termsAccepted") === "on";
+export interface RegistrationInput {
+  fullName: string;
+  email: string;
+  phone: string;
+  mahallaName: string;
+  country?: string | null;
+  province?: string | null;
+  district?: string | null;
+  divisionalSecretariat?: string | null;
+  city?: string | null;
+  address: string;
+  licensePlanId: string;
+  governmentIdUrl?: string | null;
+  selfieUrl?: string | null;
+  termsAccepted: boolean;
+}
 
-  // Validate required fields
-  if (!fullName || !email || !mahallaName) {
-    return { success: false, error: "Missing required fields: name, email, and mahalla name are required." };
-  }
-  if (!licensePlanId) {
-    return { success: false, error: "Please select a license plan." };
-  }
-  if (!termsAccepted) {
-    return { success: false, error: "You must accept the Terms & Conditions and Privacy Policy to register." };
-  }
-
+export async function sharedRegistrationLogic(data: RegistrationInput) {
   try {
-    // Guard against empty string IDs — Prisma will throw on findUnique with ""
-    const [country, province, district, divSec] = await Promise.all([
-      countryId ? prisma.masterCountry.findUnique({ where: { id: countryId }, select: { name: true } }) : null,
-      provinceId ? prisma.masterProvince.findUnique({ where: { id: provinceId }, select: { name: true } }) : null,
-      districtId ? prisma.masterDistrict.findUnique({ where: { id: districtId }, select: { name: true } }) : null,
-      divisionalSecretariatId ? prisma.masterDivisionalSecretariat.findUnique({ where: { id: divisionalSecretariatId }, select: { name: true } }) : null,
-    ]);
-
-    const governmentIdUrl = await saveFile(governmentIdFile, "registrations/ids");
-    const selfieUrl = await saveFile(selfieFile, "registrations/selfies");
-
-    const plan = await prisma.licensePlan.findUnique({ where: { id: licensePlanId } });
+    const plan = await prisma.licensePlan.findUnique({ where: { id: data.licensePlanId } });
     if (!plan) return { success: false, error: "Selected license plan not found." };
 
     // Check if email already registered in requests
     const existingReq = await prisma.registrationRequest.findUnique({
-      where: { email }
+      where: { email: data.email }
     });
 
     if (existingReq) {
@@ -100,33 +79,18 @@ export async function submitRegistration(formData: FormData) {
 
     // Check if Mahalla Name already exists in active main mahallas
     const existingMahalla = await prisma.mainMahalla.findUnique({
-      where: { name: mahallaName }
+      where: { name: data.mahallaName }
     });
 
     if (existingMahalla) {
       return { success: false, error: "A Mahalla with this name already exists on the platform." };
     }
 
-    const data = {
-      fullName,
-      email,
-      phone,
-      mahallaName,
-      country: country?.name || null,
-      province: province?.name || null,
-      district: district?.name || null,
-      divisionalSecretariat: divSec?.name || null,
-      city: city || null,
-      address,
-      licensePlanId,
-      governmentIdUrl,
-      selfieUrl,
-      termsAccepted,
-      status: "PENDING" as any
-    };
-
     const request = await prisma.registrationRequest.create({
-      data
+      data: {
+        ...data,
+        status: "PENDING" as any
+      }
     });
 
     // Generate Initial Invoice
@@ -138,7 +102,7 @@ export async function submitRegistration(formData: FormData) {
         invoiceNo,
         amount,
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-        licensePlanId,
+        licensePlanId: data.licensePlanId,
         registrationRequestId: request.id,
         status: "UNPAID"
       }
@@ -149,7 +113,7 @@ export async function submitRegistration(formData: FormData) {
 
     // Send Invoice Email
     const subject = `[MahallasPlus] Registration Received - Invoice #${invoiceNo}`;
-    const text = `Dear ${fullName}, your registration for ${mahallaName} has been received. Please pay the invoice ${invoiceNo} for ${amount} LKR.`;
+    const text = `Dear ${data.fullName}, your registration for ${data.mahallaName} has been received. Please pay the invoice ${invoiceNo} for ${amount} LKR.`;
     const html = `
       <!DOCTYPE html>
       <html>
@@ -195,7 +159,7 @@ export async function submitRegistration(formData: FormData) {
                             <span style="color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;">Registrant</span>
                           </td>
                           <td align="left" style="padding-bottom: 12px; width: 60%;">
-                            <span style="color: #0f172a; font-weight: 800; font-size: 14px;">${fullName}</span>
+                            <span style="color: #0f172a; font-weight: 800; font-size: 14px;">${data.fullName}</span>
                           </td>
                         </tr>
                         <tr>
@@ -203,7 +167,7 @@ export async function submitRegistration(formData: FormData) {
                             <span style="color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 11px;">Entity</span>
                           </td>
                           <td align="left" style="padding-bottom: 12px;">
-                            <span style="color: #0f172a; font-weight: 800; font-size: 14px;">${mahallaName}</span>
+                            <span style="color: #0f172a; font-weight: 800; font-size: 14px;">${data.mahallaName}</span>
                           </td>
                         </tr>
                         <tr>
@@ -289,7 +253,7 @@ export async function submitRegistration(formData: FormData) {
       </html>
     `;
 
-    await sendEmail(email, subject, text, html);
+    await sendEmail(data.email, subject, text, html);
 
     // 4. Notify Platform Admin
     const platformAdmins = await prisma.user.findMany({
@@ -301,20 +265,20 @@ export async function submitRegistration(formData: FormData) {
         await sendEmail(
           admin.email,
           "New Registration Request - MahallasPlus",
-          `New registration request from ${fullName} for ${mahallaName}.`,
+          `New registration request from ${data.fullName} for ${data.mahallaName}.`,
           `
             <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #2563eb; margin-bottom: 20px;">New Registration Request</h2>
               <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 40%;">Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${fullName}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Contact No</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${phone || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Mahalla Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${mahallaName}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">City</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${city || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Address</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${address || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Province</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${province?.name || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">District</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${district?.name || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Divisional Sec.</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${divSec?.name || "N/A"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Country</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${country?.name || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; width: 40%;">Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.fullName}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Contact No</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.phone || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Mahalla Name</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.mahallaName}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">City</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.city || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Address</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.address || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Province</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.province || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">District</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.district || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Divisional Sec.</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.divisionalSecretariat || "N/A"}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold;">Country</td><td style="padding: 10px; border-bottom: 1px solid #f1f5f9;">${data.country || "N/A"}</td></tr>
               </table>
               <div style="margin-top: 30px; text-align: center;">
                 <a href="${process.env.NEXTAUTH_URL}/dashboard/requests" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Review Request</a>
@@ -326,9 +290,72 @@ export async function submitRegistration(formData: FormData) {
     }
 
     revalidatePath("/dashboard/requests");
-    return { success: true };
+    return { success: true, id: request.id };
   } catch (error: any) {
     console.error(error);
-    return { success: false, error: error.message || "Failed to submit request. Email might already exist." };
+    return { success: false, error: error.message || "Failed to submit request." };
+  }
+}
+
+export async function submitRegistration(formData: FormData) {
+  const fullName = formData.get("fullName") as string;
+  const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
+  const mahallaName = formData.get("mahallaName") as string;
+  const countryId = formData.get("country") as string;
+  const provinceId = formData.get("province") as string;
+  const districtId = formData.get("district") as string;
+  const divisionalSecretariatId = formData.get("divisionalSecretariat") as string;
+  const city = formData.get("city") as string;
+  const address = formData.get("address") as string;
+  const licensePlanId = formData.get("licensePlanId") as string;
+  
+  const governmentIdFile = formData.get("governmentId") as File;
+  const selfieFile = formData.get("selfie") as File;
+  const termsAccepted = formData.get("termsAccepted") === "on";
+
+  // Validate required fields
+  if (!fullName || !email || !mahallaName) {
+    return { success: false, error: "Missing required fields: name, email, and mahalla name are required." };
+  }
+  if (!licensePlanId) {
+    return { success: false, error: "Please select a license plan." };
+  }
+  if (!termsAccepted) {
+    return { success: false, error: "You must accept the Terms & Conditions and Privacy Policy to register." };
+  }
+
+  try {
+    // Guard against empty string IDs — Prisma will throw on findUnique with ""
+    const [country, province, district, divSec] = await Promise.all([
+      countryId ? prisma.masterCountry.findUnique({ where: { id: countryId }, select: { name: true } }) : null,
+      provinceId ? prisma.masterProvince.findUnique({ where: { id: provinceId }, select: { name: true } }) : null,
+      districtId ? prisma.masterDistrict.findUnique({ where: { id: districtId }, select: { name: true } }) : null,
+      divisionalSecretariatId ? prisma.masterDivisionalSecretariat.findUnique({ where: { id: divisionalSecretariatId }, select: { name: true } }) : null,
+    ]);
+
+    const governmentIdUrl = await saveFile(governmentIdFile, "registrations/ids");
+    const selfieUrl = await saveFile(selfieFile, "registrations/selfies");
+
+    return await sharedRegistrationLogic({
+      fullName,
+      email,
+      phone,
+      mahallaName,
+      country: country?.name || null,
+      province: province?.name || null,
+      district: district?.name || null,
+      divisionalSecretariat: divSec?.name || null,
+      city: city || null,
+      address,
+      licensePlanId,
+      governmentIdUrl,
+      selfieUrl,
+      termsAccepted
+    });
+
+  } catch (error: any) {
+    console.error(error);
+    return { success: false, error: error.message || "Failed to submit request." };
   }
 }

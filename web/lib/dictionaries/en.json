@@ -13,6 +13,7 @@
     "title2": "for Modern Mahallas",
     "subtitle": "Empower your community with enterprise-grade security, automated family records, and seamless administrative controls in one unified platform.",
     "cta_register": "Register Your Mahalla",
+    "cta_whatsapp": "Register via WhatsApp",
     "cta_features": "See Features"
   },
   "stats": {
@@ -53,6 +54,7 @@
   "cta": {
     "title": "Ready to Digitize Your Community?",
     "register": "Register Your Mahalla",
+    "register_wa": "Register via WhatsApp",
     "support": "Talk to Support"
   },
   "footer": {
