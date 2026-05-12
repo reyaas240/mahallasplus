@@ -220,13 +220,13 @@ function LandingContent() {
               <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-8">{t('pricing.title')}</h3>
 
               <div className="inline-flex bg-white p-1.5 rounded-[20px] shadow-sm border border-slate-200">
-                {['MONTHLY', 'ANNUALLY'].map((type) => (
+                {['MONTHLY', 'ANNUALLY', 'LIFETIME'].map((type) => (
                   <button
                     key={type}
                     onClick={() => setSelectedPlanType(type)}
-                    className={`px-8 py-3 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all ${selectedPlanType === type ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-900'}`}
+                    className={`px-6 sm:px-8 py-3 rounded-[14px] text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${selectedPlanType === type ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-500 hover:text-slate-900'}`}
                   >
-                    {type === 'MONTHLY' ? t('pricing.monthly') : t('pricing.annually')}
+                    {type === 'MONTHLY' ? t('pricing.monthly') : type === 'ANNUALLY' ? t('pricing.annually') : t('pricing.lifetime')}
                   </button>
                 ))}
               </div>
@@ -237,7 +237,7 @@ function LandingContent() {
                 <PricingCard
                   key={plan.id}
                   plan={plan}
-                  isAnnual={selectedPlanType === 'ANNUALLY'}
+                  selectedPlanType={selectedPlanType}
                   t={t}
                 />
               ))}
@@ -309,7 +309,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
   );
 }
 
-function PricingCard({ plan, isAnnual, t }: { plan: any, isAnnual: boolean, t: any }) {
+function PricingCard({ plan, selectedPlanType, t }: { plan: any, selectedPlanType: string, t: any }) {
   const price = plan.isSaleActive ? plan.salePrice : plan.basePrice;
   const isPremium = plan.name.toLowerCase().includes('pro') || plan.name.toLowerCase().includes('enterprise');
 
@@ -332,7 +332,9 @@ function PricingCard({ plan, isAnnual, t }: { plan: any, isAnnual: boolean, t: a
             <span className="text-5xl font-black tracking-tighter">
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'LKR', maximumFractionDigits: 0 }).format(price)}
             </span>
-            <span className={`text-xs font-bold uppercase tracking-widest opacity-50`}>{isAnnual ? t('pricing.per_year') : t('pricing.per_month')}</span>
+            <span className={`text-xs font-bold uppercase tracking-widest opacity-50`}>
+              {selectedPlanType === 'ANNUALLY' ? t('pricing.per_year') : selectedPlanType === 'MONTHLY' ? t('pricing.per_month') : t('pricing.one_time')}
+            </span>
           </div>
         </div>
         <p className={`mt-4 text-sm font-medium leading-relaxed opacity-60`}>{plan.description}</p>

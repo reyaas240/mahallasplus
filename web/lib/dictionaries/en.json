@@ -43,9 +43,11 @@
     "title": "Choose the Perfect Plan for Your Mahalla",
     "monthly": "monthly",
     "annually": "annually",
+    "lifetime": "lifetime",
     "sale": "Sale",
     "per_month": "/ month",
     "per_year": "/ year",
+    "one_time": "/ lifetime",
     "get_started": "Get Started"
   },
   "cta": {
