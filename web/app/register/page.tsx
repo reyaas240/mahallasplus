@@ -500,8 +500,8 @@ function RegisterContent() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    {['MONTHLY', 'ANNUALLY'].map((type) => (
+                  <div className="grid grid-cols-3 gap-3">
+                    {['MONTHLY', 'ANNUALLY', 'LIFETIME'].map((type) => (
                       <button
                         key={type}
                         type="button"
@@ -526,7 +526,7 @@ function RegisterContent() {
                             <h3 className="text-lg font-black text-slate-900">{p.name}</h3>
                             <div className="flex items-baseline gap-1 mt-1">
                               <span className="text-2xl font-black text-blue-600">LKR {p.isSaleActive && p.salePrice ? p.salePrice : p.basePrice}</span>
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/{selectedPlanType === 'MONTHLY' ? 'mo' : 'yr'}</span>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/{selectedPlanType === 'MONTHLY' ? 'mo' : selectedPlanType === 'ANNUALLY' ? 'yr' : 'life'}</span>
                             </div>
                           </div>
                           <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${licensePlan === p.id ? 'border-blue-600 bg-blue-600' : 'border-slate-200'}`}>
