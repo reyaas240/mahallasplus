@@ -36,6 +36,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("Incoming WhatsApp Webhook Payload:", JSON.stringify(body, null, 2));
 
     if (body.object === "whatsapp_business_account") {
       const entry = body.entry?.[0];
