@@ -338,13 +338,34 @@ function PricingCard({ plan, isAnnual, t }: { plan: any, isAnnual: boolean, t: a
         <p className={`mt-4 text-sm font-medium leading-relaxed opacity-60`}>{plan.description}</p>
       </div>
 
-      <div className="flex-grow space-y-4 mb-10">
-        {plan.features.map((feature: string, idx: number) => (
-          <div key={idx} className="flex items-start gap-3">
-            <CheckCircle2 className={`w-5 h-5 shrink-0 ${isPremium ? 'text-blue-400' : 'text-blue-600'}`} />
-            <span className="text-sm font-bold tracking-tight opacity-80">{feature}</span>
+      <div className="flex-grow mb-10">
+        {plan.featureConfig && (
+          <div className={`mb-8 p-5 rounded-3xl border transition-colors ${isPremium ? 'bg-white/5 border-white/10 group-hover:bg-white/10' : 'bg-slate-50 border-slate-100 group-hover:bg-slate-100/50'}`}>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Households</span>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${(plan.featureConfig as any).MAX_FAMILY_CARDS ? 'text-blue-500' : ''}`}>{(plan.featureConfig as any).MAX_FAMILY_CARDS || 'Unlimited'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Population</span>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${(plan.featureConfig as any).MAX_MEMBERS ? 'text-blue-500' : ''}`}>{(plan.featureConfig as any).MAX_MEMBERS || 'Unlimited'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Boundaries</span>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${(plan.featureConfig as any).MAX_SUB_MAHALLAS ? 'text-blue-500' : ''}`}>{(plan.featureConfig as any).MAX_SUB_MAHALLAS || 'Unlimited'} Sub-Mahallas</span>
+              </div>
+            </div>
           </div>
-        ))}
+        )}
+
+        <div className="space-y-4">
+          {plan.features.map((feature: string, idx: number) => (
+            <div key={idx} className="flex items-start gap-3 group/feat">
+              <div className={`mt-1 w-1.5 h-1.5 rounded-full ${isPremium ? 'bg-blue-400' : 'bg-blue-600'} group-hover/feat:scale-150 transition-transform`} />
+              <span className="text-[13px] font-bold tracking-tight opacity-70 group-hover/feat:opacity-100 transition-opacity">{feature}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <Link
