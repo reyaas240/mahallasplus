@@ -147,12 +147,12 @@ export async function POST(req: NextRequest) {
           console.log(`Received text message from ${from}: "${text}"`);
 
           if (text.includes("register") || text.includes("start") || text.includes("hi")) {
-            console.log("Keyword detected. Sending welcome message...");
+            console.log("Keyword detected. Sending welcome link...");
             const sendResult = await sendWhatsAppMessage(from, {
               type: "text",
-              text: { body: "👋 Welcome to MahallasPlus! I'll help you register your Mahalla. Please wait a moment while I prepare the form..." }
+              text: { body: "👋 Welcome to MahallasPlus! We're excited to help you digitize your Mahalla.\n\nPlease complete your registration using this link: https://mahallasplus.vercel.app/register" }
             });
-            console.log("Welcome message send result:", sendResult ? "SUCCESS" : "FAILED");
+            console.log("Welcome link send result:", sendResult ? "SUCCESS" : "FAILED");
           }
         }
       }
