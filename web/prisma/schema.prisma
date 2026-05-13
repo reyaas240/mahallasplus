@@ -101,6 +101,7 @@ model User {
   committee     Committee?   @relation(fields: [committeeId], references: [id])
   mainMahalla   MainMahalla? @relation(fields: [mainMahallaId], references: [id])
   subMahalla    SubMahalla?  @relation(fields: [subMahallaId], references: [id])
+  notices       Notice[]
 }
 
 model PasswordResetRequest {
@@ -163,6 +164,7 @@ model MainMahalla {
   openingBalanceCategories OpeningBalanceCategory[]
   donations               Donation[]
   donors                  Donor[]
+  notices                 Notice[]
 }
 
 model OpeningBalanceCategory {
@@ -207,6 +209,7 @@ model SubMahalla {
   mainMahalla    MainMahalla  @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
   users          User[]
   donors         Donor[]
+  notices        Notice[]
 }
 
 model FamilyCard {
@@ -701,4 +704,45 @@ model Subscription {
   
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+}
+
+enum NoticeStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Notice {
+  id                String             @id @default(cuid())
+  title             String
+  content           String             @db.Text
+  coverImage        String?
+  status            NoticeStatus       @default(DRAFT)
+  
+  // Authorization & Context
+  authorId          String
+  author            User               @relation(fields: [authorId], references: [id])
+  mainMahallaId     String
+  mainMahalla       MainMahalla        @relation(fields: [mainMahallaId], references: [id])
+  
+  // Targeting
+  targetAllSub      Boolean            @default(false)
+  targetSubMahallaIds String[]         @default([]) // Array of SubMahalla IDs
+  
+  subMahallaId      String?
+  subMahalla        SubMahalla?        @relation(fields: [subMahallaId], references: [id])
+  
+  attachments       NoticeAttachment[]
+  
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model NoticeAttachment {
+  id        String   @id @default(cuid())
+  noticeId  String
+  notice    Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  url       String
+  name      String
+  type      String   // e.g., "image/jpeg", "application/pdf"
+  createdAt DateTime @default(now())
 }

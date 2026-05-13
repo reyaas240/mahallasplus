@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building, Shield, ShieldAlert, UserCircle2 } from "lucide-react";
+import { Users, LayoutDashboard, Settings, LogOut, FileText, Globe, Building, Shield, ShieldAlert, UserCircle2, Bell } from "lucide-react";
 import LogoutButton from "./LogoutButton";
 import { PlatformLogo } from "./PlatformLogo";
 
@@ -144,6 +144,10 @@ export default async function DashboardLayout({
                   <span className="font-bold text-sm tracking-wide">Sub Admins</span>
                 </Link>
               )}
+              <Link href="/dashboard/notices" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                <Bell className="w-5 h-5" />
+                <span className="font-bold text-sm tracking-wide">Notices</span>
+              </Link>
             </>
           )}
 
