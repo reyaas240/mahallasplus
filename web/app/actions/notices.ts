@@ -172,40 +172,44 @@ async function triggerNoticeNotifications(noticeId: string) {
     if (url.includes('blob.vercel-storage.com')) {
       return `${baseUrl}/api/files/proxy?url=${encodeURIComponent(url)}`;
     }
-    // Local dev URLs - make them absolute
     if (url.startsWith('/')) {
       return `${baseUrl}${url}`;
     }
     return url;
   };
 
-  // Collect media to send: cover image first, then image attachments, then PDF attachments
-  const imageAttachments = notice.attachments.filter(a => a.type.startsWith('image/'));
+  // Collect all images: cover image first, then image attachments
+  const allImages: string[] = [];
+  if (notice.coverImage) allImages.push(getPublicUrl(notice.coverImage));
+  notice.attachments
+    .filter(a => a.type.startsWith('image/'))
+    .forEach(a => allImages.push(getPublicUrl(a.url)));
+
   const pdfAttachments = notice.attachments.filter(a => a.type === 'application/pdf');
 
   for (const phone of uniquePhones) {
     try {
-      // 1. Send cover image first (if exists)
-      if (notice.coverImage) {
+      if (allImages.length > 0) {
+        // Send all images; put the caption on the LAST image so text appears below the group
+        for (let i = 0; i < allImages.length; i++) {
+          const isLast = i === allImages.length - 1;
+          await sendWhatsAppMessage(phone!, {
+            type: "image",
+            image: {
+              link: allImages[i],
+              ...(isLast ? { caption: messageBody } : {}),
+            }
+          });
+        }
+      } else {
+        // No images — send as plain text
         await sendWhatsAppMessage(phone!, {
-          type: "image",
-          image: {
-            link: getPublicUrl(notice.coverImage),
-          }
+          type: "text",
+          text: { body: messageBody }
         });
       }
 
-      // 2. Send image attachments
-      for (const img of imageAttachments) {
-        await sendWhatsAppMessage(phone!, {
-          type: "image",
-          image: {
-            link: getPublicUrl(img.url),
-          }
-        });
-      }
-
-      // 3. Send PDF attachments as documents
+      // Send PDF attachments as documents
       for (const pdf of pdfAttachments) {
         await sendWhatsAppMessage(phone!, {
           type: "document",
@@ -215,12 +219,6 @@ async function triggerNoticeNotifications(noticeId: string) {
           }
         });
       }
-
-      // 4. Send the text message last
-      await sendWhatsAppMessage(phone!, {
-        type: "text",
-        text: { body: messageBody }
-      });
     } catch (err) {
       console.error(`Failed to send WhatsApp to ${phone}:`, err);
     }
