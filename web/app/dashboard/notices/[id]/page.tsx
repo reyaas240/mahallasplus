@@ -5,6 +5,7 @@ import { ChevronLeft, Calendar, User, Download, FileText, Globe, MapPin, Edit3 }
 import { getProxiedImageUrl } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import NoticeAttachments from "@/components/notices/NoticeAttachments";
 
 export default async function NoticeDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -117,31 +118,7 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
 
           {/* Attachments */}
           {notice.attachments.length > 0 && (
-            <div className="pt-12 border-t border-slate-100">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Attachments & Documents</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {notice.attachments.map((att) => (
-                  <a 
-                    key={att.id}
-                    href={att.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-6 bg-slate-50 rounded-[24px] border border-slate-100 hover:bg-slate-100 transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors shadow-sm">
-                        <FileText className="w-6 h-6" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-tight truncate max-w-[200px]">{att.name}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{att.type.split('/')[1] || 'File'}</span>
-                      </div>
-                    </div>
-                    <Download className="w-5 h-5 text-slate-300 group-hover:text-slate-900 transition-colors" />
-                  </a>
-                ))}
-              </div>
-            </div>
+            <NoticeAttachments attachments={notice.attachments} />
           )}
         </div>
       </div>

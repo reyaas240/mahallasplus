@@ -111,7 +111,8 @@ async function triggerNoticeNotifications(noticeId: string) {
     where: { id: noticeId },
     include: { 
       mainMahalla: true,
-      subMahalla: true
+      subMahalla: true,
+      attachments: true
     },
   });
 
@@ -148,7 +149,12 @@ async function triggerNoticeNotifications(noticeId: string) {
     timeStyle: 'short' 
   });
   
-  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}\n\nPlease click the link below to view the full notice and attachments:\n\n🔗 ${noticeUrl}`;
+  let attachmentLinks = "";
+  if (notice.attachments.length > 0) {
+    attachmentLinks = "\n\n📎 *Attachments:*\n" + notice.attachments.map(a => `• ${a.name}: ${a.url}`).join("\n");
+  }
+  
+  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}${attachmentLinks}\n\nPlease click the link below to view the full notice:\n\n🔗 ${noticeUrl}`;
 
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
 
