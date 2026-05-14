@@ -159,19 +159,13 @@ async function triggerNoticeNotifications(noticeId: string) {
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
 
   for (const phone of uniquePhones) {
-    if (notice.coverImage) {
-      await sendWhatsAppMessage(phone!, {
-        type: "image",
-        image: {
-          link: notice.coverImage,
-          caption: messageBody
-        }
-      });
-    } else {
+    try {
       await sendWhatsAppMessage(phone!, {
         type: "text",
         text: { body: messageBody }
       });
+    } catch (err) {
+      console.error(`Failed to send WhatsApp to ${phone}:`, err);
     }
   }
 }
