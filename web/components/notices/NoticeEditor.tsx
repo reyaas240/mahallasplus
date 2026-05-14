@@ -6,6 +6,7 @@ import { upsertNotice, publishNotice } from "@/app/actions/notices";
 import { ImagePlus, FileUp, X, Loader2, Send, Save, Globe, MapPin, FileText } from "lucide-react";
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+import { getProxiedImageUrl } from "@/lib/utils";
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { 
   ssr: false,
@@ -219,7 +220,7 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors shadow-sm overflow-hidden">
                       {att.type.startsWith('image/') ? (
-                        <img src={att.url} className="w-full h-full object-cover" alt={att.name} />
+                        <img src={getProxiedImageUrl(att.url)} className="w-full h-full object-cover" alt={att.name} />
                       ) : (
                         <FileText className="w-5 h-5" />
                       )}
@@ -260,7 +261,7 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
               />
               {coverPreview ? (
                 <>
-                  <img src={coverPreview} className="w-full h-full object-cover" alt="Preview" />
+                  <img src={getProxiedImageUrl(coverPreview)} className="w-full h-full object-cover" alt="Preview" />
                   <button 
                     type="button"
                     onClick={() => {
