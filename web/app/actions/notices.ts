@@ -91,6 +91,11 @@ export async function publishNotice(id: string) {
   });
 
   if (!notice) throw new Error("Notice not found");
+  if (notice.status === NoticeStatus.PUBLISHED) {
+    console.log(`Notice ${id} is already published, skipping notifications.`);
+    revalidatePath("/dashboard/notices");
+    return notice;
+  }
   if (notice.authorId !== session.user.id && session.user.role !== Role.MAIN_ADMIN) {
     throw new Error("Forbidden");
   }
@@ -129,19 +134,36 @@ async function triggerNoticeNotifications(noticeId: string) {
     targetSubIds = allSubs.map(s => s.id);
   }
 
+  if (targetSubIds.length === 0) {
+    console.log("No target sub-mahallas found, skipping notifications.");
+    return;
+  }
+
   // Fetch Members from those Sub-Mahallas
   const members = await prisma.familyMember.findMany({
     where: {
       familyCard: {
         subMahallaId: { in: targetSubIds },
       },
-      phone: { not: null },
+      phone: { not: null, notIn: ['', ' '] },
     },
     select: { phone: true, fullName: true },
+    distinct: ['phone'],
   });
 
-  // Unique phone numbers
-  const uniquePhones = Array.from(new Set(members.map(m => m.phone).filter(Boolean)));
+  // Normalize and deduplicate phone numbers
+  const normalizePhone = (phone: string) => phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+  const uniquePhones = Array.from(
+    new Set(
+      members
+        .map(m => m.phone)
+        .filter(Boolean)
+        .map(p => normalizePhone(p!))
+    )
+  );
+
+  console.log(`All member phones (raw): ${JSON.stringify(members.map(m => m.phone))}`);
+  console.log(`Unique phones after normalization: ${JSON.stringify(uniquePhones)}`);
 
   const mahallaName = notice.subMahalla?.name || notice.mainMahalla.name;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
