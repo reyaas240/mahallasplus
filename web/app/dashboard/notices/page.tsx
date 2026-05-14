@@ -4,7 +4,7 @@ import { getNotices } from "@/app/actions/notices";
 import Link from "next/link";
 import { Plus, Bell, Clock, CheckCircle2, User, Globe, MapPin } from "lucide-react";
 import { NoticeStatus } from "@prisma/client";
-import { getProxiedImageUrl } from "@/lib/utils";
+import { getProxiedImageUrl, stripHtml } from "@/lib/utils";
 import { Edit3 } from "lucide-react";
 
 export default async function NoticesPage() {
@@ -80,7 +80,7 @@ export default async function NoticesPage() {
                 </h3>
 
                 <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6">
-                  {notice.content.replace(/<[^>]*>/g, '')}
+                  {stripHtml(notice.content)}
                 </p>
 
                 <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">

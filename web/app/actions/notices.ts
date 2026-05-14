@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { smartUpload } from "@/lib/upload";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { stripHtml } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
 export async function upsertNotice(formData: FormData) {
@@ -151,8 +152,8 @@ async function triggerNoticeNotifications(noticeId: string) {
     timeStyle: 'short' 
   });
 
-  // Strip HTML tags from rich text content
-  const plainContent = notice.content.replace(/<[^>]*>/g, '').trim();
+  // Strip HTML tags and entities from rich text content
+  const plainContent = stripHtml(notice.content);
   
   let attachmentNote = "";
   if (notice.attachments.length > 0) {
