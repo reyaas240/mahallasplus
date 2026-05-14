@@ -26,7 +26,7 @@ export async function upsertNotice(formData: FormData) {
   const isSubAdmin = session.user.role === Role.SUB_ADMIN;
 
   if (!isMainAdmin && !isSubAdmin) throw new Error("Forbidden: Only admins can create notices.");
-  
+
   if (id) {
     const existing = await prisma.notice.findUnique({ where: { id } });
     if (existing?.status === NoticeStatus.PUBLISHED) {
@@ -50,7 +50,7 @@ export async function upsertNotice(formData: FormData) {
     targetSubMahallaIds: isMainAdmin ? targetSubMahallaIds : [session.user.subMahallaId].filter(Boolean),
   };
 
-  const notice = id 
+  const notice = id
     ? await prisma.notice.update({ where: { id }, data })
     : await prisma.notice.create({ data });
 
@@ -109,7 +109,7 @@ export async function publishNotice(id: string) {
 async function triggerNoticeNotifications(noticeId: string) {
   const notice = await prisma.notice.findUnique({
     where: { id: noticeId },
-    include: { 
+    include: {
       mainMahalla: true,
       subMahalla: true,
       attachments: true
@@ -143,16 +143,16 @@ async function triggerNoticeNotifications(noticeId: string) {
   const uniquePhones = Array.from(new Set(members.map(m => m.phone).filter(Boolean)));
 
   const mahallaName = notice.subMahalla?.name || notice.mainMahalla.name;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
     || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
   const noticeUrl = `${baseUrl}/dashboard/notices/${notice.id}`;
   console.log(`Using base URL for notice link: ${baseUrl}`);
-  const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', { 
-    dateStyle: 'medium', 
-    timeStyle: 'short' 
+  const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
   });
-  
+
   let attachmentNote = "";
   if (notice.attachments.length > 0) {
     const imgCount = notice.attachments.filter(a => a.type.startsWith('image/')).length;
@@ -162,7 +162,7 @@ async function triggerNoticeNotifications(noticeId: string) {
     if (pdfCount > 0) parts.push(`${pdfCount} document${pdfCount > 1 ? 's' : ''}`);
     attachmentNote = `\n\n📎 *Attached:* ${parts.join(' & ')}`;
   }
-  
+
   const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}${attachmentNote}\n\nView full notice:\n🔗 ${noticeUrl}`;
 
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
