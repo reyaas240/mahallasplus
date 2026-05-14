@@ -63,9 +63,9 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
 
       router.push("/dashboard/notices");
       router.refresh();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to save notice. Please try again.");
+    } catch (error: any) {
+      console.error("Save notice error:", error);
+      alert(error?.message || "Failed to save notice. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -253,7 +253,8 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                 id="coverImageInput"
                 type="file" 
                 name="coverImage" 
-                className="hidden" 
+                className="hidden"
+                accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) setCoverPreview(URL.createObjectURL(file));
