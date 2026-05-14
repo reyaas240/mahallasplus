@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import NoticeEditor from "@/components/notices/NoticeEditor";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function EditNoticePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
