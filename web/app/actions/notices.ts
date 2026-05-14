@@ -143,7 +143,11 @@ async function triggerNoticeNotifications(noticeId: string) {
   const uniquePhones = Array.from(new Set(members.map(m => m.phone).filter(Boolean)));
 
   const mahallaName = notice.subMahalla?.name || notice.mainMahalla.name;
-  const noticeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/notices/${notice.id}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
+    || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  const noticeUrl = `${baseUrl}/dashboard/notices/${notice.id}`;
+  console.log(`Using base URL for notice link: ${baseUrl}`);
   const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', { 
     dateStyle: 'medium', 
     timeStyle: 'short' 
@@ -166,11 +170,11 @@ async function triggerNoticeNotifications(noticeId: string) {
   // Helper to create a publicly accessible URL for WhatsApp to fetch
   const getPublicUrl = (url: string) => {
     if (url.includes('blob.vercel-storage.com')) {
-      return `${process.env.NEXT_PUBLIC_APP_URL}/api/files/proxy?url=${encodeURIComponent(url)}`;
+      return `${baseUrl}/api/files/proxy?url=${encodeURIComponent(url)}`;
     }
     // Local dev URLs - make them absolute
     if (url.startsWith('/')) {
-      return `${process.env.NEXT_PUBLIC_APP_URL}${url}`;
+      return `${baseUrl}${url}`;
     }
     return url;
   };

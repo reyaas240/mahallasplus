@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FileText, Download, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { getProxiedImageUrl } from "@/lib/utils";
 
 interface Attachment {
   id: string;
@@ -49,7 +50,7 @@ export default function NoticeAttachments({ attachments }: { attachments: Attach
               <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors shadow-sm relative overflow-hidden">
                   {isImage ? (
-                    <img src={att.url} alt={att.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <img src={getProxiedImageUrl(att.url)} alt={att.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                   ) : (
                     <FileText className="w-6 h-6" />
                   )}
@@ -71,7 +72,7 @@ export default function NoticeAttachments({ attachments }: { attachments: Attach
                   </button>
                 )}
                 <a 
-                  href={att.url}
+                  href={getProxiedImageUrl(att.url)}
                   download={att.name}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -115,7 +116,7 @@ export default function NoticeAttachments({ attachments }: { attachments: Attach
 
           <div className="max-w-[90vw] max-h-[80vh] relative group">
             <img 
-              src={images[selectedImage].url} 
+              src={getProxiedImageUrl(images[selectedImage].url)} 
               alt={images[selectedImage].name}
               className="w-full h-full object-contain shadow-2xl rounded-lg animate-in zoom-in duration-300" 
             />
