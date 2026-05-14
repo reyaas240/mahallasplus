@@ -166,12 +166,7 @@ async function triggerNoticeNotifications(noticeId: string) {
 
   // Normalize and deduplicate phone numbers
   const normalizePhone = (phone: string) => {
-    let clean = phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
-    // If it's a local Sri Lankan number starting with 0, convert to 94 format
-    if (clean.startsWith('0') && clean.length === 10) {
-      clean = '94' + clean.substring(1);
-    }
-    return clean;
+    return phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
   };
   const phoneMap = new Map<string, string>(); // normalized -> original
   for (const m of members) {
