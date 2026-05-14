@@ -21,7 +21,12 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
     }
   });
 
-  if (!notice) notFound();
+  const targetedSubMahallas = notice.targetSubMahallaIds.length > 0
+    ? await prisma.subMahalla.findMany({
+        where: { id: { in: notice.targetSubMahallaIds } },
+        select: { name: true }
+      })
+    : [];
 
   return (
     <div className="max-w-4xl mx-auto space-y-12">
@@ -36,7 +41,7 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Feed</span>
         </Link>
 
-        {(session.user.role === "MAIN_ADMIN" || notice.authorId === session.user.id) && (
+        {(session.user.role === "MAIN_ADMIN" || notice.authorId === session.user.id) && notice.status !== "PUBLISHED" && (
           <Link 
             href={`/dashboard/notices/edit/${notice.id}`}
             className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all shadow-lg"
@@ -65,7 +70,9 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
               
               <div className="flex items-center gap-2 text-slate-400">
                 <Calendar className="w-4 h-4" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{new Date(notice.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">
+                  {new Date(notice.createdAt).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}
+                </span>
               </div>
 
               <div className="flex items-center gap-2 text-slate-400">
@@ -83,6 +90,14 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
                 <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-blue-100">
                   <Globe className="w-3.5 h-3.5" /> Broadcast: All Sub Mahallas
                 </div>
+              ) : targetedSubMahallas.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {targetedSubMahallas.map((sub, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100">
+                      <MapPin className="w-3.5 h-3.5" /> {sub.name}
+                    </div>
+                  ))}
+                </div>
               ) : notice.subMahalla ? (
                 <div className="flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100">
                   <MapPin className="w-3.5 h-3.5" /> Context: {notice.subMahalla.name}
@@ -92,9 +107,10 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="prose prose-slate max-w-none">
-            <p className="text-lg text-slate-600 leading-relaxed whitespace-pre-wrap">
-              {notice.content}
-            </p>
+            <div 
+              className="text-lg text-slate-600 leading-relaxed whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: notice.content }}
+            />
           </div>
 
           {/* Attachments */}

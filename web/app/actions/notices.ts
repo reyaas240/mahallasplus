@@ -19,12 +19,20 @@ export async function upsertNotice(formData: FormData) {
   const attachmentFiles = formData.getAll("attachments") as File[];
   const targetAllSub = formData.get("targetAllSub") === "true";
   const targetSubMahallaIds = JSON.parse(formData.get("targetSubMahallaIds") as string || "[]");
+  const deletedAttachmentIds = JSON.parse(formData.get("deletedAttachmentIds") as string || "[]");
 
   // Validate Authorization
   const isMainAdmin = session.user.role === Role.MAIN_ADMIN;
   const isSubAdmin = session.user.role === Role.SUB_ADMIN;
 
   if (!isMainAdmin && !isSubAdmin) throw new Error("Forbidden: Only admins can create notices.");
+  
+  if (id) {
+    const existing = await prisma.notice.findUnique({ where: { id } });
+    if (existing?.status === NoticeStatus.PUBLISHED) {
+      throw new Error("Cannot edit a notice that has already been published.");
+    }
+  }
 
   let coverImageUrl = formData.get("existingCoverImage") as string | null;
   if (coverImageFile && coverImageFile.size > 0) {
@@ -46,9 +54,16 @@ export async function upsertNotice(formData: FormData) {
     ? await prisma.notice.update({ where: { id }, data })
     : await prisma.notice.create({ data });
 
-  // Handle Attachments
+  // Handle Attachment Deletions
+  if (deletedAttachmentIds.length > 0) {
+    await prisma.noticeAttachment.deleteMany({
+      where: { id: { in: deletedAttachmentIds } }
+    });
+  }
+
+  // Handle New Attachments
   for (const file of attachmentFiles) {
-    if (file.size > 0) {
+    if (file && file.size > 0) {
       const url = await smartUpload(file, "notices/attachments");
       await prisma.noticeAttachment.create({
         data: {
@@ -128,17 +143,30 @@ async function triggerNoticeNotifications(noticeId: string) {
 
   const mahallaName = notice.subMahalla?.name || notice.mainMahalla.name;
   const noticeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/notices/${notice.id}`;
+  const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', { 
+    dateStyle: 'medium', 
+    timeStyle: 'short' 
+  });
+  
+  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}\n\nPlease click the link below to view the full notice and attachments:\n\n🔗 ${noticeUrl}`;
 
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
 
-  // Loop and send (In production, use a queue)
   for (const phone of uniquePhones) {
-    await sendWhatsAppMessage(phone!, {
-      type: "text",
-      text: { 
-        body: `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\nPlease click the link below to view the full notice and attachments:\n\n🔗 ${noticeUrl}`
-      }
-    });
+    if (notice.coverImage) {
+      await sendWhatsAppMessage(phone!, {
+        type: "image",
+        image: {
+          link: notice.coverImage,
+          caption: messageBody
+        }
+      });
+    } else {
+      await sendWhatsAppMessage(phone!, {
+        type: "text",
+        text: { body: messageBody }
+      });
+    }
   }
 }
 

@@ -21,6 +21,11 @@ export default async function EditNoticePage({ params }: { params: Promise<{ id:
 
   if (!notice) return notFound();
 
+  // Redirect if already published
+  if (notice.status === "PUBLISHED") {
+    redirect(`/dashboard/notices/${id}`);
+  }
+
   // Authorization check
   if (notice.authorId !== session.user.id && role !== "MAIN_ADMIN") {
     return notFound();

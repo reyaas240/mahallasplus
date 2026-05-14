@@ -80,7 +80,7 @@ export default async function NoticesPage() {
                 </h3>
 
                 <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6">
-                  {notice.content}
+                  {notice.content.replace(/<[^>]*>/g, '')}
                 </p>
 
                 <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
@@ -89,19 +89,23 @@ export default async function NoticesPage() {
                       <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">
                         <Globe className="w-3 h-3" /> All Sub Mahallas
                       </div>
+                    ) : notice.targetSubMahallaIds.length > 0 ? (
+                      <div className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">
+                        <MapPin className="w-3 h-3" /> {notice.targetSubMahallaIds.length} Targeted
+                      </div>
                     ) : notice.subMahalla ? (
                       <div className="flex items-center gap-1 text-slate-600 bg-slate-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">
                         <MapPin className="w-3 h-3" /> {notice.subMahalla.name}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">
-                        <CheckCircle2 className="w-3 h-3" /> Custom Targeting
+                      <div className="flex items-center gap-1 text-slate-400 bg-slate-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight">
+                        <MapPin className="w-3 h-3" /> Local Only
                       </div>
                     )}
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    {isAdmin && (
+                    {isAdmin && notice.status !== NoticeStatus.PUBLISHED && (
                       <Link 
                         href={`/dashboard/notices/edit/${notice.id}`}
                         className="text-slate-400 hover:text-slate-900 transition-colors"
