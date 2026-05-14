@@ -127,7 +127,9 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
         }
       `}</style>
       {initialData?.id && <input type="hidden" name="id" value={initialData.id} />}
-      {initialData?.coverImage && <input type="hidden" name="existingCoverImage" value={initialData.coverImage} />}
+      {initialData?.coverImage && coverPreview === initialData.coverImage && (
+        <input type="hidden" name="existingCoverImage" value={initialData.coverImage} />
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Left Column: Editor */}
         <div className="lg:col-span-2 space-y-8">
@@ -242,7 +244,11 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                   <img src={coverPreview} className="w-full h-full object-cover" alt="Preview" />
                   <button 
                     type="button"
-                    onClick={() => setCoverPreview(null)}
+                    onClick={() => {
+                      setCoverPreview(null);
+                      const input = document.getElementsByName("coverImage")[0] as HTMLInputElement;
+                      if (input) input.value = "";
+                    }}
                     className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-lg flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <X className="w-4 h-4" />
@@ -252,17 +258,17 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                 <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors">
                   <ImagePlus className="w-8 h-8 text-slate-300 mb-2" />
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Cover</span>
-                  <input 
-                    type="file" 
-                    name="coverImage" 
-                    className="hidden" 
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setCoverPreview(URL.createObjectURL(file));
-                    }}
-                  />
                 </label>
               )}
+              <input 
+                type="file" 
+                name="coverImage" 
+                className="hidden" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setCoverPreview(URL.createObjectURL(file));
+                }}
+              />
             </div>
           </div>
 
