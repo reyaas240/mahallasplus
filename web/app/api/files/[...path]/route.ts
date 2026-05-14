@@ -17,7 +17,7 @@ export async function GET(
 
   // 1. Security Check
   // Allow certain paths to be public (logos, committee images)
-  const isPublicPath = fileUrl.includes("/committees/") || fileUrl.includes("/logo/");
+  const isPublicPath = fileUrl.includes("/committees/") || fileUrl.includes("/logo/") || fileUrl.includes("/notices/");
   
   if (!isPublicPath) {
     const session = await getServerSession(authOptions);

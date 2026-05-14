@@ -149,17 +149,70 @@ async function triggerNoticeNotifications(noticeId: string) {
     timeStyle: 'short' 
   });
   
-  let attachmentLinks = "";
+  let attachmentNote = "";
   if (notice.attachments.length > 0) {
-    attachmentLinks = "\n\n📎 *Attachments:*\n" + notice.attachments.map(a => `• ${a.name}: ${a.url}`).join("\n");
+    const imgCount = notice.attachments.filter(a => a.type.startsWith('image/')).length;
+    const pdfCount = notice.attachments.filter(a => a.type === 'application/pdf').length;
+    const parts = [];
+    if (imgCount > 0) parts.push(`${imgCount} photo${imgCount > 1 ? 's' : ''}`);
+    if (pdfCount > 0) parts.push(`${pdfCount} document${pdfCount > 1 ? 's' : ''}`);
+    attachmentNote = `\n\n📎 *Attached:* ${parts.join(' & ')}`;
   }
   
-  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}${attachmentLinks}\n\nPlease click the link below to view the full notice:\n\n🔗 ${noticeUrl}`;
+  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}${attachmentNote}\n\nView full notice:\n🔗 ${noticeUrl}`;
 
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
 
+  // Helper to create a publicly accessible URL for WhatsApp to fetch
+  const getPublicUrl = (url: string) => {
+    if (url.includes('blob.vercel-storage.com')) {
+      return `${process.env.NEXT_PUBLIC_APP_URL}/api/files/proxy?url=${encodeURIComponent(url)}`;
+    }
+    // Local dev URLs - make them absolute
+    if (url.startsWith('/')) {
+      return `${process.env.NEXT_PUBLIC_APP_URL}${url}`;
+    }
+    return url;
+  };
+
+  // Collect media to send: cover image first, then image attachments, then PDF attachments
+  const imageAttachments = notice.attachments.filter(a => a.type.startsWith('image/'));
+  const pdfAttachments = notice.attachments.filter(a => a.type === 'application/pdf');
+
   for (const phone of uniquePhones) {
     try {
+      // 1. Send cover image first (if exists)
+      if (notice.coverImage) {
+        await sendWhatsAppMessage(phone!, {
+          type: "image",
+          image: {
+            link: getPublicUrl(notice.coverImage),
+          }
+        });
+      }
+
+      // 2. Send image attachments
+      for (const img of imageAttachments) {
+        await sendWhatsAppMessage(phone!, {
+          type: "image",
+          image: {
+            link: getPublicUrl(img.url),
+          }
+        });
+      }
+
+      // 3. Send PDF attachments as documents
+      for (const pdf of pdfAttachments) {
+        await sendWhatsAppMessage(phone!, {
+          type: "document",
+          document: {
+            link: getPublicUrl(pdf.url),
+            filename: pdf.name,
+          }
+        });
+      }
+
+      // 4. Send the text message last
       await sendWhatsAppMessage(phone!, {
         type: "text",
         text: { body: messageBody }
