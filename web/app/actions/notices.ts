@@ -167,7 +167,9 @@ async function triggerNoticeNotifications(noticeId: string) {
   
   const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ ${formattedDate}\n\n${plainContent}${attachmentNote}`;
 
-  console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
+  console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} unique phones...`);
+  console.log(`Target sub IDs: ${JSON.stringify(targetSubIds)}`);
+  console.log(`Members found: ${members.length}, Unique phones: ${uniquePhones.length}`);
 
   // Helper to create a publicly accessible URL for WhatsApp to fetch
   const getPublicUrl = (url: string) => {
@@ -180,31 +182,20 @@ async function triggerNoticeNotifications(noticeId: string) {
     return url;
   };
 
-  // Collect all images: cover image first, then image attachments
-  const allImages: string[] = [];
-  if (notice.coverImage) allImages.push(getPublicUrl(notice.coverImage));
-  notice.attachments
-    .filter(a => a.type.startsWith('image/'))
-    .forEach(a => allImages.push(getPublicUrl(a.url)));
-
   const pdfAttachments = notice.attachments.filter(a => a.type === 'application/pdf');
 
   for (const phone of uniquePhones) {
     try {
-      if (allImages.length > 0) {
-        // Send all images; put the caption on the LAST image so text appears below the group
-        for (let i = 0; i < allImages.length; i++) {
-          const isLast = i === allImages.length - 1;
-          await sendWhatsAppMessage(phone!, {
-            type: "image",
-            image: {
-              link: allImages[i],
-              ...(isLast ? { caption: messageBody } : {}),
-            }
-          });
-        }
+      // Send ONE message: cover image with caption, or plain text
+      if (notice.coverImage) {
+        await sendWhatsAppMessage(phone!, {
+          type: "image",
+          image: {
+            link: getPublicUrl(notice.coverImage),
+            caption: messageBody,
+          }
+        });
       } else {
-        // No images — send as plain text
         await sendWhatsAppMessage(phone!, {
           type: "text",
           text: { body: messageBody }
