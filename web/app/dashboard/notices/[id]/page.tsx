@@ -21,6 +21,8 @@ export default async function NoticeDetailsPage({ params }: { params: Promise<{ 
     }
   });
 
+  if (!notice) notFound();
+
   const targetedSubMahallas = notice.targetSubMahallaIds.length > 0
     ? await prisma.subMahalla.findMany({
         where: { id: { in: notice.targetSubMahallaIds } },
