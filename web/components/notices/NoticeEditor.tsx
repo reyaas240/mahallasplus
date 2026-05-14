@@ -43,6 +43,14 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
 
     try {
       if (!formRef.current) return;
+
+      // Validate distribution setting
+      if (isMainAdmin && !targetAllSub && selectedSubIds.length === 0) {
+        alert("Please select distribution settings before publishing. Choose 'All Sub Mahallas' or select specific ones.");
+        setLoading(false);
+        return;
+      }
+
       const formData = new FormData(formRef.current);
       formData.set("content", content);
       formData.append("targetAllSub", targetAllSub.toString());

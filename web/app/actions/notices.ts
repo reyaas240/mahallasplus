@@ -139,31 +139,38 @@ async function triggerNoticeNotifications(noticeId: string) {
     return;
   }
 
+  console.log(`Target sub-mahalla IDs: ${JSON.stringify(targetSubIds)}`);
+
   // Fetch Members from those Sub-Mahallas
   const members = await prisma.familyMember.findMany({
     where: {
       familyCard: {
         subMahallaId: { in: targetSubIds },
       },
-      phone: { not: null, notIn: ['', ' '] },
+      phone: { not: null },
     },
-    select: { phone: true, fullName: true },
-    distinct: ['phone'],
+    select: { id: true, phone: true, fullName: true, familyCard: { select: { subMahallaId: true } } },
+  });
+
+  console.log(`Total members found with phone: ${members.length}`);
+  members.forEach(m => {
+    console.log(`  - ${m.fullName}: phone="${m.phone}", subMahalla=${m.familyCard.subMahallaId}`);
   });
 
   // Normalize and deduplicate phone numbers
   const normalizePhone = (phone: string) => phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
-  const uniquePhones = Array.from(
-    new Set(
-      members
-        .map(m => m.phone)
-        .filter(Boolean)
-        .map(p => normalizePhone(p!))
-    )
-  );
+  const phoneMap = new Map<string, string>(); // normalized -> original
+  for (const m of members) {
+    if (m.phone && m.phone.trim()) {
+      const normalized = normalizePhone(m.phone);
+      if (!phoneMap.has(normalized)) {
+        phoneMap.set(normalized, m.phone);
+      }
+    }
+  }
+  const uniquePhones = Array.from(phoneMap.values());
 
-  console.log(`All member phones (raw): ${JSON.stringify(members.map(m => m.phone))}`);
-  console.log(`Unique phones after normalization: ${JSON.stringify(uniquePhones)}`);
+  console.log(`Unique phones to send: ${JSON.stringify(uniquePhones)}`);
 
   const mahallaName = notice.subMahalla?.name || notice.mainMahalla.name;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
