@@ -146,13 +146,14 @@ async function triggerNoticeNotifications(noticeId: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL
     || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
-  const noticeUrl = `${baseUrl}/dashboard/notices/${notice.id}`;
-  console.log(`Using base URL for notice link: ${baseUrl}`);
-  const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
+  const formattedDate = new Date(notice.createdAt).toLocaleString('en-US', { 
+    dateStyle: 'medium', 
+    timeStyle: 'short' 
   });
 
+  // Strip HTML tags from rich text content
+  const plainContent = notice.content.replace(/<[^>]*>/g, '').trim();
+  
   let attachmentNote = "";
   if (notice.attachments.length > 0) {
     const imgCount = notice.attachments.filter(a => a.type.startsWith('image/')).length;
@@ -162,8 +163,8 @@ async function triggerNoticeNotifications(noticeId: string) {
     if (pdfCount > 0) parts.push(`${pdfCount} document${pdfCount > 1 ? 's' : ''}`);
     attachmentNote = `\n\n📎 *Attached:* ${parts.join(' & ')}`;
   }
-
-  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ *Date:* ${formattedDate}${attachmentNote}\n\nView full notice:\n🔗 ${noticeUrl}`;
+  
+  const messageBody = `📢 *New Notice from ${mahallaName}*\n\n*${notice.title}*\n\n🗓️ ${formattedDate}\n\n${plainContent}${attachmentNote}`;
 
   console.log(`Broadcasting notice "${notice.title}" to ${uniquePhones.length} members...`);
 
