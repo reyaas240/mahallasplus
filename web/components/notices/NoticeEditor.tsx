@@ -182,7 +182,8 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                   type="file" 
                   onChange={handleFileChange}
                   multiple 
-                  className="hidden" 
+                  className="hidden"
+                  accept=".pdf,image/*"
                 />
               </label>
 
@@ -190,8 +191,12 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
               {pendingAttachments.map((file, idx) => (
                 <div key={`pending-${idx}`} className="bg-blue-50 rounded-2xl p-4 flex items-center justify-between border border-blue-100 animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
-                      <FileUp className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm overflow-hidden">
+                      {file.type.startsWith('image/') ? (
+                        <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Preview" />
+                      ) : (
+                        <FileUp className="w-5 h-5" />
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-blue-900 uppercase tracking-tight truncate max-w-[150px]">{file.name}</span>
@@ -212,8 +217,12 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
               {initialData?.attachments?.filter((att: any) => !deletedAttachmentIds.includes(att.id)).map((att: any) => (
                 <div key={att.id} className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between border border-slate-100 group">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors shadow-sm">
-                      <FileText className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors shadow-sm overflow-hidden">
+                      {att.type.startsWith('image/') ? (
+                        <img src={att.url} className="w-full h-full object-cover" alt={att.name} />
+                      ) : (
+                        <FileText className="w-5 h-5" />
+                      )}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight truncate max-w-[150px]">{att.name}</span>
@@ -239,28 +248,8 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
           <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Cover Image</h3>
             <div className="aspect-video rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden relative group">
-              {coverPreview ? (
-                <>
-                  <img src={coverPreview} className="w-full h-full object-cover" alt="Preview" />
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setCoverPreview(null);
-                      const input = document.getElementsByName("coverImage")[0] as HTMLInputElement;
-                      if (input) input.value = "";
-                    }}
-                    className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-lg flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors">
-                  <ImagePlus className="w-8 h-8 text-slate-300 mb-2" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Cover</span>
-                </label>
-              )}
               <input 
+                id="coverImageInput"
                 type="file" 
                 name="coverImage" 
                 className="hidden" 
@@ -269,6 +258,30 @@ export default function NoticeEditor({ initialData, subMahallas = [], role }: No
                   if (file) setCoverPreview(URL.createObjectURL(file));
                 }}
               />
+              {coverPreview ? (
+                <>
+                  <img src={coverPreview} className="w-full h-full object-cover" alt="Preview" />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setCoverPreview(null);
+                      const input = document.getElementById("coverImageInput") as HTMLInputElement;
+                      if (input) input.value = "";
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-lg flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <label 
+                  htmlFor="coverImageInput"
+                  className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors"
+                >
+                  <ImagePlus className="w-8 h-8 text-slate-300 mb-2" />
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Upload Cover</span>
+                </label>
+              )}
             </div>
           </div>
 
