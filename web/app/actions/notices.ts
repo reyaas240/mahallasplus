@@ -100,16 +100,23 @@ export async function publishNotice(id: string) {
     throw new Error("Forbidden");
   }
 
-  const updatedNotice = await prisma.notice.update({
-    where: { id },
+  // Use a strict update to prevent race conditions (double-clicks hitting concurrently)
+  const updateResult = await prisma.notice.updateMany({
+    where: { id, status: NoticeStatus.DRAFT },
     data: { status: NoticeStatus.PUBLISHED },
   });
+
+  if (updateResult.count === 0) {
+    console.log(`Notice ${id} was already published (race condition prevented), skipping notifications.`);
+    revalidatePath("/dashboard/notices");
+    return notice;
+  }
 
   // Trigger WhatsApp Notifications
   await triggerNoticeNotifications(notice.id);
 
   revalidatePath("/dashboard/notices");
-  return updatedNotice;
+  return await prisma.notice.findUnique({ where: { id } });
 }
 
 async function triggerNoticeNotifications(noticeId: string) {
@@ -158,7 +165,14 @@ async function triggerNoticeNotifications(noticeId: string) {
   });
 
   // Normalize and deduplicate phone numbers
-  const normalizePhone = (phone: string) => phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+  const normalizePhone = (phone: string) => {
+    let clean = phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+    // If it's a local Sri Lankan number starting with 0, convert to 94 format
+    if (clean.startsWith('0') && clean.length === 10) {
+      clean = '94' + clean.substring(1);
+    }
+    return clean;
+  };
   const phoneMap = new Map<string, string>(); // normalized -> original
   for (const m of members) {
     if (m.phone && m.phone.trim()) {
