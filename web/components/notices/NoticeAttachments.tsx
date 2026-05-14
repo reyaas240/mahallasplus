@@ -129,4 +129,3 @@ export default function NoticeAttachments({ attachments }: { attachments: Attach
     </div>
   );
 }
-"
