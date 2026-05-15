@@ -131,6 +131,13 @@ async function triggerNoticeNotifications(noticeId: string) {
 
   if (!notice) return;
 
+  // Check Global Kill Switch
+  const sysSettings = await prisma.systemSettings.findUnique({ where: { id: "global" } });
+  if (sysSettings && sysSettings.whatsappBroadcastsEnabled === false) {
+    console.log(`Global WhatsApp broadcasts are currently disabled. Skipping notifications for Notice ${noticeId}.`);
+    return;
+  }
+
   // Determine Targeted Sub-Mahallas
   let targetSubIds = notice.targetSubMahallaIds;
   if (notice.targetAllSub) {

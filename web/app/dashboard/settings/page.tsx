@@ -46,6 +46,7 @@ export default function SystemSettingsPage() {
       accountNumber: formData.get("accountNumber"),
       bankInstructions: formData.get("bankInstructions"),
       logoUrl: formData.get("logoUrl"),
+      whatsappBroadcastsEnabled: formData.get("whatsappBroadcastsEnabled") === "true",
     };
 
     const res = await updateSystemSettings(data);
@@ -111,6 +112,7 @@ export default function SystemSettingsPage() {
     <>
       <input type="hidden" name="recaptchaSiteKey" defaultValue={settings?.recaptchaSiteKey} />
       <input type="hidden" name="recaptchaSecretKey" defaultValue={settings?.recaptchaSecretKey} />
+      <input type="hidden" name="whatsappBroadcastsEnabled" value={settings?.whatsappBroadcastsEnabled ? "true" : "false"} />
     </>
   );
   const brandingHidden = (
@@ -261,6 +263,32 @@ export default function SystemSettingsPage() {
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Shield className="w-4 h-4" /></div>
                         <input name="recaptchaSecretKey" type="password" defaultValue={settings?.recaptchaSecretKey} placeholder="••••••••••••••••••••••••••••••••••••" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 mt-6 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-sm font-black text-slate-900 uppercase tracking-tight">Global WhatsApp Broadcasts</label>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest leading-relaxed max-w-sm">
+                          Master kill switch. If disabled, NO bulk WhatsApp notices will be sent across the entire platform. (Does not affect OTPs).
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${settings?.whatsappBroadcastsEnabled ? 'text-emerald-500' : 'text-slate-400'}`}>
+                          {settings?.whatsappBroadcastsEnabled ? 'Active' : 'Disabled'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSettings({ ...settings, whatsappBroadcastsEnabled: !settings?.whatsappBroadcastsEnabled })}
+                          className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${settings?.whatsappBroadcastsEnabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                        >
+                          <input type="hidden" name="whatsappBroadcastsEnabled" value={settings?.whatsappBroadcastsEnabled ? "true" : "false"} />
+                          <span
+                            className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${settings?.whatsappBroadcastsEnabled ? 'translate-x-9' : 'translate-x-1'}`}
+                          />
+                        </button>
                       </div>
                     </div>
                   </div>

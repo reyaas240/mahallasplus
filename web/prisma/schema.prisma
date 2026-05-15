@@ -627,6 +627,9 @@ model SystemSettings {
   // Branding
   logoUrl           String?
   
+  // Feature Toggles
+  whatsappBroadcastsEnabled Boolean @default(true)
+  
   updatedAt       DateTime @updatedAt
 }
 

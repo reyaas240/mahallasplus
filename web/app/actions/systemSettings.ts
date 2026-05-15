@@ -52,6 +52,7 @@ export async function updateSystemSettings(data: any) {
         accountNumber: data.accountNumber || null,
         bankInstructions: data.bankInstructions || null,
         logoUrl: data.logoUrl || null,
+        whatsappBroadcastsEnabled: data.whatsappBroadcastsEnabled !== undefined ? data.whatsappBroadcastsEnabled : true,
       },
       create: {
         id: "global",
@@ -69,6 +70,7 @@ export async function updateSystemSettings(data: any) {
         accountNumber: data.accountNumber || null,
         bankInstructions: data.bankInstructions || null,
         logoUrl: data.logoUrl || null,
+        whatsappBroadcastsEnabled: data.whatsappBroadcastsEnabled !== undefined ? data.whatsappBroadcastsEnabled : true,
       }
     });
 
