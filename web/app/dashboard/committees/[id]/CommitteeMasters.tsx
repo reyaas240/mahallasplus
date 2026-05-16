@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check, Star, Eye, EyeOff } from "lucide-react";
+import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check, Star, Ban } from "lucide-react";
 import {
   getRequestCategories, createRequestCategory, deleteRequestCategory, updateRequestCategory,
   getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster, updateProjectMasterStatus
@@ -363,7 +363,7 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
                             className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                             title={p.isActive ? "Mark Inactive" : "Mark Active"}
                           >
-                            {p.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            {p.isActive ? <Ban className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
                           </button>
                           <div className="w-px h-4 bg-slate-200 mx-1" />
                           <button
