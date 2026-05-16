@@ -131,6 +131,7 @@ export async function recordDonation(data: any) {
         donorId: data.donorId,
         committeeId: data.committeeId,
         committeeTermId: data.committeeTermId,
+        projectId: data.projectId,
         mainMahallaId: session.user.mainMahallaId
       }
     });
@@ -204,7 +205,8 @@ export async function getCommitteeDonations(committeeId: string, termId?: string
       ...(termId ? { committeeTermId: termId } : {})
     },
     include: {
-      donor: true
+      donor: true,
+      project: true
     },
     orderBy: [
       { date: "desc" },
@@ -224,6 +226,7 @@ export async function updateDonation(id: string, data: any) {
         amount: parseFloat(data.amount),
         date: new Date(data.date),
         paymentMethod: data.paymentMethod,
+        projectId: data.projectId,
         reference: data.reference,
         attachmentUrl: data.attachmentUrl
       }

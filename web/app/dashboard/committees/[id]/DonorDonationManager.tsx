@@ -135,6 +135,7 @@ export function DonorDonationManager({ committeeId, terms, isReadOnly }: { commi
                       <h4 className="font-black text-slate-900 uppercase tracking-wide text-sm">{d.donor.name}</h4>
                       <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2 mt-1">
                         <Calendar className="w-3.5 h-3.5" /> {new Date(d.date).toLocaleDateString()} • {d.paymentMethod}
+                        {d.project?.name && <span className="text-blue-600 font-black">• {d.project.name}</span>}
                       </p>
                     </div>
                   </div>
@@ -255,6 +256,16 @@ function EditDonationModal({ donation, settings, onClose }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [displayAmount, setDisplayAmount] = useState(donation.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(donation.projectId || "");
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const allProjects = await getProjectMasters(donation.committeeId);
+      setProjects(allProjects.filter(p => p.isActive || p.id === donation.projectId));
+    };
+    fetchProjects();
+  }, [donation.committeeId]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/,/g, "");
@@ -275,6 +286,7 @@ function EditDonationModal({ donation, settings, onClose }: any) {
       amount: rawAmount,
       date: formData.get("date"),
       paymentMethod: formData.get("paymentMethod"),
+      projectId: selectedProjectId,
       reference: formData.get("reference"),
       attachmentUrl: attachment ? attachment.name : donation.attachmentUrl
     });
@@ -352,7 +364,20 @@ function EditDonationModal({ donation, settings, onClose }: any) {
                  <option value="PDC">PDC</option>
                </select>
              </div>
-
+              <div className="col-span-12">
+                <label className="block text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1.5 px-1">Project Selection *</label>
+                <select 
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase cursor-pointer focus:border-blue-600 outline-none"
+                >
+                  <option value="" disabled>Select Project</option>
+                  {projects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
              <div className="col-span-12">
                 <div className="flex gap-4">
                    <div className="flex-1">
