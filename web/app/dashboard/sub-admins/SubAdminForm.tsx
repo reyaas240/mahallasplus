@@ -79,7 +79,7 @@ export function SubAdminForm({ subMahallas }: { subMahallas: { id: string, name:
           <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 px-1">Temporary Password</label>
           <input required name="password" type="password" className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm" placeholder="••••••••" />
         </div>
-        <button disabled={isSubmitting} type="submit" className="w-full py-3 bg-slate-900 text-white rounded-lg font-black hover:bg-slate-800 transition-all flex justify-center items-center gap-2 mt-4 active:scale-95 uppercase tracking-wide text-sm">
+        <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-slate-900 text-white rounded-[24px] font-black uppercase tracking-[0.2em] text-[11px] hover:bg-black transition-all flex justify-center items-center gap-3 shadow-xl mt-4">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Create Account"}
         </button>
       </form>

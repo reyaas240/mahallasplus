@@ -161,3 +161,67 @@ export async function createMainStaff(formData: FormData) {
     return { success: false, error: "Failed to create Mahalla Staff. Email might already exist." };
   }
 }
+
+export async function updateUser(id: string, formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const role = formData.get("role") as any;
+  const subMahallaId = formData.get("subMahallaId") as string;
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing || existing.mainMahallaId !== session.user.mainMahallaId) {
+      return { success: false, error: "User not found or access denied" };
+    }
+
+    const data: any = {
+      name,
+      email,
+      role,
+      subMahallaId: role === 'SUB_ADMIN' ? subMahallaId : null
+    };
+
+    if (password && password.length > 0) {
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data
+    });
+
+    revalidatePath("/dashboard/sub-admins");
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to update user" };
+  }
+}
+
+export async function deleteUser(id: string) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing || existing.mainMahallaId !== session.user.mainMahallaId) {
+      return { success: false, error: "User not found or access denied" };
+    }
+
+    await prisma.user.delete({ where: { id } });
+
+    revalidatePath("/dashboard/sub-admins");
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to delete user" };
+  }
+}
