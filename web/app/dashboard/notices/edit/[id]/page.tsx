@@ -27,12 +27,12 @@ export default async function EditNoticePage({ params }: { params: Promise<{ id:
   }
 
   // Authorization check
-  if (notice.authorId !== session.user.id && role !== "MAIN_ADMIN") {
+  if (notice.authorId !== session.user.id && !["MAIN_ADMIN", "MAIN_STAFF"].includes(role as string)) {
     return notFound();
   }
 
   // Fetch sub-mahallas for targeting if Main Admin
-  const subMahallas = role === "MAIN_ADMIN" 
+  const subMahallas = (role === "MAIN_ADMIN" || role === "MAIN_STAFF") 
     ? await prisma.subMahalla.findMany({
         where: { mainMahallaId: mainMahallaId! },
         select: { id: true, name: true },

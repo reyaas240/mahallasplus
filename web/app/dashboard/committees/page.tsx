@@ -11,7 +11,7 @@ import { getProxiedImageUrl } from "@/lib/utils";
 
 export default async function CommitteesPage() {
   const session = await getServerSession(authOptions);
-  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
+  if (!session || !["MAIN_ADMIN", "MAIN_STAFF", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -23,7 +23,7 @@ export default async function CommitteesPage() {
 
   if (session.user.role === "SUB_ADMIN") {
     where.subMahallaId = session.user.subMahallaId as string;
-  } else if (session.user.role === "MAIN_ADMIN") {
+  } else if (session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") {
     if (canOversight) {
       where.OR = [
         { subMahallaId: null }, // Committees directly under Main Mahalla
@@ -50,7 +50,7 @@ export default async function CommitteesPage() {
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Committee Management</h2>
           <p className="text-slate-500 font-bold mt-1 uppercase text-[10px] tracking-[0.2em]">
-            {session.user.role === "MAIN_ADMIN" ? "Central Control & Sub-Mahalla Oversight" : "Local Board Administration"}
+            {(session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") ? "Central Control & Sub-Mahalla Oversight" : "Local Board Administration"}
           </p>
         </div>
         <CreateCommitteeButton userRole={session.user.role} canOversight={canOversight} />
@@ -83,7 +83,7 @@ export default async function CommitteesPage() {
                 </div>
               ) : (
                 committees.map((c) => {
-                  const isOversight = session.user.role === "MAIN_ADMIN" && !!c.subMahallaId;
+                  const isOversight = (session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") && !!c.subMahallaId;
                   return (
                     <div key={c.id} className="p-6 hover:bg-slate-50/50 transition-all group flex items-center justify-between">
                       <div className="flex gap-5 items-center">

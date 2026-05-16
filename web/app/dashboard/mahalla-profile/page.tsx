@@ -8,7 +8,7 @@ import { getProxiedImageUrl } from "@/lib/utils";
 
 export default async function MahallaProfilePage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "MAIN_ADMIN" || !session.user.mainMahallaId) {
+  if (!session || !["MAIN_ADMIN", "MAIN_STAFF"].includes(session.user.role) || !session.user.mainMahallaId) {
     redirect("/dashboard");
   }
 

@@ -13,7 +13,7 @@ import { FamilyAttachmentsList } from "./FamilyAttachmentsList";
 export default async function FamilyDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
+  if (!session || !["MAIN_ADMIN", "MAIN_STAFF", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -36,7 +36,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
   if (!family) return notFound();
 
   // Security check: Ensure admin belongs to the right Mahalla
-  if (session.user.role === "MAIN_ADMIN" && family.subMahalla.mainMahallaId !== session.user.mainMahallaId) {
+  if ((session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") && family.subMahalla.mainMahallaId !== session.user.mainMahallaId) {
     redirect("/dashboard/families");
   }
   if (session.user.role === "SUB_ADMIN" && family.subMahallaId !== session.user.subMahallaId) {

@@ -20,7 +20,7 @@ export default async function DashboardOverview() {
     stats.subMahallas = await prisma.subMahalla.count();
     stats.totalMembers = await prisma.familyMember.count();
     stats.pendingRequests = await prisma.registrationRequest.count({ where: { status: "PENDING" } });
-  } else if (role === "MAIN_ADMIN" && session?.user?.mainMahallaId) {
+  } else if ((role === "MAIN_ADMIN" || role === "MAIN_STAFF") && session?.user?.mainMahallaId) {
     const mainMahalla = await prisma.mainMahalla.findUnique({
       where: { id: session.user.mainMahallaId },
       select: { name: true }
@@ -70,22 +70,22 @@ export default async function DashboardOverview() {
           />
         )}
         
-        {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN") && (
+        {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN" || role === "MAIN_STAFF") && (
           <StatCard 
             title="Sub Mahallas" 
             value={stats.subMahallas.toString()} 
             icon={<MapPin className="w-6 h-6 text-emerald-600" />} 
-            trend={role === "MAIN_ADMIN" ? `Under ${stats.mainMahallaName}` : "Platform Jurisdictions"}
+            trend={(role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? `Under ${stats.mainMahallaName}` : "Platform Jurisdictions"}
           />
         )}
 
-        {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN" || role === "SUB_ADMIN") && (
+        {(role === "PLATFORM_ADMIN" || role === "MAIN_ADMIN" || role === "MAIN_STAFF" || role === "SUB_ADMIN") && (
           <StatCard 
             title="Total Members" 
             value={stats.totalMembers.toString()} 
             icon={<Users className="w-6 h-6 text-indigo-600" />} 
             trend={
-              role === "MAIN_ADMIN" ? "From All Sub Mahallas" : 
+              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" : 
               role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` : 
               "Global Community"
             }

@@ -10,7 +10,7 @@ import { Edit3 } from "lucide-react";
 export default async function NoticesPage() {
   const session = await getServerSession(authOptions);
   const notices = await getNotices();
-  const isAdmin = session?.user?.role === "MAIN_ADMIN" || session?.user?.role === "SUB_ADMIN";
+  const isAdmin = ["MAIN_ADMIN", "MAIN_STAFF", "SUB_ADMIN"].includes(session?.user?.role as string);
 
   return (
     <div className="space-y-8">

@@ -15,7 +15,7 @@ import { CommitteeView } from "./CommitteeView";
 export default async function CommitteeDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
+  if (!session || !["MAIN_ADMIN", "MAIN_STAFF", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -77,7 +77,7 @@ export default async function CommitteeDetailsPage(props: { params: Promise<{ id
     getFinancialSettings()
   ]);
 
-  const isReadOnly = session.user.role === "MAIN_ADMIN" && (committee as any).subMahallaId !== null;
+  const isReadOnly = (session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") && (committee as any).subMahallaId !== null;
 
   return (
     <div className="space-y-10 pb-20">

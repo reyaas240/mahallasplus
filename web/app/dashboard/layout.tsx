@@ -115,10 +115,10 @@ export default async function DashboardLayout({
             </>
           )}
 
-          {(role === "MAIN_ADMIN" || role === "SUB_ADMIN") && (
+          {(role === "MAIN_ADMIN" || role === "SUB_ADMIN" || role === "MAIN_STAFF") && (
             <>
               <div className="mt-8 mb-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Core Operations</div>
-              {role === "MAIN_ADMIN" && (
+              {(role === "MAIN_ADMIN" || role === "MAIN_STAFF") && (
                 <>
                   <Link href="/dashboard/sub-mahallas" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
                     <Building className="w-5 h-5" />
@@ -141,7 +141,7 @@ export default async function DashboardLayout({
               {role === "MAIN_ADMIN" && (
                 <Link href="/dashboard/sub-admins" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
                   <Settings className="w-5 h-5" />
-                  <span className="font-bold text-sm tracking-wide">Sub Admins</span>
+                  <span className="font-bold text-sm tracking-wide">User Management</span>
                 </Link>
               )}
               <Link href="/dashboard/notices" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
@@ -153,7 +153,7 @@ export default async function DashboardLayout({
 
           <div className="mt-8 mb-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">System & Account</div>
           
-          {role === "MAIN_ADMIN" && (
+          {(role === "MAIN_ADMIN" || role === "MAIN_STAFF") && (
             <Link href="/dashboard/mahalla-profile" className="group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all">
               <Building className="w-5 h-5 transition-transform group-hover:scale-110" />
               <span className="font-bold text-sm tracking-wide">Mahalla Profile</span>

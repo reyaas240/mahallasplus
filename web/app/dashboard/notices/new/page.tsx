@@ -13,7 +13,7 @@ export default async function NewNoticePage() {
   const mainMahallaId = session.user.mainMahallaId;
 
   // Fetch sub-mahallas for targeting if Main Admin
-  const subMahallas = role === "MAIN_ADMIN" 
+  const subMahallas = (role === "MAIN_ADMIN" || role === "MAIN_STAFF") 
     ? await prisma.subMahalla.findMany({
         where: { mainMahallaId: mainMahallaId! },
         select: { id: true, name: true },

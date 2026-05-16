@@ -431,6 +431,7 @@ model Donation {
 enum Role {
   PLATFORM_ADMIN
   MAIN_ADMIN
+  MAIN_STAFF
   SUB_ADMIN
   MEMBER
   COMMITTEE_ADMIN

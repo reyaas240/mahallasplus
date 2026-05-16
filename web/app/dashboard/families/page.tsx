@@ -13,7 +13,7 @@ export default async function FamiliesPage(props: { searchParams: Promise<{ maha
   const mahallaId = searchParams.mahallaId;
   const session = await getServerSession(authOptions);
   
-  if (!session || !["MAIN_ADMIN", "SUB_ADMIN"].includes(session.user.role)) {
+  if (!session || !["MAIN_ADMIN", "MAIN_STAFF", "SUB_ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -21,7 +21,7 @@ export default async function FamiliesPage(props: { searchParams: Promise<{ maha
   let families: any[] = [];
 
   const baseWhere: any = {};
-  if (session.user.role === "MAIN_ADMIN") {
+  if (session.user.role === "MAIN_ADMIN" || session.user.role === "MAIN_STAFF") {
     baseWhere.subMahalla = { mainMahallaId: session.user.mainMahallaId as string };
     subMahallas = await prisma.subMahalla.findMany({
       where: { mainMahallaId: session.user.mainMahallaId as string },

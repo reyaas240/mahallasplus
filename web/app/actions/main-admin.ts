@@ -131,3 +131,33 @@ export async function createSubAdmin(formData: FormData) {
     return { success: false, error: "Failed to create Sub Admin. Email might already exist." };
   }
 }
+
+export async function createMainStaff(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== "MAIN_ADMIN" || !session?.user?.mainMahallaId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: "MAIN_STAFF",
+        mainMahallaId: session.user.mainMahallaId,
+      }
+    });
+    revalidatePath("/dashboard/sub-admins");
+    return { success: true };
+  } catch (e) {
+    console.error(e);
+    return { success: false, error: "Failed to create Mahalla Staff. Email might already exist." };
+  }
+}

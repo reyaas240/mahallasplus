@@ -17,10 +17,10 @@ export default async function SubAdminsPage() {
     orderBy: { name: 'asc' }
   });
 
-  // Fetch existing sub admins
-  const subAdmins = await prisma.user.findMany({
+  // Fetch existing users (Sub Admins & Mahalla Staff)
+  const users = await prisma.user.findMany({
     where: { 
-      role: "SUB_ADMIN",
+      role: { in: ["SUB_ADMIN", "MAIN_STAFF"] },
       mainMahallaId: session.user.mainMahallaId
     },
     include: { subMahalla: true },
@@ -31,8 +31,8 @@ export default async function SubAdminsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Sub Admins</h2>
-          <p className="text-slate-600">Assign and manage administrators for your Sub Mahallas.</p>
+          <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
+          <p className="text-slate-600">Assign and manage administrators for your Mahalla and Sub Mahallas.</p>
         </div>
       </div>
 
@@ -43,10 +43,10 @@ export default async function SubAdminsPage() {
         
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            {subAdmins.length === 0 ? (
+            {users.length === 0 ? (
               <div className="p-8 text-center">
                 <ShieldCheck className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500">No Sub Admins created yet.</p>
+                <p className="text-slate-500">No administrators created yet.</p>
               </div>
             ) : (
               <table className="w-full text-left border-collapse">
@@ -54,16 +54,22 @@ export default async function SubAdminsPage() {
                   <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                     <th className="font-medium p-4">Name</th>
                     <th className="font-medium p-4">Email</th>
+                    <th className="font-medium p-4">Role</th>
                     <th className="font-medium p-4">Assigned To</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {subAdmins.map((admin) => (
+                  {users.map((admin) => (
                     <tr key={admin.id} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="p-4 font-medium text-slate-900">{admin.name || "N/A"}</td>
                       <td className="p-4 text-slate-600">{admin.email}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${admin.role === 'MAIN_STAFF' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'}`}>
+                          {admin.role === 'MAIN_STAFF' ? 'Mahalla Staff' : 'Sub Admin'}
+                        </span>
+                      </td>
                       <td className="p-4 text-slate-600 font-medium">
-                        {admin.subMahalla?.name || "Unassigned"}
+                        {admin.role === 'MAIN_STAFF' ? 'Main Mahalla' : (admin.subMahalla?.name || "Unassigned")}
                       </td>
                     </tr>
                   ))}
