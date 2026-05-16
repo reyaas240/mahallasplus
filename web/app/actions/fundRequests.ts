@@ -27,7 +27,7 @@ export async function createFundRequest(data: any) {
         data: {
           committeeId: data.committeeId,
           committeeTermId: data.committeeTermId,
-          projectName: data.projectName || null,
+          projectId: data.projectId || null,
           beneficiaryType: data.beneficiaryType,
           familyMemberId: data.familyMemberId || null,
           externalName: data.externalName || null,
@@ -84,6 +84,7 @@ export async function getFundRequests(committeeId: string, termId?: string) {
       investigations: true,
       appointments: true,
       quotations: true,
+      project: true,
       events: { orderBy: { createdAt: "desc" } },
       disbursements: { orderBy: { createdAt: "asc" } },
     },
@@ -111,6 +112,7 @@ export async function getFundRequestDetail(id: string) {
       investigations: { orderBy: { createdAt: "desc" } },
       appointments: { orderBy: { scheduledDate: "desc" } },
       quotations: { orderBy: { createdAt: "desc" } },
+      project: true,
       events: { orderBy: { createdAt: "desc" } },
       disbursements: { orderBy: { createdAt: "asc" } },
     },
@@ -137,7 +139,7 @@ export async function updateFundRequest(id: string, data: any) {
       const req = await tx.fundRequest.update({
         where: { id },
         data: {
-          projectName: data.projectName || null,
+          projectId: data.projectId || null,
           purpose: data.purpose,
           description: data.description || null,
           requestedAmount: data.requestedAmount ? parseFloat(data.requestedAmount) : null,

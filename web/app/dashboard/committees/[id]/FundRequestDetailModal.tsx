@@ -61,7 +61,7 @@ export function FundRequestDetailModal({ requestId, settings, members, onClose, 
                   name={name} 
                 />
               </div>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{req.purpose} {req.projectName ? `• ${req.projectName}` : ""}</p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{req.purpose} {req.project?.name ? `• ${req.project.name}` : ""}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
   const [categories, setCategories] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [purpose, setPurpose] = useState(req.purpose || "");
-  const [projectName, setProjectName] = useState(req.projectName || "");
+  const [projectId, setProjectId] = useState(req.projectId || "");
   const [amountDisplay, setAmountDisplay] = useState(req.requestedAmount ? Number(req.requestedAmount).toLocaleString("en-US") : "");
 
   useEffect(() => {
@@ -178,7 +178,7 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
     const fd = new FormData(form);
     const payload = {
       purpose: purpose,
-      projectName: projectName,
+      projectId: projectId,
       description: fd.get("description"),
       requestedAmount: fd.get("requestedAmount"),
       externalName: fd.get("externalName"),
@@ -238,14 +238,11 @@ function EditRequestModal({ req, settings, onRefresh, onClose }: any) {
             </div>
             <div>
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Project (Optional)</p>
-              <select name="projectName" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 text-[10px] uppercase focus:border-blue-500 outline-none transition-all">
+              <select name="projectId" value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl font-black text-slate-900 text-[10px] uppercase focus:border-blue-500 outline-none transition-all">
                 <option value="">-- Select --</option>
-                {projects.map((p: any) => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
+                {projects.filter(p => p.isActive || p.id === req.projectId).map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
-                {req.projectName && !projects.find((p: any) => p.name === req.projectName) && (
-                  <option value={req.projectName}>{req.projectName}</option>
-                )}
               </select>
             </div>
           </div>
@@ -353,7 +350,7 @@ function OverviewSection({ req, settings, fmt, onRefresh, setLightbox }: any) {
         <InfoCard label="Type" value={req.beneficiaryType} />
         {req.letterRefNo && <InfoCard label="Letter Ref No" value={req.letterRefNo} />}
         <InfoCard label="Purpose" value={req.purpose} />
-        {req.projectName && <InfoCard label="Project" value={req.projectName} />}
+        {req.project?.name && <InfoCard label="Project" value={req.project.name} />}
         <InfoCard label="Requested" value={req.requestedAmount ? `${settings.currency} ${fmt(req.requestedAmount)}` : "—"} />
         <InfoCard label="Granted" value={req.grantedAmount ? `${settings.currency} ${fmt(req.grantedAmount)}` : "—"} />
         {req.totalDisbursed > 0 && <InfoCard label="Total Disbursed" value={`${settings.currency} ${fmt(req.totalDisbursed)}`} />}

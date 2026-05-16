@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, UserPlus, HeartHandshake, History, Plus, Loader2, X, Wallet, ArrowUpRight, DollarSign, Calendar, Landmark, CreditCard, Banknote, ShieldCheck, Phone, MessageCircle, Mail, Pencil, Paperclip, FileText, Trash2, Edit3 } from "lucide-react";
 import { searchInternalMembers, createDonor, updateDonor, recordDonation, getCommitteeDonations, getDonors, searchAllDonors, updateDonation, deleteDonation } from "@/app/actions/donors";
 import { getFinancialSettings } from "@/app/actions/committee";
+import { getProjectMasters } from "@/app/actions/masters";
 import { QRCallButton } from "@/components/QRCallButton";
 
 export function DonorDonationManager({ committeeId, terms, isReadOnly }: { committeeId: string, terms: any[], isReadOnly?: boolean }) {
@@ -563,6 +564,25 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
   const [newContact, setNewContact] = useState({ name: "", phone: "", whatsapp: "", email: "" });
   const [attachment, setAttachment] = useState<File | null>(null);
   const [displayAmount, setDisplayAmount] = useState("");
+  
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const allProjects = await getProjectMasters(committeeId);
+      const activeProjects = allProjects.filter(p => p.isActive);
+      setProjects(activeProjects);
+      
+      const defaultProject = activeProjects.find(p => p.isDefault);
+      if (defaultProject) {
+        setSelectedProjectId(defaultProject.id);
+      } else if (activeProjects.length > 0) {
+        setSelectedProjectId(activeProjects[0].id);
+      }
+    };
+    fetchProjects();
+  }, [committeeId]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/,/g, "");
@@ -641,6 +661,12 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
       }
     }
 
+    if (!selectedProjectId) {
+      alert("Please select a project.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const donationRes = await recordDonation({
       amount: rawAmount,
       date: formData.get("date"),
@@ -649,7 +675,8 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
       attachmentUrl: attachment ? attachment.name : null,
       donorId,
       committeeId,
-      committeeTermId: termId
+      committeeTermId: termId,
+      projectId: selectedProjectId
     });
 
     setIsSubmitting(false);
@@ -791,6 +818,21 @@ function DonationModal({ committeeId, termId, settings, onClose }: any) {
                  <option value="BANK">BANK</option>
                  <option value="CHEQUE">CHEQUE</option>
                  <option value="PDC">PDC</option>
+               </select>
+             </div>
+
+             <div className="col-span-12">
+               <label className="block text-[9px] font-black text-slate-900/70 uppercase tracking-widest mb-1.5 px-1">Project Selection *</label>
+               <select 
+                 value={selectedProjectId}
+                 onChange={(e) => setSelectedProjectId(e.target.value)}
+                 required
+                 className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase cursor-pointer focus:border-blue-600 outline-none"
+               >
+                 <option value="" disabled>Select Project</option>
+                 {projects.map(p => (
+                   <option key={p.id} value={p.id}>{p.name}</option>
+                 ))}
                </select>
              </div>
 

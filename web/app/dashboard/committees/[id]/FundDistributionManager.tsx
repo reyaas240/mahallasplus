@@ -186,7 +186,7 @@ export function FundDistributionManager({ committeeId, terms, isReadOnly }: { co
                         </span>
                       )}
                       <span className="text-slate-300 mx-1">•</span> {r.purpose}
-                      {r.projectName && <span className="text-blue-500">• {r.projectName}</span>}
+                      {r.project?.name && <span className="text-blue-500">• {r.project.name}</span>}
                     </p>
                   </div>
                 </div>
@@ -273,11 +273,21 @@ function NewFundRequestModal({ committeeId, termId, settings, onClose }: any) {
   const [projects, setProjects] = useState<any[]>([]);
   const [amountDisplay, setAmountDisplay] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [projectName, setProjectName] = useState("");
+  const [projectId, setProjectId] = useState("");
 
   useEffect(() => {
     getRequestCategories(committeeId).then(setCategories);
-    getProjectMasters(committeeId).then(setProjects);
+    getProjectMasters(committeeId).then((allProjects) => {
+      const activeProjects = allProjects.filter(p => p.isActive);
+      setProjects(activeProjects);
+      
+      const defaultProject = activeProjects.find(p => p.isDefault);
+      if (defaultProject) {
+        setProjectId(defaultProject.id);
+      } else if (activeProjects.length > 0) {
+        setProjectId(activeProjects[0].id);
+      }
+    });
   }, [committeeId]);
 
   useEffect(() => {
@@ -326,7 +336,7 @@ function NewFundRequestModal({ committeeId, termId, settings, onClose }: any) {
       purpose: purpose,
       description: fd.get("description"),
       requestedAmount: fd.get("requestedAmount"),
-      projectName: projectName,
+      projectId: projectId,
       letterRefNo: fd.get("letterRefNo"),
       attachments: filePaths,
     });
@@ -433,11 +443,11 @@ function NewFundRequestModal({ committeeId, termId, settings, onClose }: any) {
               </select>
             </div>
             <div className="col-span-6">
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Project (Optional)</label>
-              <select name="projectName" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
-                <option value="">-- Select Project --</option>
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Project Selection *</label>
+              <select required value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl font-black text-slate-900 text-[10px] uppercase">
+                <option value="" disabled>-- Select Project --</option>
                 {projects.map((p: any) => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>

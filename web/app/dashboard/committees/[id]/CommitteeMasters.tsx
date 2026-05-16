@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check } from "lucide-react";
+import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check, Star, Eye, EyeOff } from "lucide-react";
 import {
   getRequestCategories, createRequestCategory, deleteRequestCategory, updateRequestCategory,
-  getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster,
+  getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster, updateProjectMasterStatus
 } from "@/app/actions/masters";
 
 export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: string, isReadOnly?: boolean }) {
@@ -103,6 +103,18 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
     } else {
       alert(res.error || "Failed to update project.");
     }
+  };
+
+  const handleToggleProjectStatus = async (id: string, currentActive: boolean) => {
+    const res = await updateProjectMasterStatus(id, committeeId, { isActive: !currentActive });
+    if (res.success) await fetchAll();
+    else alert(res.error || "Failed to update status");
+  };
+
+  const handleSetProjectDefault = async (id: string) => {
+    const res = await updateProjectMasterStatus(id, committeeId, { isDefault: true });
+    if (res.success) await fetchAll();
+    else alert(res.error || "Failed to set default");
   };
 
   if (isLoading) {
@@ -315,30 +327,60 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5 self-start" />
-                        <div className="min-w-0">
-                          <span className="text-xs font-black text-slate-800 uppercase tracking-wide block truncate">{p.name}</span>
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 self-start ${p.isActive ? 'bg-blue-500' : 'bg-slate-300'}`} />
+                        <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-black uppercase tracking-wide block truncate ${p.isActive ? 'text-slate-800' : 'text-slate-400 line-through'}`}>{p.name}</span>
+                            {p.isDefault && (
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                                <Star className="w-2.5 h-2.5 fill-amber-500" /> Default
+                              </span>
+                            )}
+                            {!p.isActive && (
+                              <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[9px] font-black uppercase tracking-widest">
+                                Inactive
+                              </span>
+                            )}
+                          </div>
                           {p.description && (
-                            <span className="text-[9px] font-medium text-slate-400 block truncate mt-0.5">{p.description}</span>
+                            <span className={`text-[9px] font-medium block truncate mt-0.5 ${p.isActive ? 'text-slate-400' : 'text-slate-300'}`}>{p.description}</span>
                           )}
                         </div>
                       </div>
                       {!isReadOnly && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0 ml-4">
+                          <button
+                            onClick={() => handleSetProjectDefault(p.id)}
+                            disabled={p.isDefault || !p.isActive}
+                            className={`p-1.5 rounded-lg transition-all ${p.isDefault || !p.isActive ? 'text-slate-300 opacity-50 cursor-not-allowed' : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50'}`}
+                            title="Set as Default"
+                          >
+                            <Star className={`w-3.5 h-3.5 ${p.isDefault ? 'fill-amber-400 text-amber-400 opacity-100' : ''}`} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleProjectStatus(p.id, p.isActive)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                            title={p.isActive ? "Mark Inactive" : "Mark Active"}
+                          >
+                            {p.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                          <div className="w-px h-4 bg-slate-200 mx-1" />
                           <button
                             onClick={() => {
                               setEditingProjId(p.id);
                               setEditProjName(p.name);
                               setEditProjDesc(p.description || "");
                             }}
-                            className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Edit"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteProject(p.id)}
-                            className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

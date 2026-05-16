@@ -125,3 +125,33 @@ export async function updateProjectMaster(id: string, committeeId: string, name:
     return { success: false, error: "Failed to update project." };
   }
 }
+
+export async function updateProjectMasterStatus(id: string, committeeId: string, updates: { isActive?: boolean, isDefault?: boolean }) {
+  const session = await getServerSession(authOptions);
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN", "COMMITTEE_ADMIN"].includes(session.user.role)) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    // If setting as default, unset any existing default for this committee
+    if (updates.isDefault === true) {
+      await prisma.projectMaster.updateMany({
+        where: { committeeId, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
+    await prisma.projectMaster.update({
+      where: { id },
+      data: {
+        ...(updates.isActive !== undefined && { isActive: updates.isActive }),
+        ...(updates.isDefault !== undefined && { isDefault: updates.isDefault }),
+      },
+    });
+
+    revalidatePath(`/dashboard/committees/${committeeId}`);
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: "Failed to update project status." };
+  }
+}
