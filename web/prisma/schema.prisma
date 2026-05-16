@@ -346,9 +346,14 @@ model ProjectMaster {
   id          String    @id @default(cuid())
   name        String
   description String?
+  isActive    Boolean   @default(true)
+  isDefault   Boolean   @default(false)
   committeeId String
   committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
+
+  donations   Donation[]
+  fundRequests FundRequest[]
 
   @@unique([committeeId, name])
 }
@@ -411,6 +416,9 @@ model Donation {
   
   mainMahallaId   String
   mainMahalla     MainMahalla    @relation(fields: [mainMahallaId], references: [id], onDelete: Cascade)
+  
+  projectId       String?
+  project         ProjectMaster? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -485,6 +493,8 @@ model FundRequest {
   committee         Committee          @relation(fields: [committeeId], references: [id], onDelete: Cascade)
   committeeTermId   String
   committeeTerm     CommitteeTerm      @relation(fields: [committeeTermId], references: [id], onDelete: Cascade)
+  projectId         String?
+  project           ProjectMaster?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectName       String?
 
   // Beneficiary
