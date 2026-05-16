@@ -99,29 +99,29 @@ export default function SystemSettingsPage() {
   // Hidden fields for each tab so form data persists across tab switches
   const smtpHidden = (
     <>
-      <input type="hidden" name="smtpHost" defaultValue={settings?.smtpHost} />
-      <input type="hidden" name="smtpPort" defaultValue={settings?.smtpPort} />
-      <input type="hidden" name="smtpUser" defaultValue={settings?.smtpUser} />
-      <input type="hidden" name="smtpPassword" defaultValue={settings?.smtpPassword} />
-      <input type="hidden" name="smtpFromEmail" defaultValue={settings?.smtpFromEmail} />
-      <input type="hidden" name="smtpFromName" defaultValue={settings?.smtpFromName} />
-      <input type="hidden" name="smtpEncryption" defaultValue={settings?.smtpEncryption} />
+      <input type="hidden" name="smtpHost" defaultValue={settings?.smtpHost || ""} />
+      <input type="hidden" name="smtpPort" defaultValue={settings?.smtpPort || ""} />
+      <input type="hidden" name="smtpUser" defaultValue={settings?.smtpUser || ""} />
+      <input type="hidden" name="smtpPassword" defaultValue={settings?.smtpPassword || ""} />
+      <input type="hidden" name="smtpFromEmail" defaultValue={settings?.smtpFromEmail || ""} />
+      <input type="hidden" name="smtpFromName" defaultValue={settings?.smtpFromName || ""} />
+      <input type="hidden" name="smtpEncryption" defaultValue={settings?.smtpEncryption || ""} />
     </>
   );
   const securityHidden = (
     <>
-      <input type="hidden" name="recaptchaSiteKey" defaultValue={settings?.recaptchaSiteKey} />
-      <input type="hidden" name="recaptchaSecretKey" defaultValue={settings?.recaptchaSecretKey} />
+      <input type="hidden" name="recaptchaSiteKey" defaultValue={settings?.recaptchaSiteKey || ""} />
+      <input type="hidden" name="recaptchaSecretKey" defaultValue={settings?.recaptchaSecretKey || ""} />
       <input type="hidden" name="whatsappBroadcastsEnabled" value={settings?.whatsappBroadcastsEnabled ? "true" : "false"} />
     </>
   );
   const brandingHidden = (
     <>
-      <input type="hidden" name="bankName" defaultValue={settings?.bankName} />
-      <input type="hidden" name="accountHolder" defaultValue={settings?.accountHolder} />
-      <input type="hidden" name="accountNumber" defaultValue={settings?.accountNumber} />
-      <input type="hidden" name="bankInstructions" defaultValue={settings?.bankInstructions} />
-      <input type="hidden" name="logoUrl" defaultValue={settings?.logoUrl} />
+      <input type="hidden" name="bankName" defaultValue={settings?.bankName || ""} />
+      <input type="hidden" name="accountHolder" defaultValue={settings?.accountHolder || ""} />
+      <input type="hidden" name="accountNumber" defaultValue={settings?.accountNumber || ""} />
+      <input type="hidden" name="bankInstructions" defaultValue={settings?.bankInstructions || ""} />
+      <input type="hidden" name="logoUrl" defaultValue={settings?.logoUrl || ""} />
     </>
   );
 
@@ -180,28 +180,28 @@ export default function SystemSettingsPage() {
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">SMTP Host</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Globe className="w-4 h-4" /></div>
-                        <input name="smtpHost" defaultValue={settings?.smtpHost} placeholder="e.g. smtp.gmail.com" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpHost" defaultValue={settings?.smtpHost || ""} placeholder="e.g. smtp.gmail.com" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">SMTP Port</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Key className="w-4 h-4" /></div>
-                        <input name="smtpPort" type="number" defaultValue={settings?.smtpPort} placeholder="587 or 465" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpPort" type="number" defaultValue={settings?.smtpPort || ""} placeholder="587 or 465" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Username / Email</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><User className="w-4 h-4" /></div>
-                        <input name="smtpUser" defaultValue={settings?.smtpUser} placeholder="Email or Username" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpUser" defaultValue={settings?.smtpUser || ""} placeholder="Email or Username" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Password</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Shield className="w-4 h-4" /></div>
-                        <input name="smtpPassword" type="password" defaultValue={settings?.smtpPassword} placeholder="••••••••••••" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpPassword" type="password" defaultValue={settings?.smtpPassword || ""} placeholder="••••••••••••" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2"><div className="h-px bg-slate-100 my-4" /></div>
@@ -209,14 +209,14 @@ export default function SystemSettingsPage() {
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">From Email</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><AtSign className="w-4 h-4" /></div>
-                        <input name="smtpFromEmail" defaultValue={settings?.smtpFromEmail} placeholder="no-reply@mahallasplus.com" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpFromEmail" defaultValue={settings?.smtpFromEmail || ""} placeholder="no-reply@mahallasplus.com" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">From Name</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><User className="w-4 h-4" /></div>
-                        <input name="smtpFromName" defaultValue={settings?.smtpFromName} placeholder="MahallasPlus Notifications" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="smtpFromName" defaultValue={settings?.smtpFromName || ""} placeholder="MahallasPlus Notifications" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div className="col-span-2">
@@ -255,14 +255,14 @@ export default function SystemSettingsPage() {
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">reCAPTCHA Site Key</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Key className="w-4 h-4" /></div>
-                        <input name="recaptchaSiteKey" defaultValue={settings?.recaptchaSiteKey} placeholder="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="recaptchaSiteKey" defaultValue={settings?.recaptchaSiteKey || ""} placeholder="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">reCAPTCHA Secret Key</label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Shield className="w-4 h-4" /></div>
-                        <input name="recaptchaSecretKey" type="password" defaultValue={settings?.recaptchaSecretKey} placeholder="••••••••••••••••••••••••••••••••••••" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="recaptchaSecretKey" type="password" defaultValue={settings?.recaptchaSecretKey || ""} placeholder="••••••••••••••••••••••••••••••••••••" className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export default function SystemSettingsPage() {
                     <div className="grid grid-cols-2 gap-6">
                       <div className="col-span-2">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Platform Logo URL</label>
-                        <input name="logoUrl" defaultValue={settings?.logoUrl} placeholder="https://your-domain.com/logo.png" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="logoUrl" defaultValue={settings?.logoUrl || ""} placeholder="https://your-domain.com/logo.png" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                       <div className="col-span-2">
                         <div className="h-px bg-slate-100 my-4" />
@@ -319,19 +319,19 @@ export default function SystemSettingsPage() {
                       </div>
                       <div className="col-span-1">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Bank Name</label>
-                        <input name="bankName" defaultValue={settings?.bankName} placeholder="Commercial Bank" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="bankName" defaultValue={settings?.bankName || ""} placeholder="Commercial Bank" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                       <div className="col-span-1">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Account Number</label>
-                        <input name="accountNumber" defaultValue={settings?.accountNumber} placeholder="1234567890" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="accountNumber" defaultValue={settings?.accountNumber || ""} placeholder="1234567890" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Account Holder Name</label>
-                        <input name="accountHolder" defaultValue={settings?.accountHolder} placeholder="MahallasPlus Platform PVT LTD" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
+                        <input name="accountHolder" defaultValue={settings?.accountHolder || ""} placeholder="MahallasPlus Platform PVT LTD" className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all" />
                       </div>
                       <div className="col-span-2">
                         <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2.5 px-1">Special Payment Instructions</label>
-                        <textarea name="bankInstructions" rows={3} defaultValue={settings?.bankInstructions} placeholder="Please mention your Invoice Number as the reference..." className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all resize-none" />
+                        <textarea name="bankInstructions" rows={3} defaultValue={settings?.bankInstructions || ""} placeholder="Please mention your Invoice Number as the reference..." className="w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-900 text-sm focus:bg-white focus:border-blue-600 outline-none transition-all resize-none" />
                       </div>
                     </div>
                   </div>
