@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag } from "lucide-react";
+import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check } from "lucide-react";
 import {
-  getRequestCategories, createRequestCategory, deleteRequestCategory,
-  getProjectMasters, createProjectMaster, deleteProjectMaster,
+  getRequestCategories, createRequestCategory, deleteRequestCategory, updateRequestCategory,
+  getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster,
 } from "@/app/actions/masters";
 
 export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: string, isReadOnly?: boolean }) {
@@ -21,6 +21,13 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
   const [newProjDesc, setNewProjDesc] = useState("");
   const [projSubmitting, setProjSubmitting] = useState(false);
   const [projError, setProjError] = useState("");
+
+  // Edit states
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [editingProjId, setEditingProjId] = useState<string | null>(null);
+  const [editProjName, setEditProjName] = useState("");
+  const [editProjDesc, setEditProjDesc] = useState("");
 
   const fetchAll = async () => {
     setIsLoading(true);
@@ -74,6 +81,28 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
     if (!confirm("Delete this project?")) return;
     await deleteProjectMaster(id, committeeId);
     await fetchAll();
+  };
+
+  const handleUpdateCategory = async (id: string) => {
+    if (!editCatName.trim()) return;
+    const res = await updateRequestCategory(id, committeeId, editCatName);
+    if (res.success) {
+      setEditingCatId(null);
+      await fetchAll();
+    } else {
+      alert(res.error || "Failed to update category.");
+    }
+  };
+
+  const handleUpdateProject = async (id: string) => {
+    if (!editProjName.trim()) return;
+    const res = await updateProjectMaster(id, committeeId, editProjName, editProjDesc);
+    if (res.success) {
+      setEditingProjId(null);
+      await fetchAll();
+    } else {
+      alert(res.error || "Failed to update project.");
+    }
   };
 
   if (isLoading) {
@@ -136,17 +165,56 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
             ) : (
               categories.map((c) => (
                 <div key={c.id} className="flex items-center justify-between p-3 bg-slate-50/70 rounded-xl border border-slate-100 group hover:bg-violet-50/50 hover:border-violet-100 transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-violet-500 rounded-full shrink-0" />
-                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">{c.name}</span>
-                  </div>
-                  {!isReadOnly && (
-                    <button
-                      onClick={() => handleDeleteCategory(c.id)}
-                      className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  {editingCatId === c.id ? (
+                    <div className="flex items-center gap-2 w-full pr-2">
+                      <div className="w-2 h-2 bg-violet-500 rounded-full shrink-0" />
+                      <input
+                        type="text"
+                        value={editCatName}
+                        onChange={(e) => setEditCatName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleUpdateCategory(c.id)}
+                        autoFocus
+                        className="flex-1 px-2 py-1 bg-white border border-violet-200 rounded text-xs font-black text-slate-800 uppercase outline-none focus:ring-1 focus:ring-violet-500"
+                      />
+                      <button
+                        onClick={() => handleUpdateCategory(c.id)}
+                        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingCatId(null)}
+                        className="p-1 text-slate-400 hover:bg-slate-200 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-violet-500 rounded-full shrink-0" />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">{c.name}</span>
+                      </div>
+                      {!isReadOnly && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <button
+                            onClick={() => {
+                              setEditingCatId(c.id);
+                              setEditCatName(c.name);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(c.id)}
+                            className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))
@@ -213,23 +281,70 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
               </div>
             ) : (
               projects.map((p) => (
-                <div key={p.id} className="flex items-center justify-between p-3 bg-slate-50/70 rounded-xl border border-slate-100 group hover:bg-blue-50/50 hover:border-blue-100 transition-all">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0" />
-                    <div className="min-w-0">
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-wide block truncate">{p.name}</span>
-                      {p.description && (
-                        <span className="text-[9px] font-medium text-slate-400 block truncate">{p.description}</span>
-                      )}
+                <div key={p.id} className="flex items-start justify-between p-3 bg-slate-50/70 rounded-xl border border-slate-100 group hover:bg-blue-50/50 hover:border-blue-100 transition-all">
+                  {editingProjId === p.id ? (
+                    <div className="flex flex-col gap-2 w-full pr-2">
+                      <input
+                        type="text"
+                        value={editProjName}
+                        onChange={(e) => setEditProjName(e.target.value)}
+                        className="w-full px-2 py-1 bg-white border border-blue-200 rounded text-xs font-black text-slate-800 uppercase outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={editProjDesc}
+                        onChange={(e) => setEditProjDesc(e.target.value)}
+                        placeholder="Description (optional)"
+                        className="w-full px-2 py-1 bg-white border border-blue-200 rounded text-[10px] font-medium text-slate-600 outline-none focus:ring-1 focus:ring-blue-500"
+                        onKeyDown={(e) => e.key === "Enter" && handleUpdateProject(p.id)}
+                      />
+                      <div className="flex items-center gap-2 mt-1">
+                        <button
+                          onClick={() => handleUpdateProject(p.id)}
+                          className="px-3 py-1 bg-emerald-500 text-white rounded text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-600"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingProjId(null)}
+                          className="px-3 py-1 bg-slate-200 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-slate-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  {!isReadOnly && (
-                    <button
-                      onClick={() => handleDeleteProject(p.id)}
-                      className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1.5 self-start" />
+                        <div className="min-w-0">
+                          <span className="text-xs font-black text-slate-800 uppercase tracking-wide block truncate">{p.name}</span>
+                          {p.description && (
+                            <span className="text-[9px] font-medium text-slate-400 block truncate mt-0.5">{p.description}</span>
+                          )}
+                        </div>
+                      </div>
+                      {!isReadOnly && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingProjId(p.id);
+                              setEditProjName(p.name);
+                              setEditProjDesc(p.description || "");
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProject(p.id)}
+                            className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))
