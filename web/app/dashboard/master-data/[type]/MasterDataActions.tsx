@@ -63,7 +63,7 @@ export function MasterDataActions({ item, type, parentKey, parentName, parents }
           <select
             value={newParentId}
             onChange={(e) => setNewParentId(e.target.value)}
-            className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+            className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600 bg-white text-slate-900 font-medium"
           >
             <option value="">-- {parentName} --</option>
             {parents.map(p => (
@@ -76,7 +76,7 @@ export function MasterDataActions({ item, type, parentKey, parentName, parents }
             autoFocus
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="flex-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600"
+            className="flex-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 font-medium bg-white"
           />
           <button disabled={isLoading} onClick={handleUpdate} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

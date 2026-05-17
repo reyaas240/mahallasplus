@@ -33,6 +33,16 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
     prisma.masterSchool.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  let titles = await prisma.masterTitle.findMany({ orderBy: { name: "asc" } });
+  if (titles.length === 0) {
+    const defaultTitles = ["Mr.", "Mrs.", "Miss.", "Ms.", "Dr.", "Alhaj."];
+    await prisma.masterTitle.createMany({
+      data: defaultTitles.map(name => ({ name })),
+      skipDuplicates: true
+    });
+    titles = await prisma.masterTitle.findMany({ orderBy: { name: "asc" } });
+  }
+
   if (!family) return notFound();
 
   // Security check: Ensure admin belongs to the right Mahalla
@@ -64,7 +74,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" /> Family Members ({family.members.length})
               </h3>
-              <FamilyMemberForm cardId={family.id} occupations={occupations} grades={grades} schools={schools} />
+              <FamilyMemberForm cardId={family.id} occupations={occupations} grades={grades} schools={schools} titles={titles} />
             </div>
             
             <div className="divide-y divide-slate-100">
@@ -86,11 +96,18 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                             <span className="bg-emerald-100 text-emerald-700 text-[10px] uppercase font-black px-2 py-0.5 rounded-md border border-emerald-200 tracking-wider">Breadwinner</span>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 font-medium">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-500 font-medium">
                           <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> NIC: {member.nic || "N/A"}</span>
                           {member.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {member.phone}</span>}
-                          <span className="flex items-center gap-1 uppercase text-[11px] font-black text-slate-400">{member.relationship}</span>
-                          <span className="flex items-center gap-1 italic">{new Date().getFullYear() - new Date(member.dob).getFullYear()} Years Old</span>
+                          {member.gender && (
+                            <span className="bg-slate-100 text-slate-700 text-[10px] uppercase font-black px-2 py-0.5 rounded border border-slate-200 tracking-wider">
+                              {member.gender}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1 uppercase text-[10px] font-black text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 tracking-wider">{member.relationship}</span>
+                          <span className="flex items-center gap-1 italic">
+                            {member.dob ? `${new Date().getFullYear() - new Date(member.dob).getFullYear()} Years Old` : "Age: N/A"}
+                          </span>
                         </div>
                         <div className="text-sm text-slate-500 font-medium mt-1">
                           Status: <span className="text-slate-700">{member.maritalStatus}</span> {member.occupation && <span className="text-slate-400 mx-2">•</span>} <span className="text-slate-700">{member.occupation}</span>
@@ -98,7 +115,7 @@ export default async function FamilyDetailsPage(props: { params: Promise<{ id: s
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <FamilyMemberActions member={member} occupations={occupations} grades={grades} schools={schools} />
+                      <FamilyMemberActions member={member} occupations={occupations} grades={grades} schools={schools} titles={titles} />
                     </div>
                   </div>
                 ))

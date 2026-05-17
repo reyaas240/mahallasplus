@@ -24,6 +24,7 @@ const config: any = {
   schools: { model: "masterSchool", title: "Schools", singular: "School" },
   grades: { model: "masterGrade", title: "Grades", singular: "Grade" },
   occupations: { model: "masterOccupation", title: "Occupations", singular: "Occupation" },
+  titles: { model: "masterTitle", title: "Titles", singular: "Title" },
 };
 
 export default async function GenericMasterDataPage(props: { params: Promise<{ type: string }> }) {

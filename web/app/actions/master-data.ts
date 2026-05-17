@@ -28,6 +28,7 @@ const configMap: any = {
   schools: { model: "masterSchool" },
   grades: { model: "masterGrade" },
   occupations: { model: "masterOccupation" },
+  titles: { model: "masterTitle" },
 };
 
 export async function createGenericMasterData(type: string, formData: FormData) {

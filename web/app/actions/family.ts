@@ -79,7 +79,9 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   const fullName = formData.get("fullName") as string;
   const email = formData.get("email") as string || null;
   const title = formData.get("title") as string;
-  const dob = new Date(formData.get("dob") as string);
+  const dobVal = formData.get("dob") as string;
+  const dob = dobVal ? new Date(dobVal) : null;
+  const gender = formData.get("gender") as string || null;
   const nic = (formData.get("nic") as string) || null;
   const relationship = formData.get("relationship") as string;
   const maritalStatus = formData.get("maritalStatus") as string;
@@ -90,12 +92,6 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   const grade = isStudent ? formData.get("grade") as string : null;
   const school = isStudent ? formData.get("school") as string : null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
-
-  // Complex Validation
-  const age = new Date().getFullYear() - dob.getFullYear();
-  if (age >= 18 && !nic) {
-    return { success: false, error: "NIC is required for members aged 18 and above." };
-  }
 
   try {
     const limitCheck = await checkLicenseLimit(session.user.mainMahallaId as string, "MAX_MEMBERS");
@@ -115,6 +111,17 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
       if (existingEmail) return { success: false, error: "Email already registered." };
     }
 
+    if (title) {
+      const trimmedTitle = title.trim();
+      if (trimmedTitle) {
+        await prisma.masterTitle.upsert({
+          where: { name: trimmedTitle },
+          update: {},
+          create: { name: trimmedTitle },
+        });
+      }
+    }
+
     await prisma.familyMember.create({
       data: {
         familyCardId: cardId,
@@ -122,6 +129,7 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
         email,
         title,
         dob,
+        gender,
         nic,
         relationship,
         maritalStatus,
@@ -238,7 +246,9 @@ export async function updateFamilyMember(id: string, formData: FormData) {
   const title = formData.get("title") as string;
   const fullName = formData.get("fullName") as string;
   const email = formData.get("email") as string || null;
-  const dob = new Date(formData.get("dob") as string);
+  const dobVal = formData.get("dob") as string;
+  const dob = dobVal ? new Date(dobVal) : null;
+  const gender = formData.get("gender") as string || null;
   const nic = formData.get("nic") as string || null;
   const relationship = formData.get("relationship") as string;
   const maritalStatus = formData.get("maritalStatus") as string;
@@ -250,7 +260,7 @@ export async function updateFamilyMember(id: string, formData: FormData) {
   const school = isStudent ? formData.get("school") as string : null;
   const monthlyEarnings = parseFloat(formData.get("monthlyEarnings") as string) || 0;
 
-  console.log("Updating Member:", { id, title, fullName, email, dob, nic, monthlyEarnings, isStudent, grade, school });
+  console.log("Updating Member:", { id, title, fullName, email, dob, gender, nic, monthlyEarnings, isStudent, grade, school });
 
   try {
     // Check NIC uniqueness if changed
@@ -269,6 +279,17 @@ export async function updateFamilyMember(id: string, formData: FormData) {
       if (existingEmail) return { success: false, error: "Email already registered to another member." };
     }
 
+    if (title) {
+      const trimmedTitle = title.trim();
+      if (trimmedTitle) {
+        await prisma.masterTitle.upsert({
+          where: { name: trimmedTitle },
+          update: {},
+          create: { name: trimmedTitle },
+        });
+      }
+    }
+
     const member = await prisma.familyMember.update({
       where: { id },
       data: {
@@ -276,6 +297,7 @@ export async function updateFamilyMember(id: string, formData: FormData) {
         fullName,
         email,
         dob,
+        gender,
         nic,
         relationship,
         maritalStatus,

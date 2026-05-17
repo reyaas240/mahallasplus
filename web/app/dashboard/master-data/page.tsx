@@ -20,6 +20,7 @@ export default function MasterDataPage() {
         <DataCard href="/dashboard/master-data/schools" title="Schools" description="Manage educational institutions." icon={<GraduationCap className="w-6 h-6 text-purple-600" />} />
         <DataCard href="/dashboard/master-data/grades" title="Grades" description="Manage education grade levels." icon={<GraduationCap className="w-6 h-6 text-purple-500" />} />
         <DataCard href="/dashboard/master-data/occupations" title="Occupations" description="Manage job titles and professions." icon={<Briefcase className="w-6 h-6 text-rose-600" />} />
+        <DataCard href="/dashboard/master-data/titles" title="Titles" description="Manage dynamic salutation prefixes and titles." icon={<Settings className="w-6 h-6 text-cyan-600" />} />
       </div>
     </div>
   );

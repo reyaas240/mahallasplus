@@ -3,11 +3,15 @@ import { useState } from "react";
 import { Edit3, Trash2, X, Loader2 } from "lucide-react";
 import { deleteFamilyMember, updateFamilyMember } from "@/app/actions/family";
 
-export function FamilyMemberActions({ member, occupations, grades = [], schools = [] }: { member: any, occupations: any[], grades?: any[], schools?: any[] }) {
+export function FamilyMemberActions({ member, occupations, grades = [], schools = [], titles = [] }: { member: any, occupations: any[], grades?: any[], schools?: any[], titles?: any[] }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStudent, setIsStudent] = useState(member.isStudent);
+
+  const isPreset = titles.some((t: any) => t.name === member.title);
+  const [selectedTitle, setSelectedTitle] = useState(isPreset ? member.title : "Other");
+  const [customTitle, setCustomTitle] = useState(isPreset ? "" : member.title);
 
   const handleDelete = async () => {
     if (confirm(`Are you sure you want to delete ${member.fullName}?`)) {
@@ -36,7 +40,13 @@ export function FamilyMemberActions({ member, occupations, grades = [], schools 
     <>
       <div className="flex items-center gap-2">
         <button 
-          onClick={() => { setIsEditing(true); setIsStudent(member.isStudent); }}
+          onClick={() => { 
+            setIsEditing(true); 
+            setIsStudent(member.isStudent); 
+            const isPresetVal = titles.some((t: any) => t.name === member.title);
+            setSelectedTitle(isPresetVal ? member.title : "Other");
+            setCustomTitle(isPresetVal ? "" : member.title);
+          }}
           className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
         >
           <Edit3 className="w-4 h-4" />
@@ -67,14 +77,29 @@ export function FamilyMemberActions({ member, occupations, grades = [], schools 
               <div className="grid grid-cols-4 gap-3">
                 <div className="col-span-1">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Title</label>
-                  <select defaultValue={member.title} name="title" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
-                    <option value="Mr.">Mr.</option>
-                    <option value="Mrs.">Mrs.</option>
-                    <option value="Miss.">Miss.</option>
-                    <option value="Ms.">Ms.</option>
-                    <option value="Dr.">Dr.</option>
-                    <option value="Alhaj.">Alhaj.</option>
+                  <select 
+                    value={selectedTitle}
+                    onChange={(e) => setSelectedTitle(e.target.value)}
+                    name={selectedTitle === "Other" ? "titleSelect" : "title"}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all"
+                  >
+                    {titles.map((t: any) => (
+                      <option key={t.id} value={t.name}>{t.name}</option>
+                    ))}
+                    <option value="Other">Other (Custom)</option>
                   </select>
+                  {selectedTitle === "Other" && (
+                    <input 
+                      type="text" 
+                      name="title" 
+                      required 
+                      value={customTitle} 
+                      onChange={(e) => setCustomTitle(e.target.value)} 
+                      placeholder="Write Title" 
+                      className="mt-2 w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all"
+                    />
+                  )}
                 </div>
                 <div className="col-span-3">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Full Name</label>
@@ -96,11 +121,31 @@ export function FamilyMemberActions({ member, occupations, grades = [], schools 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Date of Birth</label>
-                  <input required name="dob" type="date" defaultValue={new Date(member.dob).toISOString().split('T')[0]} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all" />
+                  <input name="dob" type="date" defaultValue={member.dob ? new Date(member.dob).toISOString().split('T')[0] : ""} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">NIC (ID Card)</label>
                   <input name="nic" type="text" defaultValue={member.nic || ""} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gender</label>
+                  <select defaultValue={member.gender || ""} required name="gender" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Occupation</label>
+                  <select defaultValue={member.occupation || ""} name="occupation" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
+                    <option value="">-- Select Occupation --</option>
+                    {occupations.map(occ => (
+                      <option key={occ.id} value={occ.name}>{occ.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -128,16 +173,6 @@ export function FamilyMemberActions({ member, occupations, grades = [], schools 
                     <option value="Divorced">Divorced</option>
                   </select>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Occupation</label>
-                <select defaultValue={member.occupation || ""} name="occupation" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
-                  <option value="">-- Select Occupation --</option>
-                  {occupations.map(occ => (
-                    <option key={occ.id} value={occ.name}>{occ.name}</option>
-                  ))}
-                </select>
               </div>
 
               <div className="flex flex-col gap-4 p-4 bg-slate-50 rounded-[24px] border border-slate-100 shadow-inner">

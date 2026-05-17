@@ -3,11 +3,13 @@ import { addFamilyMember } from "@/app/actions/family";
 import { useState } from "react";
 import { Loader2, UserPlus, AlertCircle, X, Users } from "lucide-react";
 
-export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [] }: { cardId: string, occupations: any[], grades?: any[], schools?: any[] }) {
+export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [], titles = [] }: { cardId: string, occupations: any[], grades?: any[], schools?: any[], titles?: any[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTitle, setSelectedTitle] = useState("Mr.");
+  const [customTitle, setCustomTitle] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +26,8 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
       form.reset();
       setIsStudent(false);
       setIsOpen(false);
+      setSelectedTitle("Mr.");
+      setCustomTitle("");
     } else {
       setError(res.error || "Failed to add member");
     }
@@ -32,7 +36,7 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
   return (
     <>
       <button 
-        onClick={() => { setIsOpen(true); setIsStudent(false); }}
+        onClick={() => { setIsOpen(true); setIsStudent(false); setSelectedTitle("Mr."); setCustomTitle(""); }}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200"
       >
         <UserPlus className="w-4 h-4" /> Add Member
@@ -67,14 +71,29 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-1">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Title</label>
-                  <select required name="title" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
-                    <option value="Mr.">Mr.</option>
-                    <option value="Mrs.">Mrs.</option>
-                    <option value="Miss.">Miss.</option>
-                    <option value="Ms.">Ms.</option>
-                    <option value="Dr.">Dr.</option>
-                    <option value="Alhaj.">Alhaj.</option>
+                  <select 
+                    value={selectedTitle}
+                    onChange={(e) => setSelectedTitle(e.target.value)}
+                    name={selectedTitle === "Other" ? "titleSelect" : "title"}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all"
+                  >
+                    {titles.map((t: any) => (
+                      <option key={t.id} value={t.name}>{t.name}</option>
+                    ))}
+                    <option value="Other">Other (Custom)</option>
                   </select>
+                  {selectedTitle === "Other" && (
+                    <input 
+                      type="text" 
+                      name="title" 
+                      required 
+                      value={customTitle} 
+                      onChange={(e) => setCustomTitle(e.target.value)} 
+                      placeholder="Write Title" 
+                      className="mt-2 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all"
+                    />
+                  )}
                 </div>
                 <div className="col-span-2">
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Full Name</label>
@@ -89,7 +108,7 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Date of Birth</label>
-                  <input required name="dob" type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all" />
+                  <input name="dob" type="date" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">NIC (ID Card)</label>
@@ -101,7 +120,27 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Gender</label>
+                  <select required name="gender" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Occupation</label>
+                  <select name="occupation" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
+                    <option value="">-- Select Occupation --</option>
+                    {occupations.map(occ => (
+                      <option key={occ.id} value={occ.name}>{occ.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Relationship</label>
                   <select required name="relationship" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
@@ -123,15 +162,6 @@ export function FamilyMemberForm({ cardId, occupations, grades = [], schools = [
                     <option value="Single">Single</option>
                     <option value="Widowed">Widowed</option>
                     <option value="Divorced">Divorced</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 text-left">Occupation</label>
-                  <select name="occupation" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-900 text-sm transition-all">
-                    <option value="">-- Select Occupation --</option>
-                    {occupations.map(occ => (
-                      <option key={occ.id} value={occ.name}>{occ.name}</option>
-                    ))}
                   </select>
                 </div>
               </div>

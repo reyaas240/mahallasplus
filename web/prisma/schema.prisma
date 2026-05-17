@@ -235,7 +235,8 @@ model FamilyMember {
   id               String            @id @default(cuid())
   title            String
   fullName         String
-  dob              DateTime
+  dob              DateTime?
+  gender           String?
   nic              String?           @unique
   relationship     String
   isBreadwinner    Boolean           @default(false)
@@ -328,6 +329,11 @@ model MasterGrade {
 }
 
 model MasterOccupation {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model MasterTitle {
   id   String @id @default(cuid())
   name String @unique
 }
