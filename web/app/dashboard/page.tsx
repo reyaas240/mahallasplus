@@ -288,7 +288,7 @@ export default async function DashboardOverview() {
                   {/* Bars Group */}
                   <div className="flex items-end gap-2.5 h-full w-full justify-center px-2">
                     {/* Total Bar */}
-                    <div className="flex flex-col items-center group/bar relative w-8 sm:w-10">
+                    <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
                       <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
                         Total: {data.total}
                       </div>
@@ -301,7 +301,7 @@ export default async function DashboardOverview() {
                     </div>
 
                     {/* Male Bar */}
-                    <div className="flex flex-col items-center group/bar relative w-8 sm:w-10">
+                    <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
                       <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
                         Male: {data.males}
                       </div>
@@ -314,7 +314,7 @@ export default async function DashboardOverview() {
                     </div>
 
                     {/* Female Bar */}
-                    <div className="flex flex-col items-center group/bar relative w-8 sm:w-10">
+                    <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
                       <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
                         Female: {data.females}
                       </div>
