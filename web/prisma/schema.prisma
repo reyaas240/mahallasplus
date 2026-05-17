@@ -41,6 +41,7 @@ model Committee {
   fundRequests  FundRequest[]
   requestCategories RequestCategory[]
   projectMasters    ProjectMaster[]
+  roles             CommitteeRole[]
 }
 
 enum FinancialStatus {
@@ -360,6 +361,17 @@ model ProjectMaster {
 
   donations   Donation[]
   fundRequests FundRequest[]
+
+  @@unique([committeeId, name])
+}
+
+model CommitteeRole {
+  id          String    @id @default(cuid())
+  name        String
+  committeeId String
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([committeeId, name])
 }

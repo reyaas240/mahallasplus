@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, UserPlus, Loader2, MapPin, X } from "lucide-react";
 import { addCommitteeMember } from "@/app/actions/committee";
 
-export function MemberSelector({ terms, allMembers }: { terms: any[], allMembers: any[] }) {
+export function MemberSelector({ terms, allMembers, roles = [] }: { terms: any[], allMembers: any[], roles?: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any | null>(null);
@@ -18,6 +18,14 @@ export function MemberSelector({ terms, allMembers }: { terms: any[], allMembers
       setSelectedTermId(activeTerm ? activeTerm.id : terms[0].id);
     }
   }, [terms, selectedTermId]);
+
+  // Set default role when roles are loaded/available
+  useEffect(() => {
+    if (roles.length > 0) {
+      const defaultRole = roles.find(r => r.name.toLowerCase() === "member")?.name || roles[0].name;
+      setRole(defaultRole);
+    }
+  }, [roles]);
 
   const filteredMembers = allMembers.filter(m => 
     m.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,12 +142,19 @@ export function MemberSelector({ terms, allMembers }: { terms: any[], allMembers
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-emerald-200 rounded-xl outline-none focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 transition-all font-black text-slate-900 text-xs uppercase tracking-widest"
                 >
-                  <option value="President">President</option>
-                  <option value="Secretary">Secretary</option>
-                  <option value="Treasurer">Treasurer</option>
-                  <option value="Organizer">Organizer</option>
-                  <option value="Member">Member</option>
-                  <option value="Volunteer">Volunteer</option>
+                  {roles.map((r: any) => (
+                    <option key={r.id} value={r.name}>{r.name}</option>
+                  ))}
+                  {roles.length === 0 && (
+                    <>
+                      <option value="President">President</option>
+                      <option value="Secretary">Secretary</option>
+                      <option value="Treasurer">Treasurer</option>
+                      <option value="Organizer">Organizer</option>
+                      <option value="Member">Member</option>
+                      <option value="Volunteer">Volunteer</option>
+                    </>
+                  )}
                 </select>
               </div>
 

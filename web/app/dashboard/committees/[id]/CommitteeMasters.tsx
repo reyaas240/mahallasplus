@@ -1,14 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check, Star, Ban } from "lucide-react";
+import { Loader2, Plus, X, Trash2, FolderOpen, LayoutGrid, Tag, Pencil, Check, Star, Ban, ShieldCheck } from "lucide-react";
 import {
   getRequestCategories, createRequestCategory, deleteRequestCategory, updateRequestCategory,
-  getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster, updateProjectMasterStatus
+  getProjectMasters, createProjectMaster, deleteProjectMaster, updateProjectMaster, updateProjectMasterStatus,
+  getCommitteeRoles, createCommitteeRole, deleteCommitteeRole, updateCommitteeRole
 } from "@/app/actions/masters";
 
 export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: string, isReadOnly?: boolean }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Category form
@@ -22,21 +24,30 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
   const [projSubmitting, setProjSubmitting] = useState(false);
   const [projError, setProjError] = useState("");
 
+  // Role form
+  const [newRoleName, setNewRoleName] = useState("");
+  const [roleSubmitting, setRoleSubmitting] = useState(false);
+  const [roleError, setRoleError] = useState("");
+
   // Edit states
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [editingProjId, setEditingProjId] = useState<string | null>(null);
   const [editProjName, setEditProjName] = useState("");
   const [editProjDesc, setEditProjDesc] = useState("");
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
+  const [editRoleName, setEditRoleName] = useState("");
 
   const fetchAll = async () => {
     setIsLoading(true);
-    const [cats, projs] = await Promise.all([
+    const [cats, projs, rls] = await Promise.all([
       getRequestCategories(committeeId),
       getProjectMasters(committeeId),
+      getCommitteeRoles(committeeId)
     ]);
     setCategories(cats);
     setProjects(projs);
+    setRoles(rls);
     setIsLoading(false);
   };
 
@@ -117,6 +128,37 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
     else alert(res.error || "Failed to set default");
   };
 
+  const handleAddRole = async () => {
+    if (!newRoleName.trim()) return;
+    setRoleSubmitting(true);
+    setRoleError("");
+    const res = await createCommitteeRole(committeeId, newRoleName);
+    if (res.success) {
+      setNewRoleName("");
+      await fetchAll();
+    } else {
+      setRoleError(res.error || "Failed to create role.");
+    }
+    setRoleSubmitting(false);
+  };
+
+  const handleDeleteRole = async (id: string) => {
+    if (!confirm("Delete this role? Any members assigned this role will retain their current text representation, but the role will be removed from the master lookup list.")) return;
+    await deleteCommitteeRole(id, committeeId);
+    await fetchAll();
+  };
+
+  const handleUpdateRole = async (id: string) => {
+    if (!editRoleName.trim()) return;
+    const res = await updateCommitteeRole(id, committeeId, editRoleName);
+    if (res.success) {
+      setEditingRoleId(null);
+      await fetchAll();
+    } else {
+      alert(res.error || "Failed to update role.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -126,7 +168,7 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Request Categories */}
       <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -381,6 +423,114 @@ export function CommitteeMasters({ committeeId, isReadOnly }: { committeeId: str
                             onClick={() => handleDeleteProject(p.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                             title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Committee Roles */}
+      <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm">Committee Roles</h4>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Define custom roles for active personnel</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Add Form */}
+          {!isReadOnly && (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="New role name (e.g. ADVISOR)..."
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddRole()}
+                  className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-900 text-xs transition-all placeholder:text-slate-400"
+                />
+                <button
+                  onClick={handleAddRole}
+                  disabled={roleSubmitting || !newRoleName.trim()}
+                  className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                >
+                  {roleSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  Add
+                </button>
+              </div>
+              {roleError && <p className="text-[10px] font-bold text-rose-600 px-1">{roleError}</p>}
+            </>
+          )}
+
+          {/* List */}
+          <div className="space-y-1.5 max-h-[320px] overflow-y-auto custom-scrollbar">
+            {roles.length === 0 ? (
+              <div className="py-10 text-center">
+                <ShieldCheck className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No roles yet</p>
+              </div>
+            ) : (
+              roles.map((r) => (
+                <div key={r.id} className="flex items-center justify-between p-3 bg-slate-50/70 rounded-xl border border-slate-100 group hover:bg-emerald-50/50 hover:border-emerald-100 transition-all">
+                  {editingRoleId === r.id ? (
+                    <div className="flex items-center gap-2 w-full pr-2">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
+                      <input
+                        type="text"
+                        value={editRoleName}
+                        onChange={(e) => setEditRoleName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleUpdateRole(r.id)}
+                        autoFocus
+                        className="flex-1 px-2 py-1 bg-white border border-emerald-200 rounded text-xs font-black text-slate-800 uppercase outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                      <button
+                        onClick={() => handleUpdateRole(r.id)}
+                        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingRoleId(null)}
+                        className="p-1 text-slate-400 hover:bg-slate-200 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full shrink-0" />
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wide">{r.name}</span>
+                      </div>
+                      {!isReadOnly && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <button
+                            onClick={() => {
+                              setEditingRoleId(r.id);
+                              setEditRoleName(r.name);
+                            }}
+                            className="p-1.5 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRole(r.id)}
+                            className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

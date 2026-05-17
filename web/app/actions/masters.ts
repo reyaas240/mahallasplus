@@ -155,3 +155,78 @@ export async function updateProjectMasterStatus(id: string, committeeId: string,
     return { success: false, error: "Failed to update project status." };
   }
 }
+
+// ──────────── Committee Roles ────────────
+
+export async function getCommitteeRoles(committeeId: string) {
+  let roles = await prisma.committeeRole.findMany({
+    where: { committeeId },
+    orderBy: { name: "asc" },
+  });
+
+  if (roles.length === 0) {
+    const defaults = ["PRESIDENT", "SECRETARY", "TREASURER", "ORGANIZER", "MEMBER", "VOLUNTEER"];
+    await prisma.committeeRole.createMany({
+      data: defaults.map(name => ({ name, committeeId })),
+      skipDuplicates: true,
+    });
+    roles = await prisma.committeeRole.findMany({
+      where: { committeeId },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  return roles;
+}
+
+export async function createCommitteeRole(committeeId: string, name: string) {
+  const session = await getServerSession(authOptions);
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN", "COMMITTEE_ADMIN"].includes(session.user.role)) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.committeeRole.create({
+      data: { name: name.trim().toUpperCase(), committeeId },
+    });
+    revalidatePath(`/dashboard/committees/${committeeId}`);
+    return { success: true };
+  } catch (e: any) {
+    if (e.code === "P2002") return { success: false, error: "Role already exists." };
+    return { success: false, error: "Failed to create role." };
+  }
+}
+
+export async function deleteCommitteeRole(id: string, committeeId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN", "COMMITTEE_ADMIN"].includes(session.user.role)) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.committeeRole.delete({ where: { id } });
+    revalidatePath(`/dashboard/committees/${committeeId}`);
+    return { success: true };
+  } catch {
+    return { success: false, error: "Failed to delete role." };
+  }
+}
+
+export async function updateCommitteeRole(id: string, committeeId: string, name: string) {
+  const session = await getServerSession(authOptions);
+  if (!session || !["MAIN_ADMIN", "SUB_ADMIN", "COMMITTEE_ADMIN"].includes(session.user.role)) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await prisma.committeeRole.update({
+      where: { id },
+      data: { name: name.trim().toUpperCase() },
+    });
+    revalidatePath(`/dashboard/committees/${committeeId}`);
+    return { success: true };
+  } catch (e: any) {
+    if (e.code === "P2002") return { success: false, error: "Role already exists." };
+    return { success: false, error: "Failed to update role." };
+  }
+}

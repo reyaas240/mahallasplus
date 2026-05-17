@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Shield, ShieldOff, Trash2, Loader2, Edit3, X, Calendar, CheckCircle2, UserMinus } from "lucide-react";
 import { removeCommitteeMember, toggleMemberAccess, updateCommitteeMember } from "@/app/actions/committee";
 
-export function CommitteeMemberActions({ member }: { member: any }) {
+export function CommitteeMemberActions({ member, roles = [] }: { member: any, roles?: any[] }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -102,12 +102,19 @@ export function CommitteeMemberActions({ member }: { member: any }) {
                     defaultValue={member.role}
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-black text-slate-900 text-sm uppercase tracking-widest"
                   >
-                    <option value="President">President</option>
-                    <option value="Secretary">Secretary</option>
-                    <option value="Treasurer">Treasurer</option>
-                    <option value="Organizer">Organizer</option>
-                    <option value="Member">Member</option>
-                    <option value="Volunteer">Volunteer</option>
+                    {roles.map((r: any) => (
+                      <option key={r.id} value={r.name}>{r.name}</option>
+                    ))}
+                    {roles.length === 0 && (
+                      <>
+                        <option value="President">President</option>
+                        <option value="Secretary">Secretary</option>
+                        <option value="Treasurer">Treasurer</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Member">Member</option>
+                        <option value="Volunteer">Volunteer</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
