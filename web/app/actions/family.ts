@@ -80,7 +80,13 @@ export async function addFamilyMember(cardId: string, formData: FormData) {
   const email = formData.get("email") as string || null;
   const title = formData.get("title") as string;
   const dobVal = formData.get("dob") as string;
-  const dob = dobVal ? new Date(dobVal) : null;
+  let dob: Date | null = null;
+  if (dobVal && dobVal.trim() !== "") {
+    const parsedDate = new Date(dobVal);
+    if (!isNaN(parsedDate.getTime())) {
+      dob = parsedDate;
+    }
+  }
   const gender = formData.get("gender") as string || null;
   const nic = (formData.get("nic") as string) || null;
   const relationship = formData.get("relationship") as string;
@@ -247,7 +253,13 @@ export async function updateFamilyMember(id: string, formData: FormData) {
   const fullName = formData.get("fullName") as string;
   const email = formData.get("email") as string || null;
   const dobVal = formData.get("dob") as string;
-  const dob = dobVal ? new Date(dobVal) : null;
+  let dob: Date | null = null;
+  if (dobVal && dobVal.trim() !== "") {
+    const parsedDate = new Date(dobVal);
+    if (!isNaN(parsedDate.getTime())) {
+      dob = parsedDate;
+    }
+  }
   const gender = formData.get("gender") as string || null;
   const nic = formData.get("nic") as string || null;
   const relationship = formData.get("relationship") as string;

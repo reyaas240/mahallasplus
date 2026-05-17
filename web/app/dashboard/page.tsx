@@ -193,9 +193,9 @@ export default async function DashboardOverview() {
             value={stats.totalMembers.toString()}
             icon={<Users className="w-6 h-6 text-indigo-600" />}
             trend={
-              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" : 
-              role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` : 
-              "Global Community"
+              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" :
+                role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` :
+                  "Global Community"
             }
           />
         )}
@@ -206,9 +206,9 @@ export default async function DashboardOverview() {
             value={stats.maleMembers.toString()}
             icon={<User className="w-6 h-6 text-blue-500" />}
             trend={
-              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" : 
-              role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` : 
-              "Global Male Count"
+              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" :
+                role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` :
+                  "Global Male Count"
             }
           />
         )}
@@ -219,9 +219,9 @@ export default async function DashboardOverview() {
             value={stats.femaleMembers.toString()}
             icon={<User className="w-6 h-6 text-pink-500" />}
             trend={
-              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" : 
-              role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` : 
-              "Global Female Count"
+              (role === "MAIN_ADMIN" || role === "MAIN_STAFF") ? "From All Sub Mahallas" :
+                role === "SUB_ADMIN" ? `In ${stats.mainMahallaName}` :
+                  "Global Female Count"
             }
           />
         )}
@@ -279,9 +279,9 @@ export default async function DashboardOverview() {
           {/* Bar Groups Container */}
           <div className="relative z-10 pl-12 h-64 flex items-end justify-around gap-6 overflow-x-auto min-w-[300px]">
             {chartData.map((data, index) => {
-              const totalHeight = (data.total / maxVal) * 100;
-              const maleHeight = (data.males / maxVal) * 100;
-              const femaleHeight = (data.females / maxVal) * 100;
+              const totalHeight = (data.total / maxVal) * 82;
+              const maleHeight = (data.males / maxVal) * 82;
+              const femaleHeight = (data.females / maxVal) * 82;
 
               return (
                 <div key={index} className="flex flex-col items-center flex-1 max-w-[200px] h-full justify-end group">
@@ -289,9 +289,10 @@ export default async function DashboardOverview() {
                   <div className="flex items-end gap-2.5 h-full w-full justify-center px-2">
                     {/* Total Bar */}
                     <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
-                      <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
-                        Total: {data.total}
-                      </div>
+                      {/* Permanent label on top */}
+                      <span className="text-[14px] font-extrabold text-indigo-700 mb-1 z-10">
+                        {data.total}
+                      </span>
                       <div
                         style={{ height: `${totalHeight}%` }}
                         className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-xl shadow-md group-hover/bar:brightness-110 transition-all relative overflow-hidden min-h-[4px]"
@@ -302,9 +303,10 @@ export default async function DashboardOverview() {
 
                     {/* Male Bar */}
                     <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
-                      <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
-                        Male: {data.males}
-                      </div>
+                      {/* Permanent label on top */}
+                      <span className="text-[14px] font-extrabold text-blue-700 mb-1 z-10">
+                        {data.males}
+                      </span>
                       <div
                         style={{ height: `${maleHeight}%` }}
                         className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-xl shadow-md group-hover/bar:brightness-110 transition-all relative overflow-hidden min-h-[4px]"
@@ -315,9 +317,10 @@ export default async function DashboardOverview() {
 
                     {/* Female Bar */}
                     <div className="flex flex-col items-center justify-end group/bar relative w-8 sm:w-10 h-full">
-                      <div className="absolute -top-10 scale-0 group-hover/bar:scale-100 transition-all bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg shadow-lg z-20 whitespace-nowrap">
-                        Female: {data.females}
-                      </div>
+                      {/* Permanent label on top */}
+                      <span className="text-[14px] font-extrabold text-pink-700 mb-1 z-10">
+                        {data.females}
+                      </span>
                       <div
                         style={{ height: `${femaleHeight}%` }}
                         className="w-full bg-gradient-to-t from-pink-500 to-pink-400 rounded-t-xl shadow-md group-hover/bar:brightness-110 transition-all relative overflow-hidden min-h-[4px]"
