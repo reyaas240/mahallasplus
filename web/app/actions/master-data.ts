@@ -51,8 +51,9 @@ export async function createGenericMasterData(type: string, formData: FormData) 
     });
     revalidatePath(`/dashboard/master-data/${type}`);
     return { success: true };
-  } catch (e) {
-    return { success: false, error: "Failed to create. It might already exist." };
+  } catch (e: any) {
+    console.error("CREATE ERROR:", e);
+    return { success: false, error: `Failed to create: ${e.message || String(e)}` };
   }
 }
 
