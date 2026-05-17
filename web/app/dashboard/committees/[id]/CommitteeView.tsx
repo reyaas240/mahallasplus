@@ -18,7 +18,7 @@ export function CommitteeView({ committee, currentTerm, members, allMembers, sta
 
   useEffect(() => {
     getCommitteeRoles(committee.id).then(setRoles);
-  }, [committee.id]);
+  }, [committee.id, activeTab]);
 
   const formatValue = (val: number) => {
     return new Intl.NumberFormat('en-US', {

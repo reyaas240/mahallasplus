@@ -99,7 +99,7 @@ export function CommitteeMemberActions({ member, roles = [] }: { member: any, ro
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Committee Role</label>
                   <select 
                     name="role"
-                    defaultValue={member.role}
+                    defaultValue={roles.find(r => r.name.toLowerCase() === member.role.toLowerCase())?.name || member.role}
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all font-black text-slate-900 text-sm uppercase tracking-widest"
                   >
                     {roles.map((r: any) => (
